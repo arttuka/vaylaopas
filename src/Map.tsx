@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import { Feature, Geometry, GeoJsonProperties, FeatureCollection } from 'geojson'
+import { Feature, Geometry, GeoJsonProperties, FeatureCollection, MultiPoint } from 'geojson'
 import mapboxgl from 'mapbox-gl'
 import styled from 'styled-components'
 
@@ -21,6 +21,12 @@ interface Vaylat extends FeatureCollection<Geometry, VaylaProperties> {
   features: Vayla[]
 }
 
+interface Intersections extends Feature<Geometry, null> {
+  type: 'Feature'
+  geometry: Geometry
+  properties: null
+}
+
 const elementId = 'mapbox-container'
 
 const Div = styled.div`
@@ -31,13 +37,13 @@ const Div = styled.div`
 `
 
 interface MapState {
-  data: Vayla[]
+  vaylat?: Vaylat
+  intersections?: Intersections
 }
 
 class Map extends Component<{}, MapState> {
-  constructor(props: MapState) {
+  constructor(props: {}) {
     super(props)
-    this.state = { data: [] }
   }
   
   componentDidMount(): void {
@@ -49,11 +55,21 @@ class Map extends Component<{}, MapState> {
       center: [24.94, 60.17]
     })
     map.on('load', async () => {
-      const response = await axios.get('/api/data')
+      let response = await axios.get('/api/vaylat')
       const vaylat: Vaylat = {
         type: 'FeatureCollection',
         features: response.data,
       }
+      response = await axios.get('/api/intersections')
+      const intersections: Intersections = {
+        type: 'Feature',
+        geometry: {
+          type: 'MultiPoint',
+          coordinates: response.data,
+        },
+        properties: null,
+      }
+      this.setState({ vaylat, intersections })
       map.addLayer({
         id: `vaylat`,
         type: 'line',
@@ -70,6 +86,20 @@ class Map extends Component<{}, MapState> {
           'line-width': 1,
         },
       })
+      map.addLayer({
+        id: 'intersections',
+        type: 'circle',
+        source: {
+          type: 'geojson',
+          data: intersections,
+        },
+        paint: {
+          "circle-radius": 5,
+          "circle-color": '#00ff00',
+        }
+      })
+      console.log(vaylat.features.find(vayla => vayla.properties.id === 4950))
+      console.log(vaylat.features.find(vayla => vayla.properties.id === 5010))
     })
   }
 
