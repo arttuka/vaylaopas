@@ -1,3 +1,5 @@
+import { Position } from 'geojson'
+
 // https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/fgi/GLtiedote30.pdf
 
 const degToRad = (deg: number): number => deg * Math.PI / 180
@@ -16,7 +18,8 @@ const h2 = Math.pow(n, 2) / 48 + Math.pow(n, 3) / 15 - 437 / 1440 * Math.pow(n, 
 const h3 = 17 / 480 * Math.pow(n, 3) - 37 / 840 * Math.pow(n, 4)
 const h4 = 4397 / 161280 * Math.pow(n, 4)
 
-const toWgs84 = ([E, N]: [number, number]): [number, number] => {
+const toWgs84 = (coords: Position): Position => {
+  const [E, N] = coords
   const xi = N / (A1 * k0)
   const eta = (E - E0) / (A1 * k0)
   const xi1p = h1 * Math.sin(2 * xi) * Math.cosh(2 * eta)
