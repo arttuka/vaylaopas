@@ -1,11 +1,11 @@
 import { Coordinate, Intersection, Lane, isIntersection, nextIntersectionId, nextLaneId } from '../common/lane'
 
 export interface ComparableLane extends Lane {
-  index: number
+  index: number;
 }
 
 const nextMonotoneChain = (lane: Lane, from: number): Lane => {
-  const { coordinates, laneId, depth } = lane
+  const { coordinates, laneid: laneId, depth } = lane
   if (coordinates.length < 2 + from) {
     console.log(`unexpected length for lane: ${coordinates.length}`)
   }
@@ -20,7 +20,7 @@ const nextMonotoneChain = (lane: Lane, from: number): Lane => {
   }
   return {
     coordinates: (reverse ? result.reverse() : result),
-    laneId,
+    laneid: laneId,
     depth,
     id: nextLaneId(),
   }
@@ -49,7 +49,7 @@ const lineSegmentIntersection = (
   c2: Coordinate,
   c3: Coordinate,
   c4: Coordinate
-  ): Intersection | null => {
+): Intersection | null => {
   const g = ((c3.y - c4.y) * (c1.x - c3.x) + (c4.x - c3.x) * (c1.y - c3.y)) /
     ((c4.x - c3.x) * (c1.y - c2.y) - (c1.x - c2.x) * (c4.y - c3.y))
   const h = ((c1.y - c2.y) * (c1.x - c3.x) + (c2.x - c1.x) * (c1.y - c3.y)) /
@@ -97,7 +97,7 @@ const findIntersections = (lane: ComparableLane, lanes: Set<ComparableLane>): In
 }
 
 export const findAllIntersections = (lanes: Lane[]): Intersection[] => {
-  const acl: ComparableLane[] = lanes.map(lane => ({ ...lane, index: 0 })).sort(compareLanes)
+  const acl: ComparableLane[] = lanes.map((lane): ComparableLane => ({ ...lane, index: 0 })).sort(compareLanes)
   const scl = new Set<ComparableLane>()
   const output: Intersection[] = []
   let i = 0

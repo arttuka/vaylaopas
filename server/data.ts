@@ -1,4 +1,5 @@
 import { Feature, GeoJsonProperties, Geometry, LineString, MultiLineString, Position } from 'geojson'
+import { flatMap } from 'lodash'
 import * as path from 'path'
 import * as shapefile from 'shapefile'
 import toWgs84 from './etrs-tm35fin'
@@ -10,8 +11,8 @@ const isMultiLineString = (g: Geometry): g is MultiLineString => g.type === 'Mul
 
 const formatLanes = (value: Feature<Geometry, GeoJsonProperties>): Lane[] => {
   const { geometry, properties } = value
-  const depth: number = properties!.KULKUSYV1 || 0
-  const laneid: number = properties!.JNRO
+  const depth: number = properties ? properties.KULKUSYV1 : 0
+  const laneid: number = properties ? properties.JNRO : 0
   let coordinates: Position[][]
   if (isLineString(geometry)) {
     coordinates = [geometry.coordinates]
@@ -20,7 +21,7 @@ const formatLanes = (value: Feature<Geometry, GeoJsonProperties>): Lane[] => {
   } else {
     throw new Error(`Unexpected geometry type ${geometry.type}`)
   }
-  return coordinates.map(line => ({
+  return coordinates.map((line): Lane => ({
     id: nextLaneId(),
     laneid,
     depth,
@@ -36,9 +37,7 @@ export const loadData = async (): Promise<LanesAndIntersections> => {
   )
   let { done, value } = await source.read()
   while (!done) {
-    formatLanes(value).forEach((lane) => {
-      lanes.push(...toMonotoneChains(lane))
-    });
+    lanes.push(...flatMap(formatLanes(value), toMonotoneChains));
     ({ done, value } = await source.read())
   }
 

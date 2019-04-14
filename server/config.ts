@@ -3,12 +3,12 @@ import * as path from 'path'
 
 interface Config {
   db: {
-    host: string
-    port: number
-    user: string
-    password: string
-    database: string
-  }
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    database: string;
+  };
 }
 
 let config: Config
@@ -17,6 +17,7 @@ const configFile = path.join(__dirname, '..', '..', 'config.json')
 if(fs.existsSync(configFile)) {
   config = require('../../config.json')
 } else {
+  /* eslint-disable @typescript-eslint/no-non-null-assertion */
   config = {
     db: {
       host: process.env.DB_HOST!,
@@ -26,6 +27,7 @@ if(fs.existsSync(configFile)) {
       database: process.env.DB_NAME!,
     }
   }
+  /* eslint-enable */
 }
 
 export default config

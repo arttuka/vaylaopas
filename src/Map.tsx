@@ -6,17 +6,19 @@ import mapboxgl from 'mapbox-gl'
 import styled from 'styled-components'
 import { Lane, Intersection, Coordinate } from '../common/lane'
 
-interface LaneFeature extends Feature<LineString, null> {}
+type LaneFeature = Feature<LineString, null>
 
-interface LanesFeature extends FeatureCollection<LineString, null> {}
+type LanesFeature = FeatureCollection<LineString, null>
 
-interface IntersectionsFeature extends Feature<MultiPoint, null> {}
+type IntersectionsFeature = Feature<MultiPoint, null>
+
+const coordinateToPosition = (c: Coordinate): Position => [c.x, c.y]
 
 const laneToFeature = (lane: Lane): LaneFeature => ({
   type: 'Feature',
   geometry: {
     type: 'LineString',
-    coordinates: lane.coordinates.map(({ x, y }) => [x, y])
+    coordinates: lane.coordinates.map(coordinateToPosition)
   },
   properties: null,
 })
@@ -25,12 +27,11 @@ const intersectionsToFeature = (intersections: Intersection[]): IntersectionsFea
   type: 'Feature',
   geometry: {
     type: 'MultiPoint',
-    coordinates: intersections.map(({ x, y }) => [x, y])
+    coordinates: intersections.map(coordinateToPosition)
   },
   properties: null,
 })
 
-const coordinateToPosition = (c: Coordinate): Position => [c.x, c.y]
 
 const laneToEndpoints = (lane: Lane): Position[] => [
   coordinateToPosition(lane.coordinates[0]), 
@@ -47,15 +48,11 @@ const Div = styled.div`
 `
 
 interface MapState {
-  lanes?: LanesFeature
-  intersections?: IntersectionsFeature
+  lanes?: LanesFeature;
+  intersections?: IntersectionsFeature;
 }
 
 class Map extends Component<{}, MapState> {
-  constructor(props: {}) {
-    super(props)
-  }
-  
   componentDidMount(): void {
     const map = new mapboxgl.Map({
       container: elementId,
@@ -64,7 +61,7 @@ class Map extends Component<{}, MapState> {
       zoom: 7,
       center: [24.94, 60.17]
     })
-    map.on('load', async () => {
+    map.on('load', async (): Promise<void> => {
       let response = await axios.get('/api/lanes')
       const lanes: LanesFeature = {
         type: 'FeatureCollection',
