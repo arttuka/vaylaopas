@@ -16,7 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "rootDir": "src",
+    "rootDir": "./",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -29,6 +29,6 @@
     "server"
   ],
   "include": [
-    "src"
+    "src", "common"
   ]
 }

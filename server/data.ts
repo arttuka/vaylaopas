@@ -2,67 +2,49 @@ import { Feature, GeoJsonProperties, Geometry, LineString, MultiLineString, Posi
 import * as path from 'path'
 import * as shapefile from 'shapefile'
 import toWgs84 from './etrs-tm35fin'
-import { Chain, toMonotoneChains, findAllIntersections } from './intersect'
-
-interface Vayla {
-  type: 'Feature'
-  geometry: Geometry
-  properties: {
-    id: number
-    name: string
-    depth: number
-  }
-}
+import { toMonotoneChains, findAllIntersections } from './intersect'
+import { Lane, LanesAndIntersections, nextLaneId } from '../common/lane'
 
 const isLineString = (g: Geometry): g is LineString => g.type === 'LineString'
 const isMultiLineString = (g: Geometry): g is MultiLineString => g.type === 'MultiLineString'
 
-const formatVayla = (value: Feature<Geometry, GeoJsonProperties>): Vayla => {
+const formatLanes = (value: Feature<Geometry, GeoJsonProperties>): Lane[] => {
   const { geometry, properties } = value
+  const depth: number = properties!.KULKUSYV1 || 0
+  const laneid: number = properties!.JNRO
+  let coordinates: Position[][]
   if (isLineString(geometry)) {
-    geometry.coordinates = geometry.coordinates.map(toWgs84)
+    coordinates = [geometry.coordinates]
   } else if (isMultiLineString(geometry)) {
-    geometry.coordinates = geometry.coordinates.map(line => line.map(toWgs84))
+    coordinates = geometry.coordinates
   } else {
-    console.log(`Unexpected geometry type ${geometry.type}`)
+    throw new Error(`Unexpected geometry type ${geometry.type}`)
   }
-  const name: string = properties && properties.VAY_NIMISU || ''
-  const depth: number = properties && properties.KULKUSYV1 || 0
-  const id: number = properties && properties.JNRO || 0
-  return { type: 'Feature', geometry, properties: { id, name, depth } }
+  return coordinates.map(line => ({
+    id: nextLaneId(),
+    laneid,
+    depth,
+    coordinates: line.map(toWgs84)
+  }))
 }
 
-export const vaylat: Feature<Geometry, GeoJsonProperties>[] = []
-export const intersections: Position[] = []
-
-export const initializeData = async (): Promise<void> => {
-  const chains: Chain[] = []
+export const loadData = async (): Promise<LanesAndIntersections> => {
+  const lanes: Lane[] = []
   const source = await shapefile.open(
-    path.join(__dirname, '..', 'vaylat_0', 'vaylat.shp'),
-    path.join(__dirname, '..', 'vaylat_0', 'vaylat.dbf'),
+    path.join(__dirname, '..', '..', 'vaylat_0', 'vaylat.shp'),
+    path.join(__dirname, '..', '..', 'vaylat_0', 'vaylat.dbf'),
   )
   let { done, value } = await source.read()
   while (!done) {
-    const vayla = formatVayla(value)
-    const { geometry } = vayla
-    if (isLineString(geometry)) {
-      chains.push(...toMonotoneChains(geometry.coordinates))
-    } else if (isMultiLineString(geometry)) {
-      geometry.coordinates.forEach(line => {
-        chains.push(...toMonotoneChains(line))
-      })
-    } else {
-      console.log(`Unexpected geometry type ${geometry.type}`)
-    }
-    vaylat.push(vayla);
+    formatLanes(value).forEach((lane) => {
+      lanes.push(...toMonotoneChains(lane))
+    });
     ({ done, value } = await source.read())
   }
 
   const start = new Date()
-  findAllIntersections(chains).forEach(intersection => {
-    intersections.push([intersection.x, intersection.y])
-  })
+  const intersections = findAllIntersections(lanes)
   const end = new Date()
-  console.log(`Took ${end.getTime() - start.getTime()} ms, found ${intersections.length} intersections from ${chains.length} chains`)
+  console.log(`Took ${end.getTime() - start.getTime()} ms, found ${intersections.length} intersections from ${lanes.length} chains`)
+  return { lanes, intersections }
 }
-

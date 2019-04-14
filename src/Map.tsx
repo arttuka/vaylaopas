@@ -1,31 +1,41 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import { Feature, Geometry, GeoJsonProperties, FeatureCollection, MultiPoint } from 'geojson'
+import { flatMap } from 'lodash'
+import { Feature, LineString, FeatureCollection, MultiPoint, Position } from 'geojson'
 import mapboxgl from 'mapbox-gl'
 import styled from 'styled-components'
+import { Lane, Intersection, Coordinate } from '../common/lane'
 
-interface VaylaProperties {
-  id: number
-  name: string
-  depth: number
-}
+interface LaneFeature extends Feature<LineString, null> {}
 
-interface Vayla extends Feature<Geometry, VaylaProperties> {
-  type: 'Feature'
-  geometry: Geometry
-  properties: VaylaProperties
-}
+interface LanesFeature extends FeatureCollection<LineString, null> {}
 
-interface Vaylat extends FeatureCollection<Geometry, VaylaProperties> {
-  type: 'FeatureCollection'
-  features: Vayla[]
-}
+interface IntersectionsFeature extends Feature<MultiPoint, null> {}
 
-interface Intersections extends Feature<Geometry, null> {
-  type: 'Feature'
-  geometry: Geometry
-  properties: null
-}
+const laneToFeature = (lane: Lane): LaneFeature => ({
+  type: 'Feature',
+  geometry: {
+    type: 'LineString',
+    coordinates: lane.coordinates.map(({ x, y }) => [x, y])
+  },
+  properties: null,
+})
+
+const intersectionsToFeature = (intersections: Intersection[]): IntersectionsFeature => ({
+  type: 'Feature',
+  geometry: {
+    type: 'MultiPoint',
+    coordinates: intersections.map(({ x, y }) => [x, y])
+  },
+  properties: null,
+})
+
+const coordinateToPosition = (c: Coordinate): Position => [c.x, c.y]
+
+const laneToEndpoints = (lane: Lane): Position[] => [
+  coordinateToPosition(lane.coordinates[0]), 
+  coordinateToPosition(lane.coordinates[lane.coordinates.length - 1])
+]
 
 const elementId = 'mapbox-container'
 
@@ -37,8 +47,8 @@ const Div = styled.div`
 `
 
 interface MapState {
-  vaylat?: Vaylat
-  intersections?: Intersections
+  lanes?: LanesFeature
+  intersections?: IntersectionsFeature
 }
 
 class Map extends Component<{}, MapState> {
@@ -55,27 +65,28 @@ class Map extends Component<{}, MapState> {
       center: [24.94, 60.17]
     })
     map.on('load', async () => {
-      let response = await axios.get('/api/vaylat')
-      const vaylat: Vaylat = {
+      let response = await axios.get('/api/lanes')
+      const lanes: LanesFeature = {
         type: 'FeatureCollection',
-        features: response.data,
+        features: response.data.map(laneToFeature),
       }
-      response = await axios.get('/api/intersections')
-      const intersections: Intersections = {
+      const endpoints: IntersectionsFeature = {
         type: 'Feature',
         geometry: {
           type: 'MultiPoint',
-          coordinates: response.data,
+          coordinates: flatMap(response.data, laneToEndpoints)
         },
         properties: null,
       }
-      this.setState({ vaylat, intersections })
+      response = await axios.get('/api/intersections')
+      const intersections = intersectionsToFeature(response.data)
+      this.setState({ lanes, intersections })
       map.addLayer({
         id: `vaylat`,
         type: 'line',
         source: {
           type: 'geojson',
-          data: vaylat,
+          data: lanes,
         },
         layout: {
           'line-join': 'round',
@@ -98,8 +109,18 @@ class Map extends Component<{}, MapState> {
           "circle-color": '#00ff00',
         }
       })
-      console.log(vaylat.features.find(vayla => vayla.properties.id === 4950))
-      console.log(vaylat.features.find(vayla => vayla.properties.id === 5010))
+      map.addLayer({
+        id: 'endpoints',
+        type: 'circle',
+        source: {
+          type: 'geojson',
+          data: endpoints,
+        },
+        paint: {
+          "circle-radius": 3,
+          "circle-color": '#ff0000',
+        }
+      })
     })
   }
 

@@ -15,7 +15,7 @@
     "module": "commonjs",
     "outDir": "../dist",
     "baseUrl": "",
-    "rootDir": "./",
+    "rootDir": "../",
     "lib": [
         "es6",
         "dom",
@@ -23,6 +23,6 @@
     ]
   },
   "include": [
-    "./*.ts"
+    "./*.ts", "../common/*.ts"
   ]
 }

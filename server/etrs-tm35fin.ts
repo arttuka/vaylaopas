@@ -1,4 +1,5 @@
 import { Position } from 'geojson'
+import { Coordinate } from '../common/lane'
 
 // https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/fgi/GLtiedote30.pdf
 
@@ -18,7 +19,7 @@ const h2 = Math.pow(n, 2) / 48 + Math.pow(n, 3) / 15 - 437 / 1440 * Math.pow(n, 
 const h3 = 17 / 480 * Math.pow(n, 3) - 37 / 840 * Math.pow(n, 4)
 const h4 = 4397 / 161280 * Math.pow(n, 4)
 
-const toWgs84 = (coords: Position): Position => {
+const toWgs84 = (coords: Position): Coordinate => {
   const [E, N] = coords
   const xi = N / (A1 * k0)
   const eta = (E - E0) / (A1 * k0)
@@ -41,7 +42,10 @@ const toWgs84 = (coords: Position): Position => {
   Qp = Q + e * Math.atanh(e * Math.tanh(Qp))
   const lat = Math.atan(Math.sinh(Qp))
   const lon = l0 + l
-  return [radToDeg(lon), radToDeg(lat)]
+  return {
+    x: radToDeg(lon),
+    y: radToDeg(lat)
+  }
 }
 
 export default toWgs84
