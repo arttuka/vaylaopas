@@ -2,7 +2,8 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   extends: [
     "plugin:react/recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
   ],
   parserOptions: {
     ecmaVersion: 2018,
@@ -14,6 +15,15 @@ module.exports = {
   rules: {
     '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/indent': ['error', 2],
+    '@typescript-eslint/member-delimiter-style': {
+      multiline: {
+        delimiter: 'none'
+      },
+      singleline: {
+        delimiter: 'semi',
+        requireLast: false
+      }
+    }
   },
   settings: {
     react: {

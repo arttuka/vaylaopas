@@ -43,50 +43,66 @@ const html = `
 </html>
 `
 
-if(process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production') {
   app.use('/static', express.static(path.join(__dirname, 'public')))
 } else {
   const webpack = require('webpack') // eslint-disable-line @typescript-eslint/no-var-requires
-  const webpackConfig = require ('../../webpack.config') //eslint-disable-line @typescript-eslint/no-var-requires
+  const webpackConfig = require('../../webpack.config') //eslint-disable-line @typescript-eslint/no-var-requires
   const clientConfig = webpackConfig[0]
   const compiler = webpack(webpackConfig)
   const clientCompiler = compiler.compilers[0]
 
-  app.use(require('webpack-dev-middleware')(compiler, {
-    noInfo: true,
-    publicPath: clientConfig.output.publicPath
-  }))
-  app.use(require('webpack-hot-middleware')(clientCompiler, {
-    path: '/__webpack_hmr',
-    heartbeat: 10 * 1000
-  }))
+  app.use(
+    require('webpack-dev-middleware')(compiler, {
+      noInfo: true,
+      publicPath: clientConfig.output.publicPath,
+    })
+  )
+  app.use(
+    require('webpack-hot-middleware')(clientCompiler, {
+      path: '/__webpack_hmr',
+      heartbeat: 10 * 1000,
+    })
+  )
 }
 
-app.get('/', (req, res): express.Response => {
-  return res.send(html)
-})
+app.get(
+  '/',
+  (req, res): express.Response => {
+    return res.send(html)
+  }
+)
 
 app.use(express.json())
 
-app.get('/api/lanes', async (req, res): Promise<express.Response> => {
-  return res.send(await getLanes())
-})
+app.get(
+  '/api/lanes',
+  async (req, res): Promise<express.Response> => {
+    return res.send(await getLanes())
+  }
+)
 
-app.get('/api/intersections', async (req, res): Promise<express.Response> => {
-  return res.send(await getIntersections())
-})
+app.get(
+  '/api/intersections',
+  async (req, res): Promise<express.Response> => {
+    return res.send(await getIntersections())
+  }
+)
 
-app.post('/api/update', (req, res): express.Response => {
-  setTimeout(async (): Promise<void> => {
-    try {
-      const { lanes, intersections } = await loadData()
-      await saveLanes(lanes)
-      await saveIntersections(intersections)
-    } catch (err) {
-      console.error(err.stack)
-    }
-  }, 1)
-  return res.send()
-})
+app.post(
+  '/api/update',
+  (req, res): express.Response => {
+    setTimeout(async (): Promise<void> => {
+      try {
+        const { lanes, intersections } = await loadData()
+        await saveLanes(lanes)
+        await saveIntersections(intersections)
+      } catch (err) {
+        console.error(err.stack)
+      }
+    }, 1)
+    return res.send()
+  }
+)
 
 app.listen(port, (): void => console.log(`Listening on port ${port}`))

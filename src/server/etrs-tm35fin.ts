@@ -3,21 +3,26 @@ import { Coordinate } from '../common/lane'
 
 // https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/fgi/GLtiedote30.pdf
 
-const degToRad = (deg: number): number => deg * Math.PI / 180
-const radToDeg = (rad: number): number => (rad * 180 / Math.PI)
+const degToRad = (deg: number): number => (deg * Math.PI) / 180
+const radToDeg = (rad: number): number => (rad * 180) / Math.PI
 
 const a = 6378137
-const f = 1/298.257222101
+const f = 1 / 298.257222101
 const k0 = 0.9996
 const l0 = degToRad(27)
 const E0 = 500000
 const n = f / (2 - f)
 const A1 = (a / (1 + n)) * (1 + Math.pow(n, 2) / 4 + Math.pow(n, 4) / 64)
 const e = Math.sqrt(2 * f - Math.pow(f, 2))
-const h1 = n / 2 - 2 / 3 * Math.pow(n, 2) + 37 / 96 * Math.pow(n, 3) - Math.pow(n, 4) / 360
-const h2 = Math.pow(n, 2) / 48 + Math.pow(n, 3) / 15 - 437 / 1440 * Math.pow(n, 4)
-const h3 = 17 / 480 * Math.pow(n, 3) - 37 / 840 * Math.pow(n, 4)
-const h4 = 4397 / 161280 * Math.pow(n, 4)
+const h1 =
+  n / 2 -
+  (2 / 3) * Math.pow(n, 2) +
+  (37 / 96) * Math.pow(n, 3) -
+  Math.pow(n, 4) / 360
+const h2 =
+  Math.pow(n, 2) / 48 + Math.pow(n, 3) / 15 - (437 / 1440) * Math.pow(n, 4)
+const h3 = (17 / 480) * Math.pow(n, 3) - (37 / 840) * Math.pow(n, 4)
+const h4 = (4397 / 161280) * Math.pow(n, 4)
 
 const toWgs84 = (coords: Position): Coordinate => {
   const [E, N] = coords
@@ -44,7 +49,7 @@ const toWgs84 = (coords: Position): Coordinate => {
   const lon = l0 + l
   return {
     x: radToDeg(lon),
-    y: radToDeg(lat)
+    y: radToDeg(lat),
   }
 }
 

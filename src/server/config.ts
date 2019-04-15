@@ -3,18 +3,18 @@ import * as path from 'path'
 
 interface Config {
   db: {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    database: string;
-  };
+    host: string
+    port: number
+    user: string
+    password: string
+    database: string
+  }
 }
 
 let config: Config
 
 const configFile = path.join(__dirname, '..', '..', 'config.json')
-if(process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
+if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
   config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
 } else {
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -25,7 +25,7 @@ if(process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
       user: process.env.DB_USER!,
       password: process.env.DB_PASSWORD!,
       database: process.env.DB_NAME!,
-    }
+    },
   }
   /* eslint-enable */
 }
