@@ -2,8 +2,8 @@
   "compilerOptions": {
     "noEmitOnError": true,
     "outDir": "dist",
-    "module": "esnext",
-    "target": "es5",
+    "module": "commonjs",
+    "target": "es6",
     "lib": [
       "dom",
       "dom.iterable",

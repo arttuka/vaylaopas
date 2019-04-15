@@ -13,8 +13,8 @@ interface Config {
 
 let config: Config
 
-const configFile = path.join(__dirname, 'config.json')
-if(fs.existsSync(configFile)) {
+const configFile = path.join(__dirname, '..', '..', 'config.json')
+if(process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
   config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
 } else {
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
