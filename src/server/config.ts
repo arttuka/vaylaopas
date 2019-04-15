@@ -13,9 +13,9 @@ interface Config {
 
 let config: Config
 
-const configFile = path.join(__dirname, '..', '..', 'config.json')
+const configFile = path.join(__dirname, 'config.json')
 if(fs.existsSync(configFile)) {
-  config = require('../../config.json')
+  config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
 } else {
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
   config = {
