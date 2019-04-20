@@ -64,6 +64,7 @@ if (process.env.NODE_ENV === 'production') {
       heartbeat: 10 * 1000,
     })
   )
+  app.use(require('webpack-hot-server-middleware')(compiler))
 }
 
 app.get(
