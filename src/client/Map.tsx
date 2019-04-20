@@ -1,49 +1,8 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import { flatMap } from 'lodash'
-import {
-  Feature,
-  LineString,
-  FeatureCollection,
-  MultiPoint,
-  Position,
-} from 'geojson'
 import mapboxgl from 'mapbox-gl'
 import styled from 'styled-components'
-import { Lane, Intersection, Coordinate } from '../common/lane'
-
-type LaneFeature = Feature<LineString, null>
-
-type LanesFeature = FeatureCollection<LineString, null>
-
-type IntersectionsFeature = Feature<MultiPoint, null>
-
-const coordinateToPosition = (c: Coordinate): Position => [c.x, c.y]
-
-const laneToFeature = (lane: Lane): LaneFeature => ({
-  type: 'Feature',
-  geometry: {
-    type: 'LineString',
-    coordinates: lane.coordinates.map(coordinateToPosition),
-  },
-  properties: null,
-})
-
-const intersectionsToFeature = (
-  intersections: Intersection[]
-): IntersectionsFeature => ({
-  type: 'Feature',
-  geometry: {
-    type: 'MultiPoint',
-    coordinates: intersections.map(coordinateToPosition),
-  },
-  properties: null,
-})
-
-const laneToEndpoints = (lane: Lane): Position[] => [
-  coordinateToPosition(lane.coordinates[0]),
-  coordinateToPosition(lane.coordinates[lane.coordinates.length - 1]),
-]
+import { Lane, LaneCollection, VertexCollection } from '../common/lane'
 
 const elementId = 'mapbox-container'
 
@@ -54,12 +13,7 @@ const Div = styled.div`
   bottom: 0;
 `
 
-interface MapState {
-  lanes?: LanesFeature
-  intersections?: IntersectionsFeature
-}
-
-class Map extends Component<{}, MapState> {
+class Map extends Component<{}, {}> {
   componentDidMount(): void {
     const map = new mapboxgl.Map({
       container: elementId,
@@ -71,28 +25,14 @@ class Map extends Component<{}, MapState> {
     map.on(
       'load',
       async (): Promise<void> => {
-        let response = await axios.get('/api/lanes')
-        const lanes: LanesFeature = {
-          type: 'FeatureCollection',
-          features: response.data.map(laneToFeature),
-        }
-        const endpoints: IntersectionsFeature = {
-          type: 'Feature',
-          geometry: {
-            type: 'MultiPoint',
-            coordinates: flatMap(response.data, laneToEndpoints),
-          },
-          properties: null,
-        }
-        response = await axios.get('/api/intersections')
-        const intersections = intersectionsToFeature(response.data)
-        this.setState({ lanes, intersections })
+        const allLanes: LaneCollection = (await axios.get('/api/lane')).data
+        const gaps: VertexCollection = (await axios.get('/api/vertex/gaps')).data
         map.addLayer({
-          id: `vaylat`,
+          id: 'allLanes',
           type: 'line',
           source: {
             type: 'geojson',
-            data: lanes,
+            data: allLanes,
           },
           layout: {
             'line-join': 'round',
@@ -104,26 +44,14 @@ class Map extends Component<{}, MapState> {
           },
         })
         map.addLayer({
-          id: 'intersections',
+          id: 'gaps',
           type: 'circle',
           source: {
             type: 'geojson',
-            data: intersections,
+            data: gaps,
           },
           paint: {
             'circle-radius': 5,
-            'circle-color': '#00ff00',
-          },
-        })
-        map.addLayer({
-          id: 'endpoints',
-          type: 'circle',
-          source: {
-            type: 'geojson',
-            data: endpoints,
-          },
-          paint: {
-            'circle-radius': 3,
             'circle-color': '#ff0000',
           },
         })

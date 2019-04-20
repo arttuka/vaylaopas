@@ -1,34 +1,22 @@
-export interface Coordinate {
-  x: number
-  y: number
+import {
+  Feature,
+  LineString,
+  MultiLineString,
+  FeatureCollection,
+  Point,
+} from 'geojson'
+
+export interface LaneProperties {
+  gid: number
 }
 
-export interface Lane {
-  id: number
-  laneid: number
-  depth: number
-  coordinates: Coordinate[]
-}
+export type Lane = Feature<LineString | MultiLineString, LaneProperties>
 
-export interface Intersection extends Coordinate {
-  id: number
-  lanes: Set<number>
-}
+export type LaneCollection = FeatureCollection<
+  LineString | MultiLineString,
+  LaneProperties
+>
 
-export interface LanesAndIntersections {
-  lanes: Lane[]
-  intersections: Intersection[]
-}
+export type Vertex = Feature<Point, {}>
 
-export const isIntersection = (c: Coordinate): c is Intersection =>
-  c.hasOwnProperty('lanes')
-
-export const nextIntersectionId = ((): (() => number) => {
-  let i = 0
-  return (): number => (i += 1)
-})()
-
-export const nextLaneId = ((): (() => number) => {
-  let i = 0
-  return (): number => (i += 1)
-})()
+export type VertexCollection = FeatureCollection<Point, {}>

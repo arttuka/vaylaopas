@@ -1,7 +1,6 @@
 import express from 'express'
 import * as path from 'path'
-import { loadData } from './data'
-import { saveLanes, saveIntersections, getLanes, getIntersections } from './db'
+import { getLanes, getVertices, getGaps } from './db'
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -64,46 +63,39 @@ if (process.env.NODE_ENV === 'production') {
       heartbeat: 10 * 1000,
     })
   )
-  app.use(require('webpack-hot-server-middleware')(compiler))
 }
 
-app.get(
-  '/',
-  (req, res): express.Response => {
-    return res.send(html)
-  }
-)
+app.get('/', (req, res): express.Response => res.send(html))
 
 app.use(express.json())
 
 app.get(
-  '/api/lanes',
+  '/api/lane',
   async (req, res): Promise<express.Response> => {
-    return res.send(await getLanes())
+    const { ids } = req.query
+    return res.send(
+      await getLanes(
+        ids ? ids.split(',').map((id: string): number => parseInt(id, 10)) : []
+      )
+    )
   }
 )
 
 app.get(
-  '/api/intersections',
+  '/api/vertex',
   async (req, res): Promise<express.Response> => {
-    return res.send(await getIntersections())
+    const { ids } = req.query
+    return res.send(
+      await getVertices(
+        ids ? ids.split(',').map((id: string): number => parseInt(id, 10)) : []
+      )
+    )
   }
 )
 
-app.post(
-  '/api/update',
-  (req, res): express.Response => {
-    setTimeout(async (): Promise<void> => {
-      try {
-        const { lanes, intersections } = await loadData()
-        await saveLanes(lanes)
-        await saveIntersections(intersections)
-      } catch (err) {
-        console.error(err.stack)
-      }
-    }, 1)
-    return res.send()
-  }
+app.get(
+  '/api/vertex/gaps',
+  async (req, res): Promise<express.Response> => res.send(await getGaps())
 )
 
 app.listen(port, (): void => console.log(`Listening on port ${port}`))
