@@ -1,6 +1,7 @@
 import express from 'express'
 import * as path from 'path'
-import { getLanes, getVertices, getGaps } from './db'
+import { getLanes, getVertices, getGaps, getRoute } from './db'
+import { LngLat } from '../common/lane'
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -96,6 +97,14 @@ app.get(
 app.get(
   '/api/vertex/gaps',
   async (req, res): Promise<express.Response> => res.send(await getGaps())
+)
+
+app.post(
+  '/api/route',
+  async (req, res): Promise<express.Response> => {
+    const { from, to }: { from: LngLat; to: LngLat } = req.body
+    return res.send(await getRoute(from, to))
+  }
 )
 
 app.listen(port, (): void => console.log(`Listening on port ${port}`))

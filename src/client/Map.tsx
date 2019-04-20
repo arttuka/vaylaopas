@@ -1,8 +1,15 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import mapboxgl from 'mapbox-gl'
+import mapboxgl, { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
-import { Lane, LaneCollection, VertexCollection } from '../common/lane'
+import {
+  ClickEvent,
+  initializeMap,
+  notEmpty,
+  updateRoute,
+  updateRoutePoints,
+} from './mapbox-helper'
+import { LaneCollection, Route } from '../common/lane'
 
 const elementId = 'mapbox-container'
 
@@ -13,7 +20,22 @@ const Div = styled.div`
   bottom: 0;
 `
 
-class Map extends Component<{}, {}> {
+interface MapState {
+  from?: LngLat
+  to?: LngLat
+}
+
+interface MapProps {}
+
+class Map extends Component<MapProps, MapState> {
+  map?: mapboxgl.Map = undefined
+
+  constructor(props: MapProps) {
+    super(props)
+    this.state = {}
+    this.handleClick = this.handleClick.bind(this)
+  }
+
   componentDidMount(): void {
     const map = new mapboxgl.Map({
       container: elementId,
@@ -22,40 +44,40 @@ class Map extends Component<{}, {}> {
       zoom: 7,
       center: [24.94, 60.17],
     })
+    this.map = map
     map.on(
       'load',
       async (): Promise<void> => {
         const allLanes: LaneCollection = (await axios.get('/api/lane')).data
-        const gaps: VertexCollection = (await axios.get('/api/vertex/gaps')).data
-        map.addLayer({
-          id: 'allLanes',
-          type: 'line',
-          source: {
-            type: 'geojson',
-            data: allLanes,
-          },
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#000000',
-            'line-width': 1,
-          },
-        })
-        map.addLayer({
-          id: 'gaps',
-          type: 'circle',
-          source: {
-            type: 'geojson',
-            data: gaps,
-          },
-          paint: {
-            'circle-radius': 5,
-            'circle-color': '#ff0000',
-          },
-        })
+        initializeMap(map, this.handleClick, allLanes)
       }
+    )
+  }
+
+  async componentDidUpdate(): Promise<void> {
+    const { from, to } = this.state
+    if (this.map) {
+      const routePoints = [from, to].filter(notEmpty)
+      updateRoutePoints(this.map, routePoints)
+      if (from && to) {
+        const route: Route = (await axios.post('/api/route', {
+          from,
+          to,
+        })).data
+        updateRoute(this.map, route)
+      } else {
+        updateRoute(this.map)
+      }
+    }
+  }
+
+  handleClick(e: ClickEvent): void {
+    const { lngLat } = e
+    this.setState(
+      (state): MapState =>
+        state.to || !state.from
+          ? { from: lngLat, to: undefined }
+          : { to: lngLat }
     )
   }
 

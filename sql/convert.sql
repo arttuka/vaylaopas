@@ -52,15 +52,15 @@ CREATE TABLE lane (
   vahv_pvm date,
   vayla_lk varchar(254),
   irrotus_pv varchar(254),
-  length_m real,
+  length real,
   source integer,
   target integer
 );
 SELECT AddGeometryColumn('public','lane','geom','3067','LINESTRING',2);
 
 INSERT INTO lane
-(jnro, sub_id, vay_nimisu, vay_nimiru, tila, vaylalaji, valaistus, kulkusyv1, kulkusyv2, kulkusyv3, merial_nr, seloste_al, seloste_pa, diaarinro, vahv_pvm, vayla_lk, irrotus_pv, length_m, geom)
-SELECT ls.jnro, ln.sub_id, ls.vay_nimisu, ls.vay_nimiru, ls.tila, ls.vaylalaji, ls.valaistus, ls.kulkusyv1, ls.kulkusyv2, ls.kulkusyv3, ls.merial_nr, ls.seloste_al, ls.seloste_pa, ls.diaarinro, ls.vahv_pvm, ls.vayla_lk, ls.irrotus_pv, ST_Length(ln.geom) AS length_m, ln.geom
+(jnro, sub_id, vay_nimisu, vay_nimiru, tila, vaylalaji, valaistus, kulkusyv1, kulkusyv2, kulkusyv3, merial_nr, seloste_al, seloste_pa, diaarinro, vahv_pvm, vayla_lk, irrotus_pv, length, geom)
+SELECT ls.jnro, ln.sub_id, ls.vay_nimisu, ls.vay_nimiru, ls.tila, ls.vaylalaji, ls.valaistus, ls.kulkusyv1, ls.kulkusyv2, ls.kulkusyv3, ls.merial_nr, ls.seloste_al, ls.seloste_pa, ls.diaarinro, ls.vahv_pvm, ls.vayla_lk, ls.irrotus_pv, ST_Length(ln.geom) AS length, ln.geom
 FROM lane_single ls
 JOIN lane_single_noded ln
 ON ls.id = ln.old_id
