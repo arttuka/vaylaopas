@@ -1,12 +1,12 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import mapboxgl, { LngLat } from 'mapbox-gl'
+import mapboxgl, { LngLat, Marker } from 'mapbox-gl'
 import styled from 'styled-components'
 import ContextMenu from './ContextMenu'
 import RouteDrawer from './RouteDrawer'
 import * as helper from './mapbox-helper'
 import { LaneCollection, Route } from '../../common/lane'
-import { removeIndex } from '../../common/util'
+import { removeIndex, replaceIndex } from '../../common/util'
 
 const elementId = 'mapbox-container'
 
@@ -26,6 +26,7 @@ const MapContainer = styled.div`
 interface MapState {
   lastClick: LngLat
   routePoints: LngLat[]
+  markers: Marker[]
   lengths: number[]
   menu: {
     open: boolean
@@ -43,6 +44,7 @@ const closedMenu = {
 const defaultState: MapState = {
   lastClick: new LngLat(0, 0),
   routePoints: [],
+  markers: [],
   lengths: [],
   menu: closedMenu,
 }
@@ -59,6 +61,7 @@ class Map extends Component<MapProps, MapState> {
     this.closeContextMenu = this.closeContextMenu.bind(this)
     this.addPoint = this.addPoint.bind(this)
     this.deletePoint = this.deletePoint.bind(this)
+    this.movePoint = this.movePoint.bind(this)
   }
 
   componentDidMount(): void {
@@ -102,7 +105,7 @@ class Map extends Component<MapProps, MapState> {
   async updateRoute(): Promise<void> {
     if (this.map) {
       const { routePoints } = this.state
-      helper.updateRoutePoints(this.map, routePoints)
+      helper.updateMarkers(this.state.markers, this.movePoint)
       if (routePoints.length > 1) {
         const route: Route[] = (await axios.post('/api/route', {
           points: routePoints,
@@ -118,22 +121,42 @@ class Map extends Component<MapProps, MapState> {
   }
 
   addPoint(): void {
-    this.setState(
-      (state): MapState => ({
-        ...state,
-        menu: closedMenu,
-        routePoints: [...state.routePoints, state.lastClick],
-      }),
-      this.updateRoute
-    )
+    if (this.map) {
+      const marker = helper
+        .createMarker(this.state.routePoints.length)
+        .setLngLat(this.state.lastClick)
+        .setDraggable(true)
+        .addTo(this.map)
+      this.setState(
+        (state): MapState => ({
+          ...state,
+          menu: closedMenu,
+          routePoints: [...state.routePoints, state.lastClick],
+          markers: [...state.markers, marker],
+        }),
+        this.updateRoute
+      )
+    }
   }
 
-  async deletePoint(i: number): Promise<void> {
+  deletePoint(i: number): void {
+    this.state.markers[i].remove()
     this.setState(
       (state): MapState => ({
         ...state,
         lengths: state.lengths.length ? state.lengths.slice(1) : [],
         routePoints: removeIndex(state.routePoints, i),
+        markers: removeIndex(state.markers, i),
+      }),
+      this.updateRoute
+    )
+  }
+
+  movePoint(i: number, point: LngLat): void {
+    this.setState(
+      (state): MapState => ({
+        ...state,
+        routePoints: replaceIndex(state.routePoints, i, point),
       }),
       this.updateRoute
     )

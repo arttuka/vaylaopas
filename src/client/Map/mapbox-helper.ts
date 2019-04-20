@@ -1,4 +1,4 @@
-import { Feature, MultiPoint } from 'geojson'
+import blue from '@material-ui/core/colors/blue'
 import mapboxgl, {
   GeoJSONSource,
   GeoJSONSourceRaw,
@@ -6,19 +6,12 @@ import mapboxgl, {
   LinePaint,
   LngLat,
   Map,
+  Marker,
 } from 'mapbox-gl'
 import { Lane, LaneCollection, Route } from '../../common/lane'
+import { numToLetter } from '../../common/util'
 
 export type ClickEvent = mapboxgl.MapMouseEvent & mapboxgl.EventData
-
-const multiPointFeature = (points: LngLat[] = []): Feature<MultiPoint, {}> => ({
-  type: 'Feature',
-  geometry: {
-    type: 'MultiPoint',
-    coordinates: points.map((p): number[] => [p.lng, p.lat]),
-  },
-  properties: {},
-})
 
 const laneCollection = (lanes: Lane[] = []): LaneCollection => ({
   type: 'FeatureCollection',
@@ -91,21 +84,6 @@ export const initializeMap = (
       },
     })
   )
-  map.addSource('routePoints', {
-    type: 'geojson',
-    data: multiPointFeature(),
-  })
-  map.addLayer({
-    id: 'routePoints',
-    type: 'circle',
-    source: 'routePoints',
-    paint: {
-      'circle-radius': 5,
-      'circle-color': '#ffffff',
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#000000',
-    },
-  })
   map.on('contextmenu', handleContextMenu)
   map.on('click', handleClick)
 }
@@ -130,7 +108,57 @@ export const updateRoute = (map: Map, routes: Route[] = []): void => {
   }
 }
 
-export const updateRoutePoints = (map: Map, points: LngLat[]): void => {
-  const source = map.getSource('routePoints') as GeoJSONSource
-  source.setData(multiPointFeature(points))
+export const createMarker = (i: number): Marker => {
+  const element = document.createElement('div')
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.setAttributeNS(null, 'stroke', 'none')
+  svg.setAttributeNS(null, 'height', '48px')
+  svg.setAttributeNS(null, 'width', '32px')
+  svg.setAttributeNS(null, 'viewBox', '0 0 32 48')
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  path.setAttributeNS(
+    null,
+    'd',
+    'm15.998888,47.721162c0,0.008747 0.017495,0.026242 0.017495,0.026242s15.325378,-23.530404 15.325378,-31.263072c0,-11.380318 -7.767658,-16.331325 -15.342873,-16.34882c-7.575216,0.017495 -15.342873,4.968502 -15.342873,16.34882c0,7.732668 15.334126,31.263072 15.334126,31.263072s0.008747,-0.026242 0.008747,-0.026242z'
+  )
+  path.setAttributeNS(null, 'fill', blue[500])
+  svg.appendChild(path)
+  const label = document.createElement('label')
+  label.appendChild(document.createTextNode(numToLetter(i)))
+  element.appendChild(label)
+  element.appendChild(svg)
+
+  const marker = new Marker({
+    element,
+    offset: [0, -20],
+  })
+  return marker
+}
+
+const updateMarker = (
+  marker: Marker,
+  movePoint: (i: number, point: LngLat) => void,
+  i: number
+): void => {
+  marker.off('dragend').on(
+    'dragend',
+    (): void => {
+      movePoint(i, marker.getLngLat())
+    }
+  )
+  const label = marker.getElement().firstChild
+  if (label) {
+    label.textContent = numToLetter(i)
+  }
+}
+
+export const updateMarkers = (
+  markers: Marker[],
+  movePoint: (i: number, point: LngLat) => void
+): void => {
+  markers.forEach(
+    (marker, i): void => {
+      updateMarker(marker, movePoint, i)
+    }
+  )
 }

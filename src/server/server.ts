@@ -22,16 +22,19 @@ const html = `
       body {
         margin: 0;
         padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-          sans-serif;
+        font-family: 'Roboto', 'Helvetica Neue', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-
-      code {
-        font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-          monospace;
+      .mapboxgl-marker label {
+        position: absolute;
+        width: 32px;
+        line-height: 32px;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        font-size: 24px;
+        font-family: 'Roboto', 'Helvetica Neue', sans-serif;
       }
     </style>
     <meta

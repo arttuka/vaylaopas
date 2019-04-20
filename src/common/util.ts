@@ -29,3 +29,9 @@ export const removeIndex = <T>(arr: T[], i: number): T[] => [
   ...arr.slice(0, i),
   ...arr.slice(i + 1),
 ]
+
+export const replaceIndex = <T>(arr: T[], i: number, t: T): T[] => [
+  ...arr.slice(0, i),
+  t,
+  ...arr.slice(i + 1),
+]
