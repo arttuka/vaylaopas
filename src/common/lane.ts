@@ -9,9 +9,16 @@ export interface RawLane {
   geometry: string
 }
 
-export type Lane = Feature<LineString, {}>
+export interface LaneProperties {
+  route: number
+}
 
-export type LaneCollection = FeatureCollection<LineString, {}>
+export type Lane = Feature<LineString, LaneProperties>
+
+export const featureIsLane = (feature: Feature): feature is Lane =>
+  feature.properties !== null && feature.properties.hasOwnProperty('route')
+
+export type LaneCollection = FeatureCollection<LineString, LaneProperties>
 
 export type Vertex = Feature<Point, {}>
 

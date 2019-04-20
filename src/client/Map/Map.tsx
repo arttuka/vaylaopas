@@ -6,7 +6,7 @@ import ContextMenu from './ContextMenu'
 import RouteDrawer from './RouteDrawer'
 import * as helper from './mapbox-helper'
 import { LaneCollection, Route } from '../../common/lane'
-import { removeIndex, replaceIndex } from '../../common/util'
+import { removeIndex, replaceIndex, insertIndex } from '../../common/util'
 
 const elementId = 'mapbox-container'
 
@@ -59,7 +59,8 @@ class Map extends Component<MapProps, MapState> {
     this.state = defaultState
     this.handleContextMenu = this.handleContextMenu.bind(this)
     this.closeContextMenu = this.closeContextMenu.bind(this)
-    this.addPoint = this.addPoint.bind(this)
+    this.handleDragRoute = this.handleDragRoute.bind(this)
+    this.handleAddPoint = this.handleAddPoint.bind(this)
     this.deletePoint = this.deletePoint.bind(this)
     this.movePoint = this.movePoint.bind(this)
   }
@@ -81,13 +82,14 @@ class Map extends Component<MapProps, MapState> {
           map,
           this.closeContextMenu,
           this.handleContextMenu,
+          this.handleDragRoute,
           allLanes
         )
       }
     )
   }
 
-  handleContextMenu(e: helper.ClickEvent): void {
+  handleContextMenu(e: helper.MouseEvent): void {
     this.setState({
       lastClick: e.lngLat,
       menu: {
@@ -120,22 +122,26 @@ class Map extends Component<MapProps, MapState> {
     }
   }
 
-  addPoint(): void {
+  addPoint(i?: number, point?: LngLat): void {
     if (this.map) {
       const marker = helper
         .createMarker(this.state.routePoints.length)
-        .setLngLat(this.state.lastClick)
+        .setLngLat(point || this.state.lastClick)
         .setDraggable(true)
         .addTo(this.map)
-      this.setState(
-        (state): MapState => ({
+      this.setState((state): MapState => {
+        const index = i || this.state.routePoints.length
+        return {
           ...state,
           menu: closedMenu,
-          routePoints: [...state.routePoints, state.lastClick],
-          markers: [...state.markers, marker],
-        }),
-        this.updateRoute
-      )
+          routePoints: insertIndex(
+            state.routePoints,
+            index,
+            point || state.lastClick
+          ),
+          markers: insertIndex(state.markers, index, marker),
+        }
+      }, this.updateRoute)
     }
   }
 
@@ -162,13 +168,26 @@ class Map extends Component<MapProps, MapState> {
     )
   }
 
+  handleDragRoute(e: helper.MouseEvent, routeNumber: number): void {
+    this.addPoint(routeNumber + 1, e.lngLat)
+  }
+
+  handleAddPoint(): void {
+    this.addPoint()
+  }
+
   render(): React.ReactElement {
     const { routePoints, lengths, menu } = this.state
     const { open, top, left } = menu
     return (
       <Container>
         <MapContainer id={elementId} />
-        <ContextMenu onAdd={this.addPoint} open={open} top={top} left={left} />
+        <ContextMenu
+          onAdd={this.handleAddPoint}
+          open={open}
+          top={top}
+          left={left}
+        />
         <RouteDrawer
           onDelete={this.deletePoint}
           points={routePoints}

@@ -1,4 +1,10 @@
-import { partition, numToLetter, removeIndex, replaceIndex } from './util'
+import {
+  partition,
+  numToLetter,
+  removeIndex,
+  replaceIndex,
+  insertIndex,
+} from './util'
 
 test('partition', (): void => {
   const arr = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -35,4 +41,12 @@ test('replaceIndex', (): void => {
   expect(replaceIndex(arr, 1, 9)).toEqual([0, 9, 2, 3])
   expect(replaceIndex(arr, 2, 9)).toEqual([0, 1, 9, 3])
   expect(replaceIndex(arr, 3, 9)).toEqual([0, 1, 2, 9])
+})
+
+test('insertIndex', (): void => {
+  const arr = [0, 1, 2]
+  expect(insertIndex(arr, 0, 9)).toEqual([9, 0, 1, 2])
+  expect(insertIndex(arr, 1, 9)).toEqual([0, 9, 1, 2])
+  expect(insertIndex(arr, 2, 9)).toEqual([0, 1, 9, 2])
+  expect(insertIndex(arr, 3, 9)).toEqual([0, 1, 2, 9])
 })

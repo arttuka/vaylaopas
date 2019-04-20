@@ -35,3 +35,9 @@ export const replaceIndex = <T>(arr: T[], i: number, t: T): T[] => [
   t,
   ...arr.slice(i + 1),
 ]
+
+export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
+  ...arr.slice(0, i),
+  t,
+  ...arr.slice(i),
+]
