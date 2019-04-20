@@ -1,10 +1,14 @@
-import express from 'express'
+import express, { Handler, Response } from 'express'
 import * as path from 'path'
 import { getLanes, getVertices, getGaps, getRoute } from './db'
 import { LngLat } from '../common/lane'
 
 const app = express()
 const port = process.env.PORT || 5000
+
+const wrapAsync = (handler: Handler): Handler => (req, res, next): void => {
+  Promise.resolve(handler(req, res, next)).catch(next)
+}
 
 const html = `
 <!DOCTYPE html>
@@ -67,45 +71,55 @@ if (process.env.NODE_ENV === 'production') {
   )
 }
 
-app.get('/', (req, res): express.Response => res.send(html))
+app.get('/', (req, res): Response => res.send(html))
 
 app.use(express.json())
 
 app.get(
   '/api/lane',
-  async (req, res): Promise<express.Response> => {
-    const { ids } = req.query
-    return res.send(
-      await getLanes(
-        ids ? ids.split(',').map((id: string): number => parseInt(id, 10)) : []
+  wrapAsync(
+    async (req, res): Promise<Response> => {
+      const { ids } = req.query
+      return res.send(
+        await getLanes(
+          ids
+            ? ids.split(',').map((id: string): number => parseInt(id, 10))
+            : []
+        )
       )
-    )
-  }
+    }
+  )
 )
 
 app.get(
   '/api/vertex',
-  async (req, res): Promise<express.Response> => {
-    const { ids } = req.query
-    return res.send(
-      await getVertices(
-        ids ? ids.split(',').map((id: string): number => parseInt(id, 10)) : []
+  wrapAsync(
+    async (req, res): Promise<Response> => {
+      const { ids } = req.query
+      return res.send(
+        await getVertices(
+          ids
+            ? ids.split(',').map((id: string): number => parseInt(id, 10))
+            : []
+        )
       )
-    )
-  }
+    }
+  )
 )
 
 app.get(
   '/api/vertex/gaps',
-  async (req, res): Promise<express.Response> => res.send(await getGaps())
+  wrapAsync(async (req, res): Promise<Response> => res.send(await getGaps()))
 )
 
 app.post(
   '/api/route',
-  async (req, res): Promise<express.Response> => {
-    const { points }: { points: LngLat[] } = req.body
-    return res.send(await getRoute(points))
-  }
+  wrapAsync(
+    async (req, res): Promise<Response> => {
+      const { points }: { points: LngLat[] } = req.body
+      return res.send(await getRoute(points))
+    }
+  )
 )
 
 app.listen(port, (): void => console.log(`Listening on port ${port}`))

@@ -147,16 +147,20 @@ const getRouteBetweenVertices = async (
 
 export const getRoute = async (points: LngLat[]): Promise<Route[]> => {
   const client = await pool.connect()
-  const endpoints = await Promise.all(
-    points.map(
-      (point): Promise<RouteEndpoint> => getClosestVertex(client, point)
+  try {
+    const endpoints = await Promise.all(
+      points.map(
+        (point): Promise<RouteEndpoint> => getClosestVertex(client, point)
+      )
     )
-  )
-  const result = await Promise.all(
-    partition(endpoints, 2, 1).map(
-      ([from, to]): Promise<Route> => getRouteBetweenVertices(client, from, to)
+    const result = await Promise.all(
+      partition(endpoints, 2, 1).map(
+        ([from, to]): Promise<Route> =>
+          getRouteBetweenVertices(client, from, to)
+      )
     )
-  )
-  client.release()
-  return result
+    return result
+  } finally {
+    client.release()
+  }
 }
