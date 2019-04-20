@@ -18,7 +18,7 @@ export type Vertex = Feature<Point, {}>
 export type VertexCollection = FeatureCollection<Point, {}>
 
 export interface Route {
-  route: LaneCollection
-  startAndEnd: LaneCollection
+  route: Lane[]
+  startAndEnd: Lane[]
   length: number
 }

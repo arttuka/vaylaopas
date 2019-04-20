@@ -12,7 +12,8 @@ const html = `
   <head>
     <meta charset="utf-8" />
     <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=Promise"></script>
-    <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.css" />
+    <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
     <style type="text/css">
       body {
         margin: 0;
@@ -102,8 +103,8 @@ app.get(
 app.post(
   '/api/route',
   async (req, res): Promise<express.Response> => {
-    const { from, to }: { from: LngLat; to: LngLat } = req.body
-    return res.send(await getRoute(from, to))
+    const { points }: { points: LngLat[] } = req.body
+    return res.send(await getRoute(points))
   }
 )
 

@@ -10,6 +10,7 @@ import {
   VertexCollection,
   Vertex,
 } from '../common/lane'
+import { partition } from '../common/util'
 
 const pool = new Pool(config.db)
 
@@ -99,10 +100,15 @@ export const getGaps = async (): Promise<VertexCollection> => {
   }
 }
 
-const getClosestVertexId = async (
+interface RouteEndpoint {
+  id: number
+  line: string
+}
+
+const getClosestVertex = async (
   client: PoolClient,
   p: LngLat
-): Promise<{ id: number; line: string }> => {
+): Promise<RouteEndpoint> => {
   const point = `ST_Transform(
     'SRID=4326;POINT(${p.lng} ${p.lat})'::geometry, 3067
   )`
@@ -113,38 +119,44 @@ const getClosestVertexId = async (
   return result.rows[0]
 }
 
-export const getRoute = async (from: LngLat, to: LngLat): Promise<Route> => {
-  const client = await pool.connect()
-  const start = await getClosestVertexId(client, from)
-  const end = await getClosestVertexId(client, to)
+const getRouteBetweenVertices = async (
+  client: PoolClient,
+  from: RouteEndpoint,
+  to: RouteEndpoint
+): Promise<Route> => {
   const result = await client.query(`
   SELECT length, ${asGeoJSON('geom')} AS geometry
   FROM lane
   WHERE id IN (
     SELECT edge FROM pgr_dijkstra(
       'SELECT id, source, target, length as cost, length as reverse_cost FROM lane',
-      ${start.id}, ${end.id}
+      ${from.id}, ${to.id}
     )
   )`)
-  const route: LaneCollection = {
-    type: 'FeatureCollection',
-    features: result.rows.map(formatLane),
-  }
+  const route: Lane[] = result.rows.map(formatLane)
   const length = result.rows.reduce(
     (sum, { length }): number => sum + length,
     0
   )
-  const startAndEnd: LaneCollection = {
-    type: 'FeatureCollection',
-    features: [
-      formatLane({ geometry: start.line }),
-      formatLane({ geometry: end.line }),
-    ],
-  }
+  const startAndEnd: Lane[] = [
+    formatLane({ geometry: from.line }),
+    formatLane({ geometry: to.line }),
+  ]
+  return { route, length, startAndEnd }
+}
+
+export const getRoute = async (points: LngLat[]): Promise<Route[]> => {
+  const client = await pool.connect()
+  const endpoints = await Promise.all(
+    points.map(
+      (point): Promise<RouteEndpoint> => getClosestVertex(client, point)
+    )
+  )
+  const result = await Promise.all(
+    partition(endpoints, 2, 1).map(
+      ([from, to]): Promise<Route> => getRouteBetweenVertices(client, from, to)
+    )
+  )
   client.release()
-  return {
-    route,
-    length,
-    startAndEnd,
-  }
+  return result
 }

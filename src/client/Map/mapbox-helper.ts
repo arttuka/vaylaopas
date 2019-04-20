@@ -1,4 +1,4 @@
-import { Feature, MultiPoint } from 'geojson'
+import { Feature, LineString, MultiPoint } from 'geojson'
 import mapboxgl, {
   GeoJSONSource,
   GeoJSONSourceRaw,
@@ -7,7 +7,7 @@ import mapboxgl, {
   LngLat,
   Map,
 } from 'mapbox-gl'
-import { LaneCollection, Route } from '../common/lane'
+import { Lane, LaneCollection, Route } from '../../common/lane'
 
 export type ClickEvent = mapboxgl.MapMouseEvent & mapboxgl.EventData
 
@@ -22,10 +22,10 @@ const multiPointFeature = (points: LngLat[] = []): Feature<MultiPoint, {}> => ({
   properties: {},
 })
 
-const featureCollection: LaneCollection = {
+const laneCollection = (lanes: Lane[] = []): LaneCollection => ({
   type: 'FeatureCollection',
-  features: [],
-}
+  features: lanes,
+})
 
 const lineLayer = (data: {
   id: string
@@ -48,6 +48,7 @@ const lineLayer = (data: {
 export const initializeMap = (
   map: Map,
   handleClick: (e: ClickEvent) => void,
+  handleContextMenu: (e: ClickEvent) => void,
   allLanes: LaneCollection
 ): void => {
   map.addLayer(
@@ -65,7 +66,7 @@ export const initializeMap = (
   )
   map.addSource('route', {
     type: 'geojson',
-    data: featureCollection,
+    data: laneCollection(),
   })
   map.addLayer(
     lineLayer({
@@ -79,7 +80,7 @@ export const initializeMap = (
   )
   map.addSource('routeStartAndEnd', {
     type: 'geojson',
-    data: featureCollection,
+    data: laneCollection(),
   })
   map.addLayer(
     lineLayer({
@@ -107,18 +108,27 @@ export const initializeMap = (
       'circle-stroke-color': '#000000',
     },
   })
+  map.on('contextmenu', handleContextMenu)
   map.on('click', handleClick)
 }
 
-export const updateRoute = (map: Map, route?: Route): void => {
+export const updateRoute = (map: Map, routes: Route[] = []): void => {
   const startAndEndSource = map.getSource('routeStartAndEnd') as GeoJSONSource
   const routeSource = map.getSource('route') as GeoJSONSource
-  if (route) {
-    routeSource.setData(route.route)
-    startAndEndSource.setData(route.startAndEnd)
+  if (routes.length) {
+    const { route, startAndEnd } = routes.reduce(
+      (acc, route): Route => ({
+        route: acc.route.concat(route.route),
+        startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
+        length: acc.length + route.length,
+      }),
+      { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
+    )
+    routeSource.setData(laneCollection(route))
+    startAndEndSource.setData(laneCollection(startAndEnd))
   } else {
-    routeSource.setData(featureCollection)
-    startAndEndSource.setData(featureCollection)
+    routeSource.setData(laneCollection())
+    startAndEndSource.setData(laneCollection())
   }
 }
 

@@ -14,7 +14,7 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/explicit-member-accessibility': 'off',
-    '@typescript-eslint/indent': ['error', 2],
+    '@typescript-eslint/indent': 'off',
     '@typescript-eslint/member-delimiter-style': {
       multiline: {
         delimiter: 'none'
