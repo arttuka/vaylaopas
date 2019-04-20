@@ -1,4 +1,4 @@
-import { Feature, LineString, MultiPoint } from 'geojson'
+import { Feature, MultiPoint } from 'geojson'
 import mapboxgl, {
   GeoJSONSource,
   GeoJSONSourceRaw,
@@ -10,8 +10,6 @@ import mapboxgl, {
 import { Lane, LaneCollection, Route } from '../../common/lane'
 
 export type ClickEvent = mapboxgl.MapMouseEvent & mapboxgl.EventData
-
-export const notEmpty = <T>(t: T | undefined): t is T => t !== undefined
 
 const multiPointFeature = (points: LngLat[] = []): Feature<MultiPoint, {}> => ({
   type: 'Feature',

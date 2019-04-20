@@ -3,15 +3,10 @@ import axios from 'axios'
 import mapboxgl, { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
 import ContextMenu from './ContextMenu'
-import {
-  ClickEvent,
-  initializeMap,
-  notEmpty,
-  updateRoute,
-  updateRoutePoints,
-} from './mapbox-helper'
+import RouteDrawer from './RouteDrawer'
+import * as helper from './mapbox-helper'
 import { LaneCollection, Route } from '../../common/lane'
-import { statement } from '@babel/template'
+import { removeIndex } from '../../common/util'
 
 const elementId = 'mapbox-container'
 
@@ -31,6 +26,7 @@ const MapContainer = styled.div`
 interface MapState {
   lastClick: LngLat
   routePoints: LngLat[]
+  lengths: number[]
   menu: {
     open: boolean
     top: number
@@ -47,6 +43,7 @@ const closedMenu = {
 const defaultState: MapState = {
   lastClick: new LngLat(0, 0),
   routePoints: [],
+  lengths: [],
   menu: closedMenu,
 }
 
@@ -60,7 +57,8 @@ class Map extends Component<MapProps, MapState> {
     this.state = defaultState
     this.handleContextMenu = this.handleContextMenu.bind(this)
     this.closeContextMenu = this.closeContextMenu.bind(this)
-    this.addPointToRoute = this.addPointToRoute.bind(this)
+    this.addPoint = this.addPoint.bind(this)
+    this.deletePoint = this.deletePoint.bind(this)
   }
 
   componentDidMount(): void {
@@ -76,7 +74,7 @@ class Map extends Component<MapProps, MapState> {
       'load',
       async (): Promise<void> => {
         const allLanes: LaneCollection = (await axios.get('/api/lane')).data
-        initializeMap(
+        helper.initializeMap(
           map,
           this.closeContextMenu,
           this.handleContextMenu,
@@ -86,7 +84,7 @@ class Map extends Component<MapProps, MapState> {
     )
   }
 
-  handleContextMenu(e: ClickEvent): void {
+  handleContextMenu(e: helper.ClickEvent): void {
     this.setState({
       lastClick: e.lngLat,
       menu: {
@@ -101,36 +99,57 @@ class Map extends Component<MapProps, MapState> {
     this.setState({ menu: closedMenu })
   }
 
-  async addPointToRoute(): Promise<void> {
+  async updateRoute(): Promise<void> {
+    if (this.map) {
+      const { routePoints } = this.state
+      helper.updateRoutePoints(this.map, routePoints)
+      if (routePoints.length > 1) {
+        const route: Route[] = (await axios.post('/api/route', {
+          points: routePoints,
+        })).data
+        helper.updateRoute(this.map, route)
+        this.setState({
+          lengths: route.map((segment): number => segment.length),
+        })
+      } else {
+        helper.updateRoute(this.map)
+      }
+    }
+  }
+
+  addPoint(): void {
     this.setState(
       (state): MapState => ({
         ...state,
         menu: closedMenu,
         routePoints: [...state.routePoints, state.lastClick],
-      })
+      }),
+      this.updateRoute
     )
-    if (this.map) {
-      const points = [...this.state.routePoints, this.state.lastClick]
-      updateRoutePoints(this.map, points)
-      if (points.length > 1) {
-        const route = (await axios.post('/api/route', { points })).data
-        updateRoute(this.map, route)
-      } else {
-        updateRoute(this.map)
-      }
-    }
+  }
+
+  async deletePoint(i: number): Promise<void> {
+    this.setState(
+      (state): MapState => ({
+        ...state,
+        lengths: state.lengths.length ? state.lengths.slice(1) : [],
+        routePoints: removeIndex(state.routePoints, i),
+      }),
+      this.updateRoute
+    )
   }
 
   render(): React.ReactElement {
-    const { open, top, left } = this.state.menu
+    const { routePoints, lengths, menu } = this.state
+    const { open, top, left } = menu
     return (
       <Container>
         <MapContainer id={elementId} />
-        <ContextMenu
-          onAdd={this.addPointToRoute}
-          open={open}
-          top={top}
-          left={left}
+        <ContextMenu onAdd={this.addPoint} open={open} top={top} left={left} />
+        <RouteDrawer
+          onDelete={this.deletePoint}
+          points={routePoints}
+          lengths={lengths}
         />
       </Container>
     )
