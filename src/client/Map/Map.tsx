@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import mapboxgl, { LngLat, Marker } from 'mapbox-gl'
+import mapboxgl, { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
 import ContextMenu from './ContextMenu'
+import Marker, { updateMarkers } from './Marker'
 import RouteDrawer from './RouteDrawer'
 import * as helper from './mapbox-helper'
 import { LaneCollection, Route } from '../../common/lane'
@@ -49,12 +50,10 @@ const defaultState: MapState = {
   menu: closedMenu,
 }
 
-interface MapProps {}
-
-class Map extends Component<MapProps, MapState> {
+class Map extends Component<{}, MapState> {
   map?: mapboxgl.Map = undefined
 
-  constructor(props: MapProps) {
+  constructor(props: {}) {
     super(props)
     this.state = defaultState
     this.handleContextMenu = this.handleContextMenu.bind(this)
@@ -107,7 +106,7 @@ class Map extends Component<MapProps, MapState> {
   async updateRoute(): Promise<void> {
     if (this.map) {
       const { routePoints } = this.state
-      helper.updateMarkers(this.state.markers, this.movePoint)
+      updateMarkers(this.state.markers)
       if (routePoints.length > 1) {
         const route: Route[] = (await axios.post('/api/route', {
           points: routePoints,
@@ -124,13 +123,13 @@ class Map extends Component<MapProps, MapState> {
 
   addPoint(i?: number, point?: LngLat): void {
     if (this.map) {
-      const marker = helper
-        .createMarker(this.state.routePoints.length)
-        .setLngLat(point || this.state.lastClick)
-        .setDraggable(true)
-        .addTo(this.map)
+      const index = i || this.state.routePoints.length
+      const marker = new Marker(
+        index,
+        point || this.state.lastClick,
+        this.movePoint
+      ).addTo(this.map)
       this.setState((state): MapState => {
-        const index = i || this.state.routePoints.length
         return {
           ...state,
           menu: closedMenu,
