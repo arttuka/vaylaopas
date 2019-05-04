@@ -80,7 +80,7 @@ module.exports = [
     devtool,
     target: 'node',
     externals: [nodeExternals()],
-    entry: './src/server/server.ts',
+    entry: './src/server/server',
     module: {
       rules: [
         {
@@ -108,6 +108,7 @@ module.exports = [
     output: {
       filename: 'server.js',
       path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'commonjs2',
     },
     node: {
       __dirname: false,

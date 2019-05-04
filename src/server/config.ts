@@ -4,7 +4,7 @@ import { Config } from '../common/types'
 
 let config: Config
 
-const configFile = path.join(__dirname, '..', '..', 'config.json')
+const configFile = path.resolve('config.json')
 if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
   config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
 } else {

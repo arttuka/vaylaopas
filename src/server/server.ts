@@ -1,13 +1,13 @@
-import express, { Handler, Response } from 'express'
-import * as path from 'path'
+import express, { RequestHandler, Router } from 'express'
 import config from './config'
 import { getRoute } from './db'
 import { LngLat } from '../common/types'
 
-const app = express()
-const { port } = config.server
-
-const wrapAsync = (handler: Handler): Handler => (req, res, next): void => {
+const wrapAsync = (handler: RequestHandler): RequestHandler => (
+  req,
+  res,
+  next
+): void => {
   Promise.resolve(handler(req, res, next)).catch(next)
 }
 
@@ -55,41 +55,24 @@ const html = `
 </html>
 `
 
-if (process.env.NODE_ENV === 'production') {
-  app.use('/static', express.static(path.join(__dirname, 'public')))
-} else {
-  const webpack = require('webpack') // eslint-disable-line @typescript-eslint/no-var-requires
-  const webpackConfig = require('../../webpack.config') //eslint-disable-line @typescript-eslint/no-var-requires
-  const clientConfig = webpackConfig[0]
-  const compiler = webpack(webpackConfig)
-  const clientCompiler = compiler.compilers[0]
+const router = Router()
+router.use(express.json())
 
-  app.use(
-    require('webpack-dev-middleware')(compiler, {
-      noInfo: true,
-      publicPath: clientConfig.output.publicPath,
-    })
-  )
-  app.use(
-    require('webpack-hot-middleware')(clientCompiler, {
-      path: '/__webpack_hmr',
-      heartbeat: 10 * 1000,
-    })
-  )
-}
+router.get(
+  '/',
+  (req, res): void => {
+    res.send(html)
+  }
+)
 
-app.get('/', (req, res): Response => res.send(html))
-
-app.use(express.json())
-
-app.post(
+router.post(
   '/api/route',
   wrapAsync(
-    async (req, res): Promise<Response> => {
+    async (req, res): Promise<void> => {
       const { points }: { points: LngLat[] } = req.body
-      return res.send(await getRoute(points))
+      res.send(await getRoute(points))
     }
   )
 )
 
-app.listen(port, (): void => console.log(`Listening on port ${port}`))
+module.exports = (): RequestHandler => router

@@ -77,7 +77,7 @@ class Map extends Component<{}, MapState> {
     this.map = map
     map.on(
       'load',
-      async (): Promise<void> => {
+      (): void => {
         helper.initializeMap(
           map,
           this.closeContextMenu,

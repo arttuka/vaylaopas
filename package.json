@@ -16,16 +16,16 @@
     "styled-components": "^4.2.0"
   },
   "scripts": {
-    "server:watch": "NODE_ENV=development ts-node ./src/server/server.ts",
-    "typecheck": "tsc --noEmit",
+    "server:watch": "NODE_ENV=development ts-node ./src/server/index.ts",
     "typecheck:watch": "tsc --noEmit --watch",
     "watch": "concurrently -n ts,build -c green,blue \"npm run typecheck:watch\" \"npm run server:watch\"",
-    "lint": "eslint . --ext .ts,.tsx && prettier --check src/**/*.{ts,tsx}",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0 && prettier --check src/**/*.{ts,tsx}",
     "test": "jest",
     "test:watch": "jest --watch",
     "convert": "NODE_ENV=development ts-node ./src/server/convert.ts",
-    "build": "NODE_ENV=production webpack",
-    "start": "NODE_ENV=production node dist/server.js"
+    "build": "NODE_ENV=production webpack && tsc src/server/index.ts --outdir dist --esModuleInterop",
+    "start": "NODE_ENV=production node dist/index.js",
+    "clean": "rimraf dist/*"
   },
   "devDependencies": {
     "@types/express": "^4.16.1",
@@ -33,9 +33,10 @@
     "@types/mapbox-gl": "^0.51.4",
     "@types/node": "^11.13.4",
     "@types/pg": "^7.4.14",
-    "@types/react": "^16.8.13",
+    "@types/react": "^16.8.16",
     "@types/react-dom": "^16.8.4",
-    "@types/styled-components": "^4.1.14",
+    "@types/styled-components": "4.1.8",
+    "@types/webpack": "^4.4.29",
     "@types/webpack-env": "^1.13.9",
     "@typescript-eslint/eslint-plugin": "^1.6.0",
     "@typescript-eslint/parser": "^1.6.0",
@@ -47,6 +48,7 @@
     "html-loader": "^0.5.5",
     "jest": "^24.7.1",
     "prettier": "^1.17.0",
+    "rimraf": "^2.6.3",
     "ts-jest": "^24.0.2",
     "ts-loader": "^5.3.3",
     "ts-node": "^8.1.0",
