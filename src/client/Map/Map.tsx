@@ -67,7 +67,7 @@ class Map extends Component<{}, MapState> {
   componentDidMount(): void {
     const map = new mapboxgl.Map({
       container: elementId,
-      style: 'http://localhost:8000/styles/osm-bright/style.json',
+      style: 'http://localhost:8000/styles/vaylaopas/style.json',
       hash: true,
       zoom: 7,
       center: [24.94, 60.17],
