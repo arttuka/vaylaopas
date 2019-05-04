@@ -1,15 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-
-interface Config {
-  db: {
-    host: string
-    port: number
-    user: string
-    password: string
-    database: string
-  }
-}
+import { Config } from '../common/types'
 
 let config: Config
 
@@ -19,6 +10,12 @@ if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
 } else {
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
   config = {
+    client: {
+      mapserver: process.env.MAPSERVER!,
+    },
+    server: {
+      port: parseInt(process.env.SERVER_PORT!, 10),
+    },
     db: {
       host: process.env.DB_HOST!,
       port: parseInt(process.env.DB_PORT!, 10),

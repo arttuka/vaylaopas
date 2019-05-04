@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from 'pg'
 import { LineString } from 'geojson'
 import config from './config'
-import { Lane, LngLat, Route } from '../common/lane'
+import { Lane, LngLat, Route } from '../common/types'
 import { partition } from '../common/util'
 
 const pool = new Pool(config.db)

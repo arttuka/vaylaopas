@@ -23,3 +23,21 @@ export interface Route {
   startAndEnd: Lane[]
   length: number
 }
+
+export interface ClientConfig {
+  mapserver: string
+}
+
+export interface Config {
+  client: ClientConfig
+  server: {
+    port: number
+  }
+  db: {
+    host: string
+    port: number
+    user: string
+    password: string
+    database: string
+  }
+}

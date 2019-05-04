@@ -7,7 +7,7 @@ import mapboxgl, {
   LngLat,
   Map,
 } from 'mapbox-gl'
-import { featureIsLane, Lane, LaneCollection, Route } from '../../common/lane'
+import { featureIsLane, Lane, LaneCollection, Route } from '../../common/types'
 
 export type MouseEvent = mapboxgl.MapMouseEvent & mapboxgl.EventData
 export type MouseLayerEvent = mapboxgl.MapLayerMouseEvent & mapboxgl.EventData

@@ -81,6 +81,7 @@ class RouteDrawer extends PureComponent<RouteDrawerProps> {
       segments.push({
         point: points[i + 1],
         length: lengths[i],
+        key: `segment-${i}`,
       })
       totalLength += lengths[i]
     }
@@ -99,8 +100,8 @@ class RouteDrawer extends PureComponent<RouteDrawerProps> {
             </ListItem>
           )}
           {segments.map(
-            ({ length }, i): ReactNode => (
-              <ListItem>
+            ({ length, key }, i): ReactNode => (
+              <ListItem key={key}>
                 <Point className={classes.avatar} text={numToLetter(i + 1)} />
                 <ListItemText primary={`${toNM(length)} mpk`} />
                 <Delete onClick={(): void => onDelete(i + 1)} />

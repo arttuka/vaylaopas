@@ -2,10 +2,12 @@
   "name": "vaylaopas",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": false,
   "dependencies": {
     "@material-ui/core": "^3.9.3",
     "@material-ui/icons": "^3.0.2",
     "axios": "^0.18.0",
+    "express": "^4.16.4",
     "mapbox-gl": "^0.53.1",
     "pg": "^7.9.0",
     "pg-native": "^3.0.0",
@@ -18,10 +20,12 @@
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "watch": "concurrently -n ts,build -c green,blue \"npm run typecheck:watch\" \"npm run server:watch\"",
-    "lint": "./node_modules/.bin/eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx && prettier --check src/**/*.{ts,tsx}",
     "test": "jest",
     "test:watch": "jest --watch",
-    "convert": "NODE_ENV=development ts-node ./src/server/convert.ts"
+    "convert": "NODE_ENV=development ts-node ./src/server/convert.ts",
+    "build": "NODE_ENV=production webpack",
+    "start": "NODE_ENV=production node dist/server.js"
   },
   "devDependencies": {
     "@types/express": "^4.16.1",
@@ -40,7 +44,6 @@
     "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "^7.12.4",
-    "express": "^4.16.4",
     "html-loader": "^0.5.5",
     "jest": "^24.7.1",
     "prettier": "^1.17.0",

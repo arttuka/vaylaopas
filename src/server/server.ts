@@ -1,10 +1,11 @@
 import express, { Handler, Response } from 'express'
 import * as path from 'path'
+import config from './config'
 import { getRoute } from './db'
-import { LngLat } from '../common/lane'
+import { LngLat } from '../common/types'
 
 const app = express()
-const port = process.env.PORT || 5000
+const { port } = config.server
 
 const wrapAsync = (handler: Handler): Handler => (req, res, next): void => {
   Promise.resolve(handler(req, res, next)).catch(next)
@@ -45,6 +46,9 @@ const html = `
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      const clientConfig = ${JSON.stringify(config.client)}
+    </script>
     <script src="/static/vendor.js" async></script>
     <script src="/static/client.js" async></script>
   </body>

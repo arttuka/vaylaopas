@@ -6,8 +6,10 @@ import ContextMenu from './ContextMenu'
 import Marker, { updateMarkers } from './Marker'
 import RouteDrawer from './RouteDrawer'
 import * as helper from './mapbox-helper'
-import { Route } from '../../common/lane'
+import { ClientConfig, Route } from '../../common/types'
 import { removeIndex, replaceIndex, insertIndex } from '../../common/util'
+
+declare const clientConfig: ClientConfig
 
 const elementId = 'mapbox-container'
 
@@ -67,7 +69,7 @@ class Map extends Component<{}, MapState> {
   componentDidMount(): void {
     const map = new mapboxgl.Map({
       container: elementId,
-      style: 'http://localhost:8000/styles/vaylaopas/style.json',
+      style: clientConfig.mapserver,
       hash: true,
       zoom: 7,
       center: [24.94, 60.17],
