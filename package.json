@@ -20,7 +20,8 @@
     "watch": "concurrently -n ts,build -c green,blue \"npm run typecheck:watch\" \"npm run server:watch\"",
     "lint": "./node_modules/.bin/eslint . --ext .ts,.tsx",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "convert": "NODE_ENV=development ts-node ./src/server/convert.ts"
   },
   "devDependencies": {
     "@types/express": "^4.16.1",

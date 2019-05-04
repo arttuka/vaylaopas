@@ -41,3 +41,12 @@ export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
   t,
   ...arr.slice(i),
 ]
+
+export const addMany = <T>(set: Set<T>, ...ts: T[]): Set<T> => {
+  ts.forEach(
+    (t): void => {
+      set.add(t)
+    }
+  )
+  return set
+}

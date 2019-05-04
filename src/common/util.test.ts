@@ -4,6 +4,7 @@ import {
   removeIndex,
   replaceIndex,
   insertIndex,
+  addMany,
 } from './util'
 
 test('partition', (): void => {
@@ -49,4 +50,9 @@ test('insertIndex', (): void => {
   expect(insertIndex(arr, 1, 9)).toEqual([0, 9, 1, 2])
   expect(insertIndex(arr, 2, 9)).toEqual([0, 1, 9, 2])
   expect(insertIndex(arr, 3, 9)).toEqual([0, 1, 2, 9])
+})
+
+test('addMany', (): void => {
+  const set = new Set([1, 2, 3])
+  expect(addMany(set, 3, 4, 5)).toEqual(new Set([1, 2, 3, 4, 5]))
 })
