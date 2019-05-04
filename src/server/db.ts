@@ -1,109 +1,22 @@
 import { Pool, PoolClient } from 'pg'
+import { LineString } from 'geojson'
 import config from './config'
-import {
-  Lane,
-  LaneCollection,
-  LngLat,
-  RawLane,
-  Route,
-  VertexCollection,
-  Vertex,
-} from '../common/lane'
+import { Lane, LngLat, Route } from '../common/lane'
 import { partition } from '../common/util'
 
 const pool = new Pool(config.db)
 
-const vars = (count: number, from: number = 1): string => {
-  const arr = []
-  for (let i = 0; i < count; i += 1) {
-    arr.push(`$${i + from}`)
-  }
-  return `(${arr.join(',')})`
-}
-
-const formatLane = ({ geometry }: RawLane, routeNumber: number): Lane => ({
+const formatLane = (geometry: LineString, routeNumber: number): Lane => ({
   type: 'Feature',
-  geometry: JSON.parse(geometry),
+  geometry,
   properties: {
     route: routeNumber,
   },
 })
 
-const asGeoJSON = (geometry: string): string =>
-  `ST_AsGeoJSON(ST_Transform(${geometry}, 4326), 6)`
-
-export const getLanes = async (ids: number[] = []): Promise<LaneCollection> => {
-  let result
-  if (ids.length) {
-    result = await pool.query(
-      `SELECT ${asGeoJSON('geom')} AS geometry FROM lane WHERE id in ${vars(
-        ids.length
-      )}`,
-      ids
-    )
-  } else {
-    result = await pool.query(
-      `SELECT ${asGeoJSON('geom')} AS geometry FROM lane`
-    )
-  }
-  const lanes = result.rows.map(formatLane)
-  return {
-    type: 'FeatureCollection',
-    features: lanes,
-  }
-}
-
-export const getVertices = async (
-  ids: number[] = []
-): Promise<VertexCollection> => {
-  let result
-  if (ids.length) {
-    result = await pool.query(
-      `SELECT ${asGeoJSON(
-        'the_geom'
-      )} AS geometry FROM lane_vertices_pgr WHERE id in ${vars(ids.length)}`,
-      ids
-    )
-  } else {
-    result = await pool.query(
-      `SELECT ${asGeoJSON('the_geom')} AS geometry FROM lane_vertices_pgr`
-    )
-  }
-  const vertices = result.rows.map(
-    ({ geometry }): Vertex => ({
-      type: 'Feature',
-      geometry: JSON.parse(geometry),
-      properties: {},
-    })
-  )
-  return {
-    type: 'FeatureCollection',
-    features: vertices,
-  }
-}
-
-export const getGaps = async (): Promise<VertexCollection> => {
-  const result = await pool.query(
-    `SELECT ${asGeoJSON(
-      'the_geom'
-    )} AS geometry FROM lane_vertices_pgr WHERE chk = 1`
-  )
-  const vertices = result.rows.map(
-    ({ geometry }): Vertex => ({
-      type: 'Feature',
-      geometry: JSON.parse(geometry),
-      properties: {},
-    })
-  )
-  return {
-    type: 'FeatureCollection',
-    features: vertices,
-  }
-}
-
 interface RouteEndpoint {
   id: number
-  line: string
+  geometry: LineString
 }
 
 const getClosestVertex = async (
@@ -114,10 +27,15 @@ const getClosestVertex = async (
     'SRID=4326;POINT(${p.lng} ${p.lat})'::geometry, 3067
   )`
   const result = await client.query(`
-  SELECT id, ${asGeoJSON(`ST_MakeLine(${point}, the_geom)`)} AS line
-  FROM lane_vertices_pgr
-  ORDER BY the_geom <-> ${point} LIMIT 1`)
-  return result.rows[0]
+    SELECT id, AsJSON(ST_MakeLine(${point}, the_geom)) AS geometry
+    FROM lane_vertices_pgr
+    ORDER BY the_geom <-> ${point} LIMIT 1
+  `)
+  const { id, geometry } = result.rows[0]
+  return {
+    id,
+    geometry: JSON.parse(geometry),
+  }
 }
 
 const getRouteBetweenVertices = async (
@@ -127,24 +45,24 @@ const getRouteBetweenVertices = async (
   routeNumber: number
 ): Promise<Route> => {
   const result = await client.query(`
-  SELECT length, ${asGeoJSON('geom')} AS geometry
+  SELECT length, AsJSON(geom) AS geometry
   FROM lane
   WHERE id IN (
     SELECT edge FROM pgr_dijkstra(
-      'SELECT id, source, target, length as cost, length as reverse_cost FROM lane',
+      'SELECT id, source, target, length AS cost, length AS reverse_cost FROM lane',
       ${from.id}, ${to.id}
     )
   )`)
-  const route: Lane[] = result.rows.map(
-    (row): Lane => formatLane(row, routeNumber)
+  const route = result.rows.map(
+    ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
   )
   const length = result.rows.reduce(
     (sum, { length }): number => sum + length,
     0
   )
-  const startAndEnd: Lane[] = [
-    formatLane({ geometry: from.line }, routeNumber),
-    formatLane({ geometry: to.line }, routeNumber),
+  const startAndEnd = [
+    formatLane(from.geometry, routeNumber),
+    formatLane(to.geometry, routeNumber),
   ]
   return { route, length, startAndEnd }
 }
@@ -157,13 +75,12 @@ export const getRoute = async (points: LngLat[]): Promise<Route[]> => {
         (point): Promise<RouteEndpoint> => getClosestVertex(client, point)
       )
     )
-    const result = await Promise.all(
+    return await Promise.all(
       partition(endpoints, 2, 1).map(
         ([from, to], i): Promise<Route> =>
           getRouteBetweenVertices(client, from, to, i)
       )
     )
-    return result
   } finally {
     client.release()
   }

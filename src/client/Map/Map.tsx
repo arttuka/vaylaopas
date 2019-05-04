@@ -6,7 +6,7 @@ import ContextMenu from './ContextMenu'
 import Marker, { updateMarkers } from './Marker'
 import RouteDrawer from './RouteDrawer'
 import * as helper from './mapbox-helper'
-import { LaneCollection, Route } from '../../common/lane'
+import { Route } from '../../common/lane'
 import { removeIndex, replaceIndex, insertIndex } from '../../common/util'
 
 const elementId = 'mapbox-container'
@@ -76,13 +76,11 @@ class Map extends Component<{}, MapState> {
     map.on(
       'load',
       async (): Promise<void> => {
-        const allLanes: LaneCollection = (await axios.get('/api/lane')).data
         helper.initializeMap(
           map,
           this.closeContextMenu,
           this.handleContextMenu,
-          this.handleDragRoute,
-          allLanes
+          this.handleDragRoute
         )
       }
     )
@@ -129,8 +127,8 @@ class Map extends Component<{}, MapState> {
         point || this.state.lastClick,
         this.movePoint
       ).addTo(this.map)
-      this.setState((state): MapState => {
-        return {
+      this.setState(
+        (state): MapState => ({
           ...state,
           menu: closedMenu,
           routePoints: insertIndex(
@@ -139,8 +137,9 @@ class Map extends Component<{}, MapState> {
             point || state.lastClick
           ),
           markers: insertIndex(state.markers, index, marker),
-        }
-      }, this.updateRoute)
+        }),
+        this.updateRoute
+      )
     }
   }
 

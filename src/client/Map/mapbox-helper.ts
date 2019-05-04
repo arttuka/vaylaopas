@@ -48,23 +48,9 @@ export const initializeMap = (
   map: Map,
   handleClick: (e: MouseEvent) => void,
   handleContextMenu: (e: MouseEvent) => void,
-  handleDragRoute: (e: MouseEvent, route: number) => void,
-  allLanes: LaneCollection
+  handleDragRoute: (e: MouseEvent, route: number) => void
 ): void => {
   const canvas = map.getCanvasContainer()
-  map.addLayer(
-    lineLayer({
-      id: 'allLanes',
-      source: {
-        type: 'geojson',
-        data: allLanes,
-      },
-      paint: {
-        'line-color': '#000000',
-        'line-width': 1,
-      },
-    })
-  )
   map.addSource('route', {
     type: 'geojson',
     data: laneCollection(),
@@ -144,7 +130,7 @@ export const initializeMap = (
       e.preventDefault()
       canvas.style.cursor = 'grab'
       const feature = e.features && e.features[0]
-      if (feature && featureIsLane(feature)) {
+      if (featureIsLane(feature)) {
         map.on('mousemove', onMove)
         map.once('mouseup', onUp(feature.properties.route))
       }

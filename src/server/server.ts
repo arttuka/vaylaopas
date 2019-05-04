@@ -1,6 +1,6 @@
 import express, { Handler, Response } from 'express'
 import * as path from 'path'
-import { getLanes, getVertices, getGaps, getRoute } from './db'
+import { getRoute } from './db'
 import { LngLat } from '../common/lane'
 
 const app = express()
@@ -77,43 +77,6 @@ if (process.env.NODE_ENV === 'production') {
 app.get('/', (req, res): Response => res.send(html))
 
 app.use(express.json())
-
-app.get(
-  '/api/lane',
-  wrapAsync(
-    async (req, res): Promise<Response> => {
-      const { ids } = req.query
-      return res.send(
-        await getLanes(
-          ids
-            ? ids.split(',').map((id: string): number => parseInt(id, 10))
-            : []
-        )
-      )
-    }
-  )
-)
-
-app.get(
-  '/api/vertex',
-  wrapAsync(
-    async (req, res): Promise<Response> => {
-      const { ids } = req.query
-      return res.send(
-        await getVertices(
-          ids
-            ? ids.split(',').map((id: string): number => parseInt(id, 10))
-            : []
-        )
-      )
-    }
-  )
-)
-
-app.get(
-  '/api/vertex/gaps',
-  wrapAsync(async (req, res): Promise<Response> => res.send(await getGaps()))
-)
 
 app.post(
   '/api/route',
