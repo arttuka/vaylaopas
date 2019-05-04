@@ -17,5 +17,5 @@ fi
 host=${PGHOST:-localhost}
 
 shp2pgsql -e -s 3067 -W LATIN1 "$1" public.lane_tmp \
-  | cat - ./sql/convert.sql \
+  | cat - ./resources/sql/convert.sql \
   | psql "-h$host" -Uvaylaopas -1 vaylaopas
