@@ -66,3 +66,14 @@ export const mapBy = <T, S>(
   )
   return ret
 }
+
+export const calculateDuration = (meters: number, knots: number): number =>
+  Math.floor((toNM(meters) / knots) * 60)
+
+export const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60)
+  return `${hours > 0 ? `${hours} h ` : ''}${Math.floor(minutes % 60)} min`
+}
+
+export const add = (n1?: number, n2?: number): number | undefined =>
+  n1 !== undefined && n2 !== undefined ? n1 + n2 : undefined

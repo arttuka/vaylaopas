@@ -8,7 +8,7 @@ import CancelIcon from '@material-ui/icons/Cancel'
 import MuiIconButton, { IconButtonProps } from '@material-ui/core/IconButton'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { withStyles } from '@material-ui/core/styles'
-import TextField from '@material-ui/core/TextField'
+import MuiTextField, { TextFieldProps } from '@material-ui/core/TextField'
 
 interface ClearButtonProps {
   disabled: boolean
@@ -31,6 +31,12 @@ const ClearButton: FunctionComponent<ClearButtonProps> = ({
     </IconButton>
   </InputAdornment>
 )
+
+const TextField: ComponentType<TextFieldProps> = withStyles({
+  root: {
+    flexBasis: 90,
+  },
+})(MuiTextField)
 
 interface SettingFieldProps {
   id: string

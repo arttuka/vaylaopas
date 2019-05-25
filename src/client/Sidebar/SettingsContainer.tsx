@@ -3,7 +3,9 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary, {
   ExpansionPanelSummaryProps,
 } from '@material-ui/core/ExpansionPanelSummary'
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
+import MuiExpansionPanelDetails, {
+  ExpansionPanelDetailsProps,
+} from '@material-ui/core/ExpansionPanelDetails'
 import { withStyles } from '@material-ui/core/styles'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import SettingField from './SettingField'
@@ -26,6 +28,15 @@ const ExpansionPanelSummary: ComponentType<
   expanded: {},
 })(MuiExpansionPanelSummary)
 
+const ExpansionPanelDetails: ComponentType<
+  ExpansionPanelDetailsProps
+> = withStyles({
+  root: {
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+})(MuiExpansionPanelDetails)
+
 type ChangeHandler = (value?: number) => void
 
 interface SettingsProps {
@@ -36,12 +47,18 @@ interface SettingsProps {
 class SettingsContainer extends Component<SettingsProps, {}> {
   handleUpdateDepth: ChangeHandler
   handleUpdateHeight: ChangeHandler
+  handleUpdateSpeed: ChangeHandler
+  handleUpdateConsumption: ChangeHandler
   constructor(props: SettingsProps) {
     super(props)
     this.handleUpdateDepth = (value?: number): void =>
       this.handleUpdate('depth', value)
     this.handleUpdateHeight = (value?: number): void =>
       this.handleUpdate('height', value)
+    this.handleUpdateSpeed = (value?: number): void =>
+      this.handleUpdate('speed', value)
+    this.handleUpdateConsumption = (value?: number): void =>
+      this.handleUpdate('consumption', value)
   }
 
   handleUpdate(key: keyof Settings, value?: number): void {
@@ -50,7 +67,7 @@ class SettingsContainer extends Component<SettingsProps, {}> {
 
   render(): ReactElement {
     const {
-      settings: { depth, height },
+      settings: { depth, height, speed, consumption },
     } = this.props
     return (
       <ExpansionPanel>
@@ -69,6 +86,18 @@ class SettingsContainer extends Component<SettingsProps, {}> {
             label="Korkeus (m)"
             value={height}
             onChange={this.handleUpdateHeight}
+          />
+          <SettingField
+            id="settingfield-speed"
+            label="Nopeus (kn)"
+            value={speed}
+            onChange={this.handleUpdateSpeed}
+          />
+          <SettingField
+            id="settingfield-consumption"
+            label="Kulutus (l/h)"
+            value={consumption}
+            onChange={this.handleUpdateConsumption}
           />
         </ExpansionPanelDetails>
       </ExpansionPanel>

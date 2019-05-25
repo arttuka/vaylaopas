@@ -7,7 +7,12 @@ import Sidebar from './Sidebar/Sidebar'
 import RouteList from './Sidebar/RouteList'
 import SettingsContainer from './Sidebar/SettingsContainer'
 import { Route, Settings } from '../common/types'
-import { removeIndex, replaceIndex, insertIndex } from '../common/util'
+import {
+  removeIndex,
+  replaceIndex,
+  insertIndex,
+  calculateDuration,
+} from '../common/util'
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
@@ -16,6 +21,21 @@ const Container = styled.div`
   width: 100%;
   height: 100vh;
 `
+
+const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
+  const { speed, consumption } = settings
+  return routes.map(
+    (route): Route => {
+      const duration = speed && calculateDuration(route.length, speed)
+      const fuel = duration && consumption && (duration * consumption) / 60
+      return {
+        ...route,
+        duration,
+        fuel,
+      }
+    }
+  )
+}
 
 interface AppState {
   waypoints: LngLat[]
@@ -43,7 +63,7 @@ class App extends Component<{}, AppState> {
       state => ({
         waypoints: insertIndex(state.waypoints, index, point),
       }),
-      this.updateRoute
+      this.fetchRoute
     )
   }
 
@@ -52,7 +72,7 @@ class App extends Component<{}, AppState> {
       state => ({
         waypoints: removeIndex(state.waypoints, index),
       }),
-      this.updateRoute
+      this.fetchRoute
     )
   }
 
@@ -61,11 +81,11 @@ class App extends Component<{}, AppState> {
       state => ({
         waypoints: replaceIndex(state.waypoints, index, point),
       }),
-      this.updateRoute
+      this.fetchRoute
     )
   }
 
-  async updateRoute(): Promise<void> {
+  async fetchRoute(): Promise<void> {
     const {
       settings: { depth, height },
       waypoints,
@@ -76,19 +96,31 @@ class App extends Component<{}, AppState> {
         depth,
         height,
       })).data
-      this.setState({ routes })
+      this.setState(({ settings }) => ({
+        routes: enrichRoutes(routes, settings),
+      }))
     } else {
       this.setState({ routes: [] })
     }
   }
 
   updateSetting(key: keyof Settings, value?: number): void {
-    this.setState(
-      ({ settings }) => ({
-        settings: { ...settings, [key]: value },
-      }),
-      this.updateRoute
-    )
+    if (['depth', 'height'].includes(key)) {
+      this.setState(
+        ({ settings }) => ({
+          settings: { ...settings, [key]: value },
+        }),
+        this.fetchRoute
+      )
+    } else {
+      this.setState(({ routes, settings }) => {
+        const newSettings = { ...settings, [key]: value }
+        return {
+          settings: newSettings,
+          routes: enrichRoutes(routes, newSettings),
+        }
+      })
+    }
   }
 
   render(): React.ReactElement {

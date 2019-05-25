@@ -22,6 +22,8 @@ export interface Route {
   route: Lane[]
   startAndEnd: Lane[]
   length: number
+  duration?: number
+  fuel?: number
 }
 
 export interface Index<T> {
@@ -31,6 +33,8 @@ export interface Index<T> {
 export interface Settings {
   height?: number
   depth?: number
+  speed?: number
+  consumption?: number
 }
 
 export interface ClientConfig {

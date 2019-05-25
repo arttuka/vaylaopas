@@ -6,6 +6,8 @@ import {
   insertIndex,
   addMany,
   mapBy,
+  calculateDuration,
+  formatDuration,
 } from './util'
 import { Index } from '../common/types'
 
@@ -72,4 +74,15 @@ test('mapBy', (): void => {
     (s): string => `x${s}`
   )
   expect(result).toEqual(expected)
+})
+
+test('calculateDuration', (): void => {
+  expect(calculateDuration(1852 * 5, 5)).toEqual(60)
+  expect(calculateDuration(1852 * 1.5, 4.5)).toEqual(20)
+})
+
+test('formatDuration', (): void => {
+  expect(formatDuration(59)).toEqual('59 min')
+  expect(formatDuration(60)).toEqual('1 h 0 min')
+  expect(formatDuration(61)).toEqual('1 h 1 min')
 })

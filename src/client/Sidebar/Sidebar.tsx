@@ -9,10 +9,10 @@ import { withStyles } from '@material-ui/core/styles'
 
 const Drawer: ComponentType<DrawerProps> = withStyles({
   docked: {
-    width: 240,
+    width: 280,
   },
   paper: {
-    width: 240,
+    width: 280,
   },
 })(MuiDrawer)
 
