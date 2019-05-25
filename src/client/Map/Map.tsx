@@ -1,23 +1,16 @@
 import React, { Component } from 'react'
-import axios from 'axios'
 import mapboxgl, { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
 import ContextMenu from './ContextMenu'
-import Marker, { updateMarkers } from './Marker'
-import RouteDrawer from './RouteDrawer'
+import Marker from './Marker'
 import * as helper from './mapbox-helper'
 import { ClientConfig, Route } from '../../common/types'
-import { removeIndex, replaceIndex, insertIndex } from '../../common/util'
+
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 declare const clientConfig: ClientConfig
 
 const elementId = 'mapbox-container'
-
-const Container = styled.div`
-  position: relative;
-  width: 100%;
-  height: 100vh;
-`
 
 const MapContainer = styled.div`
   width: 100%;
@@ -26,11 +19,16 @@ const MapContainer = styled.div`
   bottom: 0;
 `
 
+interface MapProps {
+  routes: Route[]
+  waypoints: LngLat[]
+  onAddWaypoint: (point: LngLat, index?: number) => void
+  onMoveWaypoint: (point: LngLat, index: number) => void
+}
+
 interface MapState {
   lastClick: LngLat
-  routePoints: LngLat[]
   markers: Marker[]
-  lengths: number[]
   menu: {
     open: boolean
     top: number
@@ -46,24 +44,32 @@ const closedMenu = {
 
 const defaultState: MapState = {
   lastClick: new LngLat(0, 0),
-  routePoints: [],
   markers: [],
-  lengths: [],
   menu: closedMenu,
 }
 
-class Map extends Component<{}, MapState> {
+const waypointsEqual = (w1: LngLat[], w2: LngLat[]): boolean => {
+  if (w1.length !== w2.length) {
+    return false
+  }
+  for (const i in w1) {
+    if (w1[i].lat !== w2[i].lat || w1[i].lng !== w2[i].lng) {
+      return false
+    }
+  }
+  return true
+}
+
+class Map extends Component<MapProps, MapState> {
   map?: mapboxgl.Map = undefined
 
-  constructor(props: {}) {
+  constructor(props: MapProps) {
     super(props)
     this.state = defaultState
     this.handleContextMenu = this.handleContextMenu.bind(this)
     this.closeContextMenu = this.closeContextMenu.bind(this)
     this.handleDragRoute = this.handleDragRoute.bind(this)
     this.handleAddPoint = this.handleAddPoint.bind(this)
-    this.deletePoint = this.deletePoint.bind(this)
-    this.movePoint = this.movePoint.bind(this)
   }
 
   componentDidMount(): void {
@@ -88,6 +94,27 @@ class Map extends Component<{}, MapState> {
     )
   }
 
+  componentDidUpdate(prevProps: MapProps): void {
+    const { onMoveWaypoint, routes, waypoints } = this.props
+    const { map } = this
+    if (map) {
+      helper.updateRoute(map, routes)
+      if (!waypointsEqual(waypoints, prevProps.waypoints)) {
+        this.state.markers.forEach(
+          (m): void => {
+            m.remove()
+          }
+        )
+        this.setState({
+          markers: waypoints.map(
+            (waypoint, index): Marker =>
+              new Marker(index, waypoint, onMoveWaypoint).addTo(map)
+          ),
+        })
+      }
+    }
+  }
+
   handleContextMenu(e: helper.MouseEvent): void {
     this.setState({
       lastClick: e.lngLat,
@@ -103,84 +130,21 @@ class Map extends Component<{}, MapState> {
     this.setState({ menu: closedMenu })
   }
 
-  async updateRoute(): Promise<void> {
-    if (this.map) {
-      const { routePoints } = this.state
-      updateMarkers(this.state.markers)
-      if (routePoints.length > 1) {
-        const route: Route[] = (await axios.post('/api/route', {
-          points: routePoints,
-        })).data
-        helper.updateRoute(this.map, route)
-        this.setState({
-          lengths: route.map((segment): number => segment.length),
-        })
-      } else {
-        helper.updateRoute(this.map)
-      }
-    }
-  }
-
-  addPoint(i?: number, point?: LngLat): void {
-    if (this.map) {
-      const index = i || this.state.routePoints.length
-      const marker = new Marker(
-        index,
-        point || this.state.lastClick,
-        this.movePoint
-      ).addTo(this.map)
-      this.setState(
-        (state): MapState => ({
-          ...state,
-          menu: closedMenu,
-          routePoints: insertIndex(
-            state.routePoints,
-            index,
-            point || state.lastClick
-          ),
-          markers: insertIndex(state.markers, index, marker),
-        }),
-        this.updateRoute
-      )
-    }
-  }
-
-  deletePoint(i: number): void {
-    this.state.markers[i].remove()
-    this.setState(
-      (state): MapState => ({
-        ...state,
-        lengths: state.lengths.length ? state.lengths.slice(1) : [],
-        routePoints: removeIndex(state.routePoints, i),
-        markers: removeIndex(state.markers, i),
-      }),
-      this.updateRoute
-    )
-  }
-
-  movePoint(i: number, point: LngLat): void {
-    this.setState(
-      (state): MapState => ({
-        ...state,
-        routePoints: replaceIndex(state.routePoints, i, point),
-      }),
-      this.updateRoute
-    )
-  }
-
   handleDragRoute(e: helper.MouseEvent, routeNumber: number): void {
-    this.addPoint(routeNumber + 1, e.lngLat)
+    this.props.onAddWaypoint(e.lngLat, routeNumber + 1)
   }
 
   handleAddPoint(): void {
-    this.addPoint()
+    this.props.onAddWaypoint(this.state.lastClick)
+    this.setState({ menu: closedMenu })
   }
 
   render(): React.ReactElement {
-    const { routePoints, lengths, menu } = this.state
-    const { open, top, left } = menu
+    const {
+      menu: { open, top, left },
+    } = this.state
     return (
-      <Container>
+      <>
         <MapContainer id={elementId} />
         <ContextMenu
           onAdd={this.handleAddPoint}
@@ -188,12 +152,7 @@ class Map extends Component<{}, MapState> {
           top={top}
           left={left}
         />
-        <RouteDrawer
-          onDelete={this.deletePoint}
-          points={routePoints}
-          lengths={lengths}
-        />
-      </Container>
+      </>
     )
   }
 }

@@ -65,12 +65,18 @@ router.get(
   }
 )
 
+interface RouteParams {
+  points: LngLat[]
+  depth?: number
+  height?: number
+}
+
 router.post(
   '/api/route',
   wrapAsync(
     async (req, res): Promise<void> => {
-      const { points }: { points: LngLat[] } = req.body
-      res.send(await getRoute(points))
+      const { points, depth, height }: RouteParams = req.body
+      res.send(await getRoute(points, depth, height))
     }
   )
 )

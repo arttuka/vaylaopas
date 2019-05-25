@@ -32,11 +32,11 @@ const createMarker = (i: number): mapboxgl.Marker => {
 class Marker {
   i: number
   marker: mapboxgl.Marker
-  movePoint: (i: number, point: LngLat) => void
+  movePoint: (point: LngLat, i: number) => void
   constructor(
     i: number,
     point: LngLat,
-    movePoint: (i: number, point: LngLat) => void
+    movePoint: (point: LngLat, i: number) => void
   ) {
     this.i = i
     this.movePoint = movePoint
@@ -48,15 +48,7 @@ class Marker {
   }
 
   onDragEnd(): void {
-    this.movePoint(this.i, this.marker.getLngLat())
-  }
-
-  updateNumber(i: number): void {
-    this.i = i
-    const label = this.marker.getElement().firstChild
-    if (label) {
-      label.textContent = numToLetter(i)
-    }
+    this.movePoint(this.marker.getLngLat(), this.i)
   }
 
   addTo(map: mapboxgl.Map): this {
@@ -70,11 +62,3 @@ class Marker {
 }
 
 export default Marker
-
-export const updateMarkers = (markers: Marker[]): void => {
-  markers.forEach(
-    (marker, i): void => {
-      marker.updateNumber(i)
-    }
-  )
-}

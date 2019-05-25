@@ -42,8 +42,8 @@ const getRouteBetweenVertices = async (
   client: PoolClient,
   from: RouteEndpoint,
   to: RouteEndpoint,
-  depth: number | null,
-  height: number | null,
+  depth: number | undefined,
+  height: number | undefined,
   routeNumber: number
 ): Promise<Route> => {
   const laneQuery = `
@@ -78,8 +78,8 @@ const getRouteBetweenVertices = async (
 
 export const getRoute = async (
   points: LngLat[],
-  depth: number | null = null,
-  height: number | null = null
+  depth: number | undefined,
+  height: number | undefined
 ): Promise<Route[]> => {
   const client = await pool.connect()
   try {

@@ -138,7 +138,7 @@ export const initializeMap = (
   )
 }
 
-export const updateRoute = (map: Map, routes: Route[] = []): void => {
+export const updateRoute = (map: Map, routes: Route[]): void => {
   const startAndEndSource = map.getSource('routeStartAndEnd') as GeoJSONSource
   const routeSource = map.getSource('route') as GeoJSONSource
   if (routes.length) {
