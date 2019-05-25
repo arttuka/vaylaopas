@@ -19,6 +19,7 @@
     "skipLibCheck": true,
     "downlevelIteration": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "jsx": "react",
     "rootDir": "./"
   },

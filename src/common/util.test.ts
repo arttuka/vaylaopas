@@ -5,7 +5,9 @@ import {
   replaceIndex,
   insertIndex,
   addMany,
+  mapBy,
 } from './util'
+import { Index } from '../common/types'
 
 test('partition', (): void => {
   const arr = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -55,4 +57,19 @@ test('insertIndex', (): void => {
 test('addMany', (): void => {
   const set = new Set([1, 2, 3])
   expect(addMany(set, 3, 4, 5)).toEqual(new Set([1, 2, 3, 4, 5]))
+})
+
+test('mapBy', (): void => {
+  const arr = ['1', '2', '3']
+  const expected: Index<string> = {
+    0: 'x1',
+    1: 'x2',
+    2: 'x3',
+  }
+  const result = mapBy(
+    arr,
+    (s): number => parseInt(s, 10) - 1,
+    (s): string => `x${s}`
+  )
+  expect(result).toEqual(expected)
 })

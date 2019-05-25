@@ -22,7 +22,7 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0 && prettier --check src/**/*.{ts,tsx}",
     "test": "jest",
     "test:watch": "jest --watch",
-    "convert": "NODE_ENV=development ts-node ./src/server/convert.ts",
+    "convert": "NODE_ENV=development ts-node ./src/convert/convert.ts",
     "build": "NODE_ENV=production webpack && tsc src/server/index.ts --outdir dist --esModuleInterop",
     "start": "NODE_ENV=production node dist/index.js",
     "clean": "rimraf dist/*"

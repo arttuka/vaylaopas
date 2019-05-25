@@ -1,3 +1,5 @@
+import { Index } from '../common/types'
+
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   const result = []
   let i = 0
@@ -49,4 +51,18 @@ export const addMany = <T>(set: Set<T>, ...ts: T[]): Set<T> => {
     }
   )
   return set
+}
+
+export const mapBy = <T, S>(
+  arr: T[],
+  keyfn: (t: T) => number,
+  valfn: (t: T) => S
+): Index<S> => {
+  const ret: Index<S> = {}
+  arr.forEach(
+    (t): void => {
+      ret[keyfn(t)] = valfn(t)
+    }
+  )
+  return ret
 }

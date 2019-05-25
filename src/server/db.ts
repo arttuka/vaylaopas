@@ -42,17 +42,26 @@ const getRouteBetweenVertices = async (
   client: PoolClient,
   from: RouteEndpoint,
   to: RouteEndpoint,
+  depth: number | null,
+  height: number | null,
   routeNumber: number
 ): Promise<Route> => {
-  const result = await client.query(`
-  SELECT length, AsJSON(geom) AS geometry
-  FROM lane
-  WHERE id IN (
-    SELECT edge FROM pgr_dijkstra(
-      'SELECT id, source, target, length AS cost, length AS reverse_cost FROM lane',
-      ${from.id}, ${to.id}
-    )
-  )`)
+  const laneQuery = `
+    SELECT id, source, target, length AS cost, length AS reverse_cost
+    FROM lane
+    WHERE true
+    ${depth ? `AND depth IS NULL OR depth >= ${depth}` : ''}
+    ${height ? `AND height IS NULL OR height >= ${height}` : ''}`
+  const query = `
+    SELECT length, AsJSON(geom) AS geometry
+    FROM lane
+    WHERE id IN (
+      SELECT edge FROM pgr_dijkstra(
+        '${laneQuery}',
+        ${from.id}, ${to.id}
+      )
+    )`
+  const result = await client.query(query)
   const route = result.rows.map(
     ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
   )
@@ -67,7 +76,11 @@ const getRouteBetweenVertices = async (
   return { route, length, startAndEnd }
 }
 
-export const getRoute = async (points: LngLat[]): Promise<Route[]> => {
+export const getRoute = async (
+  points: LngLat[],
+  depth: number | null = null,
+  height: number | null = null
+): Promise<Route[]> => {
   const client = await pool.connect()
   try {
     const endpoints = await Promise.all(
@@ -78,7 +91,7 @@ export const getRoute = async (points: LngLat[]): Promise<Route[]> => {
     return await Promise.all(
       partition(endpoints, 2, 1).map(
         ([from, to], i): Promise<Route> =>
-          getRouteBetweenVertices(client, from, to, i)
+          getRouteBetweenVertices(client, from, to, depth, height, i)
       )
     )
   } finally {

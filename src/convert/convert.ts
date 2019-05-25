@@ -1,6 +1,9 @@
 import { Client, QueryResult } from 'pg'
-import config from './config'
-import { addMany } from '../common/util'
+import config from '../server/config'
+import { Index } from '../common/types'
+import { addMany, mapBy } from '../common/util'
+import manualLanes from './manualLanes.json'
+import obstructions from './obstructions.json'
 
 const client = new Client(config.db)
 const tableFrom = 'lane_tmp'
@@ -22,17 +25,26 @@ interface SavedIntersection extends Intersection {
 
 const isSaved = (i: Intersection): i is SavedIntersection => i.id !== undefined
 
-interface IntersectionDict {
-  [key: number]: SavedIntersection
-}
+type IntersectionIndex = Index<Intersection>
 
 interface Lane {
   id: number
   intersections: Set<number>
 }
 
-interface LaneDict {
-  [key: number]: Lane
+type LaneIndex = Index<Lane>
+
+interface ManualLane {
+  source: {
+    lane: number[]
+    end: 'source' | 'target'
+  }
+  target: {
+    lane: number[]
+    end: 'source' | 'target'
+  }
+  points: number[][]
+  depth: number
 }
 
 const dropTable = (table: string): Promise<QueryResult> =>
@@ -44,24 +56,12 @@ const createTable = async (table: string): Promise<void> => {
   await client.query(`
     CREATE TABLE ${table} (
       id serial PRIMARY KEY,
-      old_id integer,
       segment integer,
       jnro integer,
-      vay_nimisu varchar(254),
-      vay_nimiru varchar(254),
-      tila numeric,
-      vaylalaji numeric,
-      valaistus numeric,
-      kulkusyv1 numeric,
-      kulkusyv2 numeric,
-      kulkusyv3 numeric,
-      merial_nr numeric,
-      seloste_al varchar(254),
-      seloste_pa varchar(254),
-      diaarinro varchar(254),
-      vahv_pvm date,
-      vayla_lk varchar(254),
-      irrotus_pv varchar(254),
+      jnropart integer,
+      name varchar(254),
+      depth real,
+      height real,
       length real,
       source integer,
       target integer
@@ -76,9 +76,15 @@ const createTables = async (): Promise<void> => {
     await createTable(tableTmp)
     await client.query(`
       INSERT INTO ${tableTmp}
-      (jnro, vay_nimisu, vay_nimiru, tila, vaylalaji, valaistus, kulkusyv1, kulkusyv2, kulkusyv3, merial_nr, seloste_al, seloste_pa, diaarinro, vahv_pvm, vayla_lk, irrotus_pv, geom)
-      SELECT jnro::integer, vay_nimisu, vay_nimiru, tila, vaylalaji, valaistus, kulkusyv1, kulkusyv2, kulkusyv3, merial_nr, seloste_al, seloste_pa, diaarinro, vahv_pvm, vayla_lk, irrotus_pv, (ST_Dump(geom)).geom AS geom
-      FROM ${tableFrom}
+      (jnro, jnropart, name, depth, geom)
+      SELECT jnro, ROW_NUMBER() OVER (PARTITION BY jnro) AS jnropart, name, depth, geom
+      FROM (
+        SELECT
+          jnro::integer AS jnro, vay_nimisu AS name,
+          COALESCE(kulkusyv1::real, kulkusyv2::real, kulkusyv3::real) AS depth,
+          (ST_Dump(geom)).geom AS geom
+        FROM ${tableFrom}
+      ) parts
       ORDER BY jnro ASC
     `)
     await dropTable(tableFrom)
@@ -121,36 +127,32 @@ const createTables = async (): Promise<void> => {
   }
 }
 
-const getLanes = async (): Promise<LaneDict> => {
+const getLanes = async (): Promise<LaneIndex> => {
   const result = await client.query(`SELECT id FROM ${tableTmp}`)
-  const ret: LaneDict = {}
-  result.rows.forEach(
-    ({ id }): void => {
-      ret[id] = {
-        id,
-        intersections: new Set(),
-      }
-    }
+  return mapBy(
+    result.rows,
+    ({ id }): number => id,
+    ({ id }): Lane => ({
+      id,
+      intersections: new Set(),
+    })
   )
-  return ret
 }
 
-const getEndpoints = async (): Promise<IntersectionDict> => {
+const getEndpoints = async (): Promise<IntersectionIndex> => {
   const result = await client.query(`
     SELECT v.id, v.the_geom AS point
     FROM ${verticesTmp} v
   `)
-  const ret: IntersectionDict = {}
-  result.rows.forEach(
-    ({ id, point }): void => {
-      ret[id] = {
-        id,
-        point,
-        laneIds: new Set(),
-      }
-    }
+  return mapBy(
+    result.rows,
+    ({ id }): number => id,
+    ({ id, point }): SavedIntersection => ({
+      id,
+      point,
+      laneIds: new Set(),
+    })
   )
-  return ret
 }
 
 const findGaps = async (vertexId: number): Promise<number[]> => {
@@ -162,7 +164,7 @@ const findGaps = async (vertexId: number): Promise<number[]> => {
       WHERE v.id = $1
       AND l.source != $1
       AND l.target != $1
-      AND ST_DWithin(l.geom, v.the_geom, ${tolerance});`,
+      AND ST_DWithin(l.geom, v.the_geom, ${tolerance})`,
       [vertexId]
     )
     return result.rows.map(({ id }): number => id)
@@ -174,7 +176,7 @@ const findGaps = async (vertexId: number): Promise<number[]> => {
 
 const findIntersections = async (
   laneId: number,
-  iDict: IntersectionDict
+  index: IntersectionIndex
 ): Promise<Intersection[]> => {
   try {
     const result = await client.query(
@@ -202,13 +204,14 @@ const findIntersections = async (
       AND NOT ST_DWithin(point, ta.the_geom, ${tolerance})
       AND NOT ST_DWithin(point, sb.the_geom, ${tolerance})
       AND NOT ST_DWithin(point, tb.the_geom, ${tolerance})
-      GROUP BY point, v.id;`,
+      GROUP BY point, v.id
+      ORDER BY point ASC`,
       [laneId]
     )
     return result.rows.map(
       ({ laneids, point, id }): Intersection => {
         if (id) {
-          const intersection = iDict[id]
+          const intersection = index[id]
           addMany(intersection.laneIds, laneId, ...laneids)
           return intersection
         }
@@ -259,13 +262,13 @@ const saveLane = async (l: Lane): Promise<void> => {
       ) AS d
       ORDER BY distance ASC
     )
-    INSERT INTO ${tableTo} (old_id, segment, source, target, length, geom, jnro, vay_nimisu, vay_nimiru, tila, vaylalaji, valaistus, kulkusyv1, kulkusyv2, kulkusyv3, merial_nr, seloste_al, seloste_pa, diaarinro, vahv_pvm, vayla_lk, irrotus_pv)
+    INSERT INTO ${tableTo} (segment, source, target, length, geom, jnro, jnropart, name, depth, height)
     SELECT 
-      l.id AS old_id, "from".num AS segment, "from".id AS source, "to".id AS target, ST_Length(ST_LineSubstring(l.geom, "from".distance, "to".distance)) AS length, ST_LineSubstring(l.geom, "from".distance, "to".distance) AS geom,
-      l.jnro, l.vay_nimisu, l.vay_nimiru, l.tila, l.vaylalaji, l.valaistus, l.kulkusyv1, l.kulkusyv2, l.kulkusyv3, l.merial_nr, l.seloste_al, l.seloste_pa, l.diaarinro, l.vahv_pvm, l.vayla_lk, l.irrotus_pv
+      "from".num AS segment, "from".id AS source, "to".id AS target, ST_Length(ST_LineSubstring(l.geom, "from".distance, "to".distance)) AS length, ST_LineSubstring(l.geom, "from".distance, "to".distance) AS geom,
+      l.jnro, l.jnropart, l.name, l.depth, l.height
     FROM distances AS "from"
     JOIN distances AS "to" ON "from".num + 1 = "to".num
-    JOIN ${tableTmp} l ON l.id = $1;
+    JOIN ${tableTmp} l ON l.id = $1
 `
   try {
     await client.query(query, [l.id, ...Array.from(l.intersections)])
@@ -275,13 +278,83 @@ const saveLane = async (l: Lane): Promise<void> => {
   }
 }
 
+const point = ([lng, lat]: number[]): string => `ST_Transform(
+  'SRID=4326;POINT(${lng} ${lat})'::geometry, 3067
+)`
+
+const endQuery = (i: number, end: 'source' | 'target'): string => `
+  (SELECT ${end}
+    FROM ${tableTo}
+    WHERE jnro = $${i} AND jnropart = $${i + 1} AND segment = $${i + 2})`
+
+const saveManualLanes = async (): Promise<void> => {
+  for (const lane of manualLanes) {
+    const { source, target, depth, points } = lane as ManualLane
+    const line = `ST_MakeLine(Array[${[
+      's.the_geom',
+      ...points.map(point),
+      't.the_geom',
+    ].join(',')}])`
+    const name = `manual_${source.lane[0]}_${target.lane[0]}`
+    const query = `
+      INSERT INTO ${tableTo}
+        (jnro, name, source, target, length, geom, depth)
+      SELECT
+        -1 AS jnro, $1 AS name, s.id AS source, t.id AS target,
+        ST_Length(${line}) AS length, ${line} AS geom, $2 as depth
+      FROM ${verticesTo} s
+      JOIN ${verticesTo} t
+      ON s.id = ${endQuery(3, source.end)}
+      AND t.id = ${endQuery(6, target.end)}`
+    try {
+      const result = await client.query(query, [
+        name,
+        depth,
+        ...source.lane,
+        ...target.lane,
+      ])
+      if (result.rowCount !== 1) {
+        console.error(
+          `Error inserting manual lane from ${source.lane[0]} to ${
+            target.lane[0]
+          }`
+        )
+      }
+    } catch (err) {
+      console.error(
+        `Error saving manual lane from ${source.lane[0]} to ${target.lane[0]}`,
+        query
+      )
+      throw err
+    }
+  }
+}
+
+const saveObstructions = async (): Promise<void> => {
+  const query = `
+    UPDATE lane
+    SET height = $1
+    WHERE jnro = $2 AND jnropart = $3 AND segment = $4`
+  for (const { height, lane } of obstructions) {
+    try {
+      const result = await client.query(query, [height, ...lane])
+      if (result.rowCount !== 1) {
+        console.error(`Error inserting obstruction for lane ${lane}`)
+      }
+    } catch (err) {
+      console.error(`Error saving obstruction for lane ${lane}`)
+      throw err
+    }
+  }
+}
+
 const convert = async (): Promise<void> => {
   try {
     await client.connect()
     await client.query('BEGIN')
     await createTables()
-    const intersections: IntersectionDict = await getEndpoints()
-    const lanes: LaneDict = await getLanes()
+    const intersections: IntersectionIndex = await getEndpoints()
+    const lanes: LaneIndex = await getLanes()
 
     let count = 0
     const progress = (): void => {
@@ -331,10 +404,14 @@ const convert = async (): Promise<void> => {
 
     count = Object.values(lanes).length
     console.log(`Saving ${count} lanes`)
-    for (const lane of Object.values(lanes)) {
+    for (const lane of Object.values(lanes).sort(
+      (l1, l2): number => l1.id - l2.id
+    )) {
       progress()
       await saveLane(lane)
     }
+    await saveManualLanes()
+    await saveObstructions()
     await dropTable(tableTmp)
     await dropTable(verticesTmp)
     console.log('All done!')

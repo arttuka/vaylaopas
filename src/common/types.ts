@@ -24,6 +24,10 @@ export interface Route {
   length: number
 }
 
+export interface Index<T> {
+  [key: number]: T
+}
+
 export interface ClientConfig {
   mapserver: string
 }
