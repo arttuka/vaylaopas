@@ -2,10 +2,11 @@ import React, { Component } from 'react'
 import axios from 'axios'
 import { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
-import Drawer from './Sidebar/Drawer'
 import Map from './Map/Map'
+import Sidebar from './Sidebar/Sidebar'
 import RouteList from './Sidebar/RouteList'
-import { Route } from '../common/types'
+import SettingsContainer from './Sidebar/SettingsContainer'
+import { Route, Settings } from '../common/types'
 import { removeIndex, replaceIndex, insertIndex } from '../common/util'
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -19,10 +20,7 @@ const Container = styled.div`
 interface AppState {
   waypoints: LngLat[]
   routes: Route[]
-  settings: {
-    height?: number
-    depth?: number
-  }
+  settings: Settings
 }
 
 class App extends Component<{}, AppState> {
@@ -36,6 +34,7 @@ class App extends Component<{}, AppState> {
     this.addWaypoint = this.addWaypoint.bind(this)
     this.deleteWaypoint = this.deleteWaypoint.bind(this)
     this.moveWaypoint = this.moveWaypoint.bind(this)
+    this.updateSetting = this.updateSetting.bind(this)
   }
 
   addWaypoint(point: LngLat, i?: number): void {
@@ -83,13 +82,26 @@ class App extends Component<{}, AppState> {
     }
   }
 
+  updateSetting(key: keyof Settings, value?: number): void {
+    this.setState(
+      ({ settings }) => ({
+        settings: { ...settings, [key]: value },
+      }),
+      this.updateRoute
+    )
+  }
+
   render(): React.ReactElement {
-    const { routes, waypoints } = this.state
+    const { settings, routes, waypoints } = this.state
     return (
       <Container>
-        <Drawer>
+        <Sidebar>
+          <SettingsContainer
+            settings={settings}
+            updateSetting={this.updateSetting}
+          />
           <RouteList onDelete={this.deleteWaypoint} routes={routes} />
-        </Drawer>
+        </Sidebar>
         <Map
           routes={routes}
           waypoints={waypoints}

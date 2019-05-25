@@ -28,6 +28,11 @@ export interface Index<T> {
   [key: number]: T
 }
 
+export interface Settings {
+  height?: number
+  depth?: number
+}
+
 export interface ClientConfig {
   mapserver: string
 }
