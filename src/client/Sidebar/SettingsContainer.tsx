@@ -1,4 +1,4 @@
-import React, { Component, ComponentType, ReactElement } from 'react'
+import React, { ComponentType, PureComponent, ReactElement } from 'react'
 import ExpansionPanel from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary, {
   ExpansionPanelSummaryProps,
@@ -44,7 +44,7 @@ interface SettingsProps {
   updateSetting: (key: keyof Settings, value?: number) => void
 }
 
-class SettingsContainer extends Component<SettingsProps, {}> {
+class SettingsContainer extends PureComponent<SettingsProps> {
   handleUpdateDepth: ChangeHandler
   handleUpdateHeight: ChangeHandler
   handleUpdateSpeed: ChangeHandler

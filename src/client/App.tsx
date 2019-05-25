@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component, ReactElement } from 'react'
 import axios from 'axios'
 import { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
@@ -37,6 +37,14 @@ const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   )
 }
 
+const getStoredSetting = (key: keyof Settings): number | undefined => {
+  const value = localStorage.getItem(key)
+  if (value) {
+    return parseFloat(value)
+  }
+  return undefined
+}
+
 interface AppState {
   waypoints: LngLat[]
   routes: Route[]
@@ -49,7 +57,12 @@ class App extends Component<{}, AppState> {
     this.state = {
       waypoints: [],
       routes: [],
-      settings: {},
+      settings: {
+        height: getStoredSetting('height'),
+        depth: getStoredSetting('depth'),
+        speed: getStoredSetting('speed'),
+        consumption: getStoredSetting('consumption'),
+      },
     }
     this.addWaypoint = this.addWaypoint.bind(this)
     this.deleteWaypoint = this.deleteWaypoint.bind(this)
@@ -121,9 +134,14 @@ class App extends Component<{}, AppState> {
         }
       })
     }
+    if (value !== undefined) {
+      localStorage.setItem(key, value.toString())
+    } else {
+      localStorage.removeItem(key)
+    }
   }
 
-  render(): React.ReactElement {
+  render(): ReactElement {
     const { settings, routes, waypoints } = this.state
     return (
       <Container>

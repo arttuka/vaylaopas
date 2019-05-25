@@ -115,9 +115,7 @@ export const initializeMap = (
     const dragIndicatorSource = map.getSource('dragIndicator') as GeoJSONSource
     dragIndicatorSource.setData(pointFeature(e.lngLat))
   }
-  const onUp = (route: number): ((e: MouseEvent) => void) => (
-    e: MouseEvent
-  ): void => {
+  const onUp = (e: MouseEvent, route: number): void => {
     map.off('mousemove', onMove)
     const dragIndicatorSource = map.getSource('dragIndicator') as GeoJSONSource
     dragIndicatorSource.setData(pointFeature())
@@ -132,7 +130,10 @@ export const initializeMap = (
       const feature = e.features && e.features[0]
       if (featureIsLane(feature)) {
         map.on('mousemove', onMove)
-        map.once('mouseup', onUp(feature.properties.route))
+        map.once(
+          'mouseup',
+          (e: MouseEvent): void => onUp(e, feature.properties.route)
+        )
       }
     }
   )

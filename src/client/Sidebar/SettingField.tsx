@@ -1,4 +1,5 @@
 import React, {
+  ChangeEvent,
   ComponentType,
   FunctionComponent,
   PureComponent,
@@ -52,7 +53,7 @@ class SettingField extends PureComponent<SettingFieldProps> {
     this.onClear = this.onClear.bind(this)
   }
 
-  onChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  onChange(e: ChangeEvent<HTMLInputElement>): void {
     const value = parseFloat(e.currentTarget.value)
     this.props.onChange(isNaN(value) ? undefined : value)
   }

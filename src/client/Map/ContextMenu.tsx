@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react'
+import React, { FunctionComponent, ReactElement } from 'react'
 import MenuList from '@material-ui/core/MenuList'
 import MenuItem from '@material-ui/core/MenuItem'
 import Paper from '@material-ui/core/Paper'
@@ -10,25 +10,24 @@ interface ContextMenuProps {
   onAdd: () => void
 }
 
-class ContextMenu extends PureComponent<ContextMenuProps> {
-  render(): React.ReactNode {
-    const { open, top, left, onAdd } = this.props
-    return (
-      open && (
-        <Paper
-          style={{
-            top: `${top}px`,
-            left: `${left}px`,
-            position: 'absolute',
-          }}
-        >
-          <MenuList>
-            <MenuItem onClick={onAdd}>Lisää reitille</MenuItem>
-          </MenuList>
-        </Paper>
-      )
-    )
-  }
-}
+const ContextMenu: FunctionComponent<ContextMenuProps> = ({
+  open,
+  top,
+  left,
+  onAdd,
+}: ContextMenuProps): ReactElement | null =>
+  open ? (
+    <Paper
+      style={{
+        top: `${top}px`,
+        left: `${left}px`,
+        position: 'absolute',
+      }}
+    >
+      <MenuList>
+        <MenuItem onClick={onAdd}>Lisää reitille</MenuItem>
+      </MenuList>
+    </Paper>
+  ) : null
 
 export default ContextMenu

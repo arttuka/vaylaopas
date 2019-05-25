@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component, ReactElement } from 'react'
 import mapboxgl, { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
 import ContextMenu from './ContextMenu'
@@ -139,7 +139,7 @@ class Map extends Component<MapProps, MapState> {
     this.setState({ menu: closedMenu })
   }
 
-  render(): React.ReactElement {
+  render(): ReactElement {
     const {
       menu: { open, top, left },
     } = this.state
