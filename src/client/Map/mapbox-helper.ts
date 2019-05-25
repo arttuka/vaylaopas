@@ -51,66 +51,6 @@ export const initializeMap = (
   handleDragRoute: (e: MouseEvent, route: number) => void
 ): void => {
   const canvas = map.getCanvasContainer()
-  map.addSource('route', {
-    type: 'geojson',
-    data: laneCollection(),
-  })
-  map.addLayer(
-    lineLayer({
-      id: 'route',
-      source: 'route',
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 3,
-      },
-    })
-  )
-  map.addSource('routeStartAndEnd', {
-    type: 'geojson',
-    data: laneCollection(),
-  })
-  map.addLayer(
-    lineLayer({
-      id: 'routeStartAndEnd',
-      source: 'routeStartAndEnd',
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 3,
-        'line-dasharray': [0.5, 3],
-      },
-    })
-  )
-  map.addSource('dragIndicator', {
-    type: 'geojson',
-    data: pointFeature(),
-  })
-  map.addLayer({
-    id: 'dragIndicator',
-    source: 'dragIndicator',
-    type: 'circle',
-    paint: {
-      'circle-radius': 10,
-      'circle-color': '#ffffff',
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#000000',
-    },
-  })
-  map.on('contextmenu', handleContextMenu)
-  map.on('click', handleClick)
-  map.on(
-    'mouseenter',
-    'route',
-    (): void => {
-      canvas.style.cursor = 'move'
-    }
-  )
-  map.on(
-    'mouseleave',
-    'route',
-    (): void => {
-      canvas.style.cursor = ''
-    }
-  )
   const onMove = (e: MouseEvent): void => {
     const dragIndicatorSource = map.getSource('dragIndicator') as GeoJSONSource
     dragIndicatorSource.setData(pointFeature(e.lngLat))
@@ -121,22 +61,83 @@ export const initializeMap = (
     dragIndicatorSource.setData(pointFeature())
     handleDragRoute(e, route)
   }
-  map.on(
-    'mousedown',
-    'route',
-    (e): void => {
-      e.preventDefault()
-      canvas.style.cursor = 'grab'
-      const feature = e.features && e.features[0]
-      if (featureIsLane(feature)) {
-        map.on('mousemove', onMove)
-        map.once(
-          'mouseup',
-          (e: MouseEvent): void => onUp(e, feature.properties.route)
-        )
+  map
+    .addSource('route', {
+      type: 'geojson',
+      data: laneCollection(),
+    })
+    .addLayer(
+      lineLayer({
+        id: 'route',
+        source: 'route',
+        paint: {
+          'line-color': '#ff0000',
+          'line-width': 3,
+        },
+      })
+    )
+    .addSource('routeStartAndEnd', {
+      type: 'geojson',
+      data: laneCollection(),
+    })
+    .addLayer(
+      lineLayer({
+        id: 'routeStartAndEnd',
+        source: 'routeStartAndEnd',
+        paint: {
+          'line-color': '#ff0000',
+          'line-width': 3,
+          'line-dasharray': [0.5, 3],
+        },
+      })
+    )
+    .addSource('dragIndicator', {
+      type: 'geojson',
+      data: pointFeature(),
+    })
+    .addLayer({
+      id: 'dragIndicator',
+      source: 'dragIndicator',
+      type: 'circle',
+      paint: {
+        'circle-radius': 10,
+        'circle-color': '#ffffff',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#000000',
+      },
+    })
+    .on('contextmenu', handleContextMenu)
+    .on('click', handleClick)
+    .on(
+      'mouseenter',
+      'route',
+      (): void => {
+        canvas.style.cursor = 'move'
       }
-    }
-  )
+    )
+    .on(
+      'mouseleave',
+      'route',
+      (): void => {
+        canvas.style.cursor = ''
+      }
+    )
+    .on(
+      'mousedown',
+      'route',
+      (e): void => {
+        e.preventDefault()
+        canvas.style.cursor = 'grab'
+        const feature = e.features && e.features[0]
+        if (featureIsLane(feature)) {
+          map.on('mousemove', onMove)
+          map.once(
+            'mouseup',
+            (e: MouseEvent): void => onUp(e, feature.properties.route)
+          )
+        }
+      }
+    )
 }
 
 export const updateRoute = (map: Map, routes: Route[]): void => {

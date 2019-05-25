@@ -37,12 +37,24 @@ const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   )
 }
 
+const fetchRoutes = async (
+  waypoints: LngLat[],
+  settings: Settings
+): Promise<Route[]> => {
+  if (waypoints.length > 1) {
+    const routes: Route[] = (await axios.post('/api/route', {
+      points: waypoints,
+      depth: settings.depth,
+      height: settings.height,
+    })).data
+    return enrichRoutes(routes, settings)
+  }
+  return []
+}
+
 const getStoredSetting = (key: keyof Settings): number | undefined => {
   const value = localStorage.getItem(key)
-  if (value) {
-    return parseFloat(value)
-  }
-  return undefined
+  return value ? parseFloat(value) : undefined
 }
 
 interface AppState {
@@ -51,7 +63,7 @@ interface AppState {
   settings: Settings
 }
 
-class App extends Component<{}, AppState> {
+export default class App extends Component<{}, AppState> {
   constructor(props: {}) {
     super(props)
     this.state = {
@@ -70,51 +82,40 @@ class App extends Component<{}, AppState> {
     this.updateSetting = this.updateSetting.bind(this)
   }
 
-  addWaypoint(point: LngLat, i?: number): void {
-    const index = i !== undefined ? i : this.state.waypoints.length
+  addWaypoint(point: LngLat, index?: number): void {
     this.setState(
-      state => ({
-        waypoints: insertIndex(state.waypoints, index, point),
+      ({ waypoints }) => ({
+        waypoints: insertIndex(
+          waypoints,
+          index !== undefined ? index : waypoints.length,
+          point
+        ),
       }),
-      this.fetchRoute
+      this.updateRoutes
     )
   }
 
   deleteWaypoint(index: number): void {
     this.setState(
-      state => ({
-        waypoints: removeIndex(state.waypoints, index),
+      ({ waypoints }) => ({
+        waypoints: removeIndex(waypoints, index),
       }),
-      this.fetchRoute
+      this.updateRoutes
     )
   }
 
   moveWaypoint(point: LngLat, index: number): void {
     this.setState(
-      state => ({
-        waypoints: replaceIndex(state.waypoints, index, point),
+      ({ waypoints }) => ({
+        waypoints: replaceIndex(waypoints, index, point),
       }),
-      this.fetchRoute
+      this.updateRoutes
     )
   }
 
-  async fetchRoute(): Promise<void> {
-    const {
-      settings: { depth, height },
-      waypoints,
-    } = this.state
-    if (waypoints.length > 1) {
-      const routes: Route[] = (await axios.post('/api/route', {
-        points: waypoints,
-        depth,
-        height,
-      })).data
-      this.setState(({ settings }) => ({
-        routes: enrichRoutes(routes, settings),
-      }))
-    } else {
-      this.setState({ routes: [] })
-    }
+  async updateRoutes(): Promise<void> {
+    const { settings, waypoints } = this.state
+    this.setState({ routes: await fetchRoutes(waypoints, settings) })
   }
 
   updateSetting(key: keyof Settings, value?: number): void {
@@ -123,7 +124,7 @@ class App extends Component<{}, AppState> {
         ({ settings }) => ({
           settings: { ...settings, [key]: value },
         }),
-        this.fetchRoute
+        this.updateRoutes
       )
     } else {
       this.setState(({ routes, settings }) => {
@@ -162,5 +163,3 @@ class App extends Component<{}, AppState> {
     )
   }
 }
-
-export default App

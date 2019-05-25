@@ -11,7 +11,7 @@ export interface LaneProperties {
 
 export type Lane = Feature<LineString, LaneProperties>
 
-export const featureIsLane = (feature: Feature | undefined): feature is Lane =>
+export const featureIsLane = (feature?: Feature): feature is Lane =>
   feature !== undefined &&
   feature.properties !== null &&
   feature.properties.hasOwnProperty('route')
@@ -43,9 +43,6 @@ export interface ClientConfig {
 
 export interface Config {
   client: ClientConfig
-  server: {
-    port: number
-  }
   db: {
     host: string
     port: number

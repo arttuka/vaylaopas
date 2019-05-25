@@ -60,7 +60,7 @@ const waypointsEqual = (w1: LngLat[], w2: LngLat[]): boolean => {
   return true
 }
 
-class Map extends Component<MapProps, MapState> {
+export default class Map extends Component<MapProps, MapState> {
   map?: mapboxgl.Map = undefined
 
   constructor(props: MapProps) {
@@ -79,6 +79,7 @@ class Map extends Component<MapProps, MapState> {
       hash: true,
       zoom: 7,
       center: [24.94, 60.17],
+      dragRotate: false,
     })
     this.map = map
     map.on(
@@ -156,5 +157,3 @@ class Map extends Component<MapProps, MapState> {
     )
   }
 }
-
-export default Map

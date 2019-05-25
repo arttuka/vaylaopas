@@ -25,7 +25,7 @@ interface SavedIntersection extends Intersection {
 
 const isSaved = (i: Intersection): i is SavedIntersection => i.id !== undefined
 
-type IntersectionIndex = Index<Intersection>
+type IntersectionIndex = Index<SavedIntersection>
 
 interface Lane {
   id: number
@@ -113,8 +113,8 @@ const createTables = async (): Promise<void> => {
       `SELECT MAX(id) + 1 AS maxid FROM ${verticesTo}`
     )).rows[0].maxid
     await client.query(`
-    ALTER SEQUENCE ${verticesTo}_id_seq
-    RESTART WITH ${maxId}
+      ALTER SEQUENCE ${verticesTo}_id_seq
+      RESTART WITH ${maxId}
     `)
     await client.query(`
       ALTER TABLE ${tableTo}
@@ -366,12 +366,12 @@ const convert = async (): Promise<void> => {
 
     count = Object.values(intersections).length
     console.log(`Processing ${count} vertices`)
-    for (const intersection of Object.values(intersections)) {
+    for (const { id, laneIds } of Object.values(intersections)) {
       progress()
-      ;(await findGaps(intersection.id)).forEach(
+      ;(await findGaps(id)).forEach(
         (laneId): void => {
-          lanes[laneId].intersections.add(intersection.id)
-          intersections[intersection.id].laneIds.add(laneId)
+          lanes[laneId].intersections.add(id)
+          laneIds.add(laneId)
         }
       )
     }

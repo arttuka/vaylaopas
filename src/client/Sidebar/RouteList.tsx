@@ -1,6 +1,6 @@
 import React, {
   ComponentType,
-  FunctionComponent,
+  PureComponent,
   ReactElement,
   ReactNode,
 } from 'react'
@@ -31,31 +31,27 @@ const Avatar: ComponentType<AvatarProps> = withStyles({
   },
 })(MuiAvatar)
 
-interface PointProps {
-  text: string
+class Point extends PureComponent<{ text: string }> {
+  render(): ReactElement {
+    return (
+      <ListItemAvatar>
+        <Avatar>{this.props.text}</Avatar>
+      </ListItemAvatar>
+    )
+  }
 }
 
-const Point: FunctionComponent<PointProps> = ({
-  text,
-}: PointProps): ReactElement => (
-  <ListItemAvatar>
-    <Avatar>{text}</Avatar>
-  </ListItemAvatar>
-)
-
-interface DeleteProps {
-  onClick: () => void
+class Delete extends PureComponent<{ onClick: () => void }> {
+  render(): ReactElement {
+    return (
+      <ListItemSecondaryAction>
+        <IconButton onClick={this.props.onClick}>
+          <DeleteIcon />
+        </IconButton>
+      </ListItemSecondaryAction>
+    )
+  }
 }
-
-const Delete: FunctionComponent<DeleteProps> = ({
-  onClick,
-}: DeleteProps): ReactElement => (
-  <ListItemSecondaryAction>
-    <IconButton onClick={onClick}>
-      <DeleteIcon />
-    </IconButton>
-  </ListItemSecondaryAction>
-)
 
 interface RouteSegmentProps {
   length: number
@@ -65,25 +61,22 @@ interface RouteSegmentProps {
   onDelete?: () => void
 }
 
-const RouteSegment: FunctionComponent<RouteSegmentProps> = ({
-  index,
-  length,
-  duration,
-  fuel,
-  onDelete,
-}: RouteSegmentProps): ReactElement => {
-  const durationStr = duration !== undefined ? formatDuration(duration) : ''
-  const fuelStr = fuel !== undefined ? `, ${round(fuel, 1)} l` : ''
-  return (
-    <ListItem>
-      <Point text={index !== undefined ? numToLetter(index) : '='} />
-      <ListItemText
-        primary={`${toNM(length)} mpk`}
-        secondary={durationStr + fuelStr}
-      />
-      {onDelete && <Delete onClick={onDelete} />}
-    </ListItem>
-  )
+class RouteSegment extends PureComponent<RouteSegmentProps> {
+  render(): ReactElement {
+    const { index, length, duration, fuel, onDelete } = this.props
+    const durationStr = duration ? formatDuration(duration) : ''
+    const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
+    return (
+      <ListItem>
+        <Point text={index !== undefined ? numToLetter(index) : '='} />
+        <ListItemText
+          primary={`${toNM(length)} mpk`}
+          secondary={durationStr + fuelStr}
+        />
+        {onDelete && <Delete onClick={onDelete} />}
+      </ListItem>
+    )
+  }
 }
 
 interface Totals {
@@ -110,38 +103,36 @@ interface RouteListProps {
   onDelete: (index: number) => void
 }
 
-const RouteList: FunctionComponent<RouteListProps> = ({
-  routes,
-  onDelete,
-}: RouteListProps): ReactElement => {
-  const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
-  return (
-    <List>
-      {routes.length > 0 && (
-        <ListItem>
-          <Point text="A" />
-          <Delete onClick={(): void => onDelete(0)} />
-        </ListItem>
-      )}
-      {routes.map(
-        ({ length, duration, fuel }, i): ReactNode => (
-          <RouteSegment
-            key={`route-segment-${i}`}
-            length={length}
-            duration={duration}
-            fuel={fuel}
-            index={i + 1}
-            onDelete={(): void => onDelete(i + 1)}
-          />
-        )
-      )}
-      <RouteSegment
-        length={totalLength}
-        duration={totalDuration}
-        fuel={totalFuel}
-      />
-    </List>
-  )
+export default class RouteList extends PureComponent<RouteListProps> {
+  render(): ReactElement {
+    const { routes, onDelete } = this.props
+    const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
+    return (
+      <List>
+        {routes.length > 0 && (
+          <ListItem>
+            <Point text="A" />
+            <Delete onClick={(): void => onDelete(0)} />
+          </ListItem>
+        )}
+        {routes.map(
+          ({ length, duration, fuel }, i): ReactNode => (
+            <RouteSegment
+              key={`route-segment-${i}`}
+              length={length}
+              duration={duration}
+              fuel={fuel}
+              index={i + 1}
+              onDelete={(): void => onDelete(i + 1)}
+            />
+          )
+        )}
+        <RouteSegment
+          length={totalLength}
+          duration={totalDuration}
+          fuel={totalFuel}
+        />
+      </List>
+    )
+  }
 }
-
-export default RouteList

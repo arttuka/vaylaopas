@@ -1,7 +1,6 @@
 import React, {
   ChangeEvent,
   ComponentType,
-  FunctionComponent,
   PureComponent,
   ReactElement,
 } from 'react'
@@ -22,16 +21,18 @@ const IconButton: ComponentType<IconButtonProps> = withStyles({
   },
 })(MuiIconButton)
 
-const ClearButton: FunctionComponent<ClearButtonProps> = ({
-  disabled,
-  onClick,
-}: ClearButtonProps): ReactElement => (
-  <InputAdornment position="start">
-    <IconButton disabled={disabled} onClick={onClick}>
-      <CancelIcon />
-    </IconButton>
-  </InputAdornment>
-)
+class ClearButton extends PureComponent<ClearButtonProps> {
+  render(): ReactElement {
+    const { disabled, onClick } = this.props
+    return (
+      <InputAdornment position="start">
+        <IconButton disabled={disabled} onClick={onClick}>
+          <CancelIcon />
+        </IconButton>
+      </InputAdornment>
+    )
+  }
+}
 
 const TextField: ComponentType<TextFieldProps> = withStyles({
   root: {
@@ -46,7 +47,7 @@ interface SettingFieldProps {
   onChange: (value?: number) => void
 }
 
-class SettingField extends PureComponent<SettingFieldProps> {
+export default class SettingField extends PureComponent<SettingFieldProps> {
   constructor(props: SettingFieldProps) {
     super(props)
     this.onChange = this.onChange.bind(this)
@@ -87,5 +88,3 @@ class SettingField extends PureComponent<SettingFieldProps> {
     )
   }
 }
-
-export default SettingField

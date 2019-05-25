@@ -29,7 +29,7 @@ const createMarker = (i: number): mapboxgl.Marker => {
   return marker
 }
 
-class Marker {
+export default class Marker {
   i: number
   marker: mapboxgl.Marker
   movePoint: (point: LngLat, i: number) => void
@@ -44,7 +44,7 @@ class Marker {
     this.marker = createMarker(i)
       .setLngLat(point)
       .setDraggable(true)
-    this.marker.on('dragend', this.onDragEnd)
+      .on('dragend', this.onDragEnd)
   }
 
   onDragEnd(): void {
@@ -60,5 +60,3 @@ class Marker {
     this.marker.remove()
   }
 }
-
-export default Marker

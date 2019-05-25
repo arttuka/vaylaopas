@@ -44,7 +44,7 @@ interface SettingsProps {
   updateSetting: (key: keyof Settings, value?: number) => void
 }
 
-class SettingsContainer extends PureComponent<SettingsProps> {
+export default class SettingsContainer extends PureComponent<SettingsProps> {
   handleUpdateDepth: ChangeHandler
   handleUpdateHeight: ChangeHandler
   handleUpdateSpeed: ChangeHandler
@@ -66,9 +66,7 @@ class SettingsContainer extends PureComponent<SettingsProps> {
   }
 
   render(): ReactElement {
-    const {
-      settings: { depth, height, speed, consumption },
-    } = this.props
+    const { depth, height, speed, consumption } = this.props.settings
     return (
       <ExpansionPanel>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
@@ -104,5 +102,3 @@ class SettingsContainer extends PureComponent<SettingsProps> {
     )
   }
 }
-
-export default SettingsContainer

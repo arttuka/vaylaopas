@@ -13,9 +13,6 @@ if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
     client: {
       mapserver: process.env.MAPSERVER!,
     },
-    server: {
-      port: parseInt(process.env.SERVER_PORT!, 10),
-    },
     db: {
       host: process.env.DB_HOST!,
       port: parseInt(process.env.DB_PORT!, 10),

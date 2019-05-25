@@ -24,13 +24,15 @@ const getClosestVertex = async (
   p: LngLat
 ): Promise<RouteEndpoint> => {
   const point = `ST_Transform(
-    'SRID=4326;POINT(${p.lng} ${p.lat})'::geometry, 3067
+    ST_SetSRID(ST_MakePoint($1, $2), 4326),
+    3067
   )`
-  const result = await client.query(`
-    SELECT id, AsJSON(ST_MakeLine(${point}, the_geom)) AS geometry
-    FROM lane_vertices_pgr
-    ORDER BY the_geom <-> ${point} LIMIT 1
-  `)
+  const result = await client.query(
+    `SELECT id, AsJSON(ST_MakeLine(${point}, the_geom)) AS geometry
+     FROM lane_vertices_pgr
+     ORDER BY the_geom <-> ${point} LIMIT 1`,
+    [p.lng, p.lat]
+  )
   const { id, geometry } = result.rows[0]
   return {
     id,
@@ -38,14 +40,22 @@ const getClosestVertex = async (
   }
 }
 
+const assertNumber = (n?: number): void => {
+  if (n !== undefined && typeof n !== 'number') {
+    throw new Error(`Expected ${n} to be a number, got ${typeof n}`)
+  }
+}
+
 const getRouteBetweenVertices = async (
   client: PoolClient,
+  routeNumber: number,
   from: RouteEndpoint,
   to: RouteEndpoint,
-  depth: number | undefined,
-  height: number | undefined,
-  routeNumber: number
+  depth?: number,
+  height?: number
 ): Promise<Route> => {
+  assertNumber(depth)
+  assertNumber(height)
   const laneQuery = `
     SELECT id, source, target, length AS cost, length AS reverse_cost
     FROM lane
@@ -57,11 +67,10 @@ const getRouteBetweenVertices = async (
     FROM lane
     WHERE id IN (
       SELECT edge FROM pgr_dijkstra(
-        '${laneQuery}',
-        ${from.id}, ${to.id}
+        '${laneQuery}', $1::bigint, $2::bigint
       )
     )`
-  const result = await client.query(query)
+  const result = await client.query(query, [from.id, to.id])
   const route = result.rows.map(
     ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
   )
@@ -78,8 +87,8 @@ const getRouteBetweenVertices = async (
 
 export const getRoute = async (
   points: LngLat[],
-  depth: number | undefined,
-  height: number | undefined
+  depth?: number,
+  height?: number
 ): Promise<Route[]> => {
   const client = await pool.connect()
   try {
@@ -91,7 +100,7 @@ export const getRoute = async (
     return await Promise.all(
       partition(endpoints, 2, 1).map(
         ([from, to], i): Promise<Route> =>
-          getRouteBetweenVertices(client, from, to, depth, height, i)
+          getRouteBetweenVertices(client, i, from, to, depth, height)
       )
     )
   } finally {
