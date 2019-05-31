@@ -9,7 +9,12 @@ const port = process.env.SERVER_PORT
   : 8080
 
 if (process.env.NODE_ENV === 'production') {
-  app.use('/static', express.static(path.join(__dirname, 'public')))
+  app.use(
+    '/static',
+    express.static(path.join(__dirname, 'public'), {
+      maxAge: 86400000,
+    })
+  )
   const router = require('./server')
   app.use(router())
 } else {
