@@ -34,19 +34,6 @@ interface Lane {
 
 type LaneIndex = Index<Lane>
 
-interface ManualLane {
-  source: {
-    lane: number[]
-    end: 'source' | 'target'
-  }
-  target: {
-    lane: number[]
-    end: 'source' | 'target'
-  }
-  points: number[][]
-  depth: number
-}
-
 const dropTable = (table: string): Promise<QueryResult> =>
   client.query(`DROP TABLE IF EXISTS ${table}`)
 
@@ -282,47 +269,49 @@ const point = ([lng, lat]: number[]): string => `ST_Transform(
   'SRID=4326;POINT(${lng} ${lat})'::geometry, 3067
 )`
 
-const endQuery = (i: number, end: 'source' | 'target'): string => `
-  (SELECT ${end}
-    FROM ${tableTo}
-    WHERE jnro = $${i} AND jnropart = $${i + 1} AND segment = $${i + 2})`
+const getClosestVertex = async (p: number[]): Promise<number> => {
+  const result = await client.query(`
+    SELECT id
+    FROM ${verticesTo}
+    ORDER BY the_geom <-> ${point(p)}
+    LIMIT 1
+  `)
+  return result.rows[0].id
+}
 
 const saveManualLanes = async (): Promise<void> => {
   for (const lane of manualLanes) {
-    const { source, target, depth, points } = lane as ManualLane
+    const { depth, points } = lane
+    const source = await getClosestVertex(points[0])
+    const target = await getClosestVertex(points[points.length - 1])
     const line = `ST_MakeLine(Array[${[
       's.the_geom',
-      ...points.map(point),
+      ...points.slice(1, -1).map(point),
       't.the_geom',
     ].join(',')}])`
-    const name = `manual_${source.lane[0]}_${target.lane[0]}`
     const query = `
       INSERT INTO ${tableTo}
         (jnro, name, source, target, length, geom, depth)
       SELECT
-        -1 AS jnro, $1 AS name, s.id AS source, t.id AS target,
-        ST_Length(${line}) AS length, ${line} AS geom, $2 as depth
+        -1 AS jnro,
+        'manual_' || s.id || '_' || t.id AS name,
+        s.id AS source,
+        t.id AS target,
+        ST_Length(${line}) AS length,
+        ${line} AS geom,
+        $1 as depth
       FROM ${verticesTo} s
       JOIN ${verticesTo} t
-      ON s.id = ${endQuery(3, source.end)}
-      AND t.id = ${endQuery(6, target.end)}`
+      ON s.id = $2
+      AND t.id = $3`
     try {
-      const result = await client.query(query, [
-        name,
-        depth,
-        ...source.lane,
-        ...target.lane,
-      ])
+      const result = await client.query(query, [depth, source, target])
       if (result.rowCount !== 1) {
-        console.error(
-          `Error inserting manual lane from ${source.lane[0]} to ${
-            target.lane[0]
-          }`
-        )
+        console.error(`Error inserting manual lane from ${source} to ${target}`)
       }
     } catch (err) {
       console.error(
-        `Error saving manual lane from ${source.lane[0]} to ${target.lane[0]}`,
+        `Error saving manual lane from ${source} to ${target}`,
         query
       )
       throw err
