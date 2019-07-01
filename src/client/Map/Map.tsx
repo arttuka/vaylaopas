@@ -98,23 +98,20 @@ export default class Map extends Component<MapProps, MapState> {
       dragRotate: false,
     })
     this.map = map
-    map.on(
-      'load',
-      (): void => {
-        helper.initializeMap(
-          map,
-          {
-            handleClick: this.closeContextMenu,
-            handleLongTouch: this.handleLongTouch,
-            handleContextMenu: this.handleContextMenu,
-            handleDragRoute: this.handleDragRoute,
-            handleTouchStart: this.handleTouchStart,
-            handleTouchEnd: this.handleTouchEnd,
-          },
-          longTouchDuration
-        )
-      }
-    )
+    map.on('load', (): void => {
+      helper.initializeMap(
+        map,
+        {
+          handleClick: this.closeContextMenu,
+          handleLongTouch: this.handleLongTouch,
+          handleContextMenu: this.handleContextMenu,
+          handleDragRoute: this.handleDragRoute,
+          handleTouchStart: this.handleTouchStart,
+          handleTouchEnd: this.handleTouchEnd,
+        },
+        longTouchDuration
+      )
+    })
   }
 
   componentDidUpdate(prevProps: MapProps): void {
@@ -123,11 +120,9 @@ export default class Map extends Component<MapProps, MapState> {
     if (map) {
       helper.updateRoute(map, routes)
       if (!waypointsEqual(waypoints, prevProps.waypoints)) {
-        this.state.markers.forEach(
-          (m): void => {
-            m.remove()
-          }
-        )
+        this.state.markers.forEach((m): void => {
+          m.remove()
+        })
         this.setState({
           markers: waypoints.map(
             (waypoint, index): Marker =>

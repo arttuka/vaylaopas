@@ -45,11 +45,9 @@ export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
 ]
 
 export const addMany = <T>(set: Set<T>, ...ts: T[]): Set<T> => {
-  ts.forEach(
-    (t): void => {
-      set.add(t)
-    }
-  )
+  ts.forEach((t): void => {
+    set.add(t)
+  })
   return set
 }
 
@@ -59,11 +57,9 @@ export const mapBy = <T, S>(
   valfn: (t: T) => S
 ): Index<S> => {
   const ret: Index<S> = {}
-  arr.forEach(
-    (t): void => {
-      ret[keyfn(t)] = valfn(t)
-    }
-  )
+  arr.forEach((t): void => {
+    ret[keyfn(t)] = valfn(t)
+  })
   return ret
 }
 

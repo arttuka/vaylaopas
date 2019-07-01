@@ -226,9 +226,7 @@ const saveIntersection = async (
     return i as SavedIntersection
   } catch (err) {
     console.error(
-      `Error saving intersection ${i.id} between ${i.laneIds} with geom ${
-        i.point
-      }`
+      `Error saving intersection ${i.id} between ${i.laneIds} with geom ${i.point}`
     )
     throw err
   }
@@ -401,12 +399,10 @@ const convert = async (): Promise<void> => {
     console.log(`Processing ${count} vertices`)
     for (const { id, laneIds } of Object.values(intersections)) {
       progress()
-      ;(await findGaps(id)).forEach(
-        (laneId): void => {
-          lanes[laneId].intersections.add(id)
-          laneIds.add(laneId)
-        }
-      )
+      ;(await findGaps(id)).forEach((laneId): void => {
+        lanes[laneId].intersections.add(id)
+        laneIds.add(laneId)
+      })
     }
 
     count = obstructions.length
@@ -415,11 +411,9 @@ const convert = async (): Promise<void> => {
       progress()
       const saved = await saveIntersection(intersection)
       intersections[saved.id] = saved
-      intersection.laneIds.forEach(
-        (id): void => {
-          lanes[id].intersections.add(saved.id)
-        }
-      )
+      intersection.laneIds.forEach((id): void => {
+        lanes[id].intersections.add(saved.id)
+      })
     }
 
     count = Object.values(lanes).length
@@ -440,11 +434,9 @@ const convert = async (): Promise<void> => {
           intersections[saved.id] = saved
           intersectionId = saved.id
         }
-        intersection.laneIds.forEach(
-          (id): void => {
-            lanes[id].intersections.add(intersectionId)
-          }
-        )
+        intersection.laneIds.forEach((id): void => {
+          lanes[id].intersections.add(intersectionId)
+        })
       }
     }
 

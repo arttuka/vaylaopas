@@ -66,12 +66,9 @@ const html = `
 const router = Router()
 router.use(express.json())
 
-router.get(
-  '/',
-  (req, res): void => {
-    res.send(html)
-  }
-)
+router.get('/', (req, res): void => {
+  res.send(html)
+})
 
 interface RouteParams {
   points: LngLat[]

@@ -132,46 +132,30 @@ export const initializeMap = (
     })
     .on('contextmenu', handleContextMenu)
     .on('click', handleClick)
-    .on(
-      'mouseenter',
-      'route',
-      (): void => {
-        canvas.style.cursor = 'move'
+    .on('mouseenter', 'route', (): void => {
+      canvas.style.cursor = 'move'
+    })
+    .on('mouseleave', 'route', (): void => {
+      canvas.style.cursor = ''
+    })
+    .on('mousedown', 'route', (e): void => {
+      e.preventDefault()
+      canvas.style.cursor = 'grab'
+      const feature = e.features && e.features[0]
+      if (featureIsLane(feature)) {
+        map.on('mousemove', onMove)
+        map.once('mouseup', (e: MouseEvent): void =>
+          onUp(e, feature.properties.route)
+        )
       }
-    )
-    .on(
-      'mouseleave',
-      'route',
-      (): void => {
-        canvas.style.cursor = ''
-      }
-    )
-    .on(
-      'mousedown',
-      'route',
-      (e): void => {
-        e.preventDefault()
-        canvas.style.cursor = 'grab'
-        const feature = e.features && e.features[0]
-        if (featureIsLane(feature)) {
-          map.on('mousemove', onMove)
-          map.once(
-            'mouseup',
-            (e: MouseEvent): void => onUp(e, feature.properties.route)
-          )
-        }
-      }
-    )
-    .on(
-      'touchstart',
-      (e): void => {
-        window.clearTimeout(longTouchTimer)
-        handleTouchStart(e)
-        longTouchTimer = window.setTimeout((): void => {
-          handleLongTouch(e)
-        }, longTouchDuration)
-      }
-    )
+    })
+    .on('touchstart', (e): void => {
+      window.clearTimeout(longTouchTimer)
+      handleTouchStart(e)
+      longTouchTimer = window.setTimeout((): void => {
+        handleLongTouch(e)
+      }, longTouchDuration)
+    })
     .on('touchend', onTouchEnd)
     .on('touchcancel', onTouchEnd)
     .on('touchmove', onTouchEnd)
