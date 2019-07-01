@@ -3,6 +3,7 @@ import mapboxgl, { LngLat } from 'mapbox-gl'
 import styled from 'styled-components'
 import ContextMenu from './ContextMenu'
 import Marker from './Marker'
+import TouchMarker from './TouchMarker'
 import * as helper from './mapbox-helper'
 import { ClientConfig, Route } from '../../common/types'
 
@@ -11,12 +12,11 @@ import { ClientConfig, Route } from '../../common/types'
 declare const clientConfig: ClientConfig
 
 const elementId = 'mapbox-container'
+const longTouchDuration = 750
 
 const MapContainer = styled.div`
   width: 100%;
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  height: 100vh;
 `
 
 interface MapProps {
@@ -34,6 +34,13 @@ interface MapState {
     top: number
     left: number
   }
+  touchMarker:
+    | undefined
+    | {
+        direction: 'up' | 'down'
+        top: number
+        left: number
+      }
 }
 
 const closedMenu = {
@@ -46,6 +53,7 @@ const defaultState: MapState = {
   lastClick: new LngLat(0, 0),
   markers: [],
   menu: closedMenu,
+  touchMarker: undefined,
 }
 
 const waypointsEqual = (w1: LngLat[], w2: LngLat[]): boolean => {
@@ -62,6 +70,7 @@ const waypointsEqual = (w1: LngLat[], w2: LngLat[]): boolean => {
 
 export default class Map extends Component<MapProps, MapState> {
   map?: mapboxgl.Map = undefined
+  containerRef: React.RefObject<HTMLDivElement>
 
   constructor(props: MapProps) {
     super(props)
@@ -70,9 +79,16 @@ export default class Map extends Component<MapProps, MapState> {
     this.closeContextMenu = this.closeContextMenu.bind(this)
     this.handleDragRoute = this.handleDragRoute.bind(this)
     this.handleAddPoint = this.handleAddPoint.bind(this)
+    this.handleLongTouch = this.handleLongTouch.bind(this)
+    this.handleTouchStart = this.handleTouchStart.bind(this)
+    this.handleTouchEnd = this.handleTouchEnd.bind(this)
+    this.containerRef = React.createRef()
   }
 
   componentDidMount(): void {
+    if (this.containerRef.current) {
+      this.containerRef.current.style.height = `${window.innerHeight}px`
+    }
     const map = new mapboxgl.Map({
       container: elementId,
       style: clientConfig.mapserver,
@@ -87,9 +103,15 @@ export default class Map extends Component<MapProps, MapState> {
       (): void => {
         helper.initializeMap(
           map,
-          this.closeContextMenu,
-          this.handleContextMenu,
-          this.handleDragRoute
+          {
+            handleClick: this.closeContextMenu,
+            handleLongTouch: this.handleLongTouch,
+            handleContextMenu: this.handleContextMenu,
+            handleDragRoute: this.handleDragRoute,
+            handleTouchStart: this.handleTouchStart,
+            handleTouchEnd: this.handleTouchEnd,
+          },
+          longTouchDuration
         )
       }
     )
@@ -140,19 +162,45 @@ export default class Map extends Component<MapProps, MapState> {
     this.setState({ menu: closedMenu })
   }
 
+  handleLongTouch(e: helper.TouchEvent): void {
+    e.preventDefault()
+    this.props.onAddWaypoint(e.lngLat)
+    this.setState({ touchMarker: undefined })
+  }
+
+  handleTouchStart(e: helper.TouchEvent): void {
+    this.setState({
+      touchMarker: {
+        direction: 'up',
+        top: e.point.y,
+        left: e.point.x,
+      },
+    })
+  }
+
+  handleTouchEnd(): void {
+    this.setState({ touchMarker: undefined })
+  }
+
   render(): ReactElement {
-    const {
-      menu: { open, top, left },
-    } = this.state
+    const { touchMarker, menu } = this.state
     return (
       <>
-        <MapContainer id={elementId} />
+        <MapContainer ref={this.containerRef} id={elementId} />
         <ContextMenu
           onAdd={this.handleAddPoint}
-          open={open}
-          top={top}
-          left={left}
+          open={menu.open}
+          top={menu.top}
+          left={menu.left}
         />
+        {touchMarker && (
+          <TouchMarker
+            top={touchMarker.top}
+            left={touchMarker.left}
+            direction={touchMarker.direction}
+            duration={longTouchDuration}
+          />
+        )}
       </>
     )
   }

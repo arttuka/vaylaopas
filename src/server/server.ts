@@ -23,9 +23,17 @@ const html = `
       body {
         margin: 0;
         padding: 0;
+        width: 100%;
+        position: fixed;
+        overflow: hidden;
         font-family: 'Roboto', 'Helvetica Neue', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        -webkit-touch-callout: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
       }
       .mapboxgl-marker label {
         position: absolute;

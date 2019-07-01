@@ -14,6 +14,7 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
 import ListItemText from '@material-ui/core/ListItemText'
 import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
+import { LngLat } from 'mapbox-gl'
 import { Route } from '../../common/types'
 import {
   add,
@@ -100,16 +101,17 @@ const calculateTotals = (routes: Route[]): Totals =>
 
 interface RouteListProps {
   routes: Route[]
+  waypoints: LngLat[]
   onDelete: (index: number) => void
 }
 
 export default class RouteList extends PureComponent<RouteListProps> {
   render(): ReactElement {
-    const { routes, onDelete } = this.props
+    const { routes, waypoints, onDelete } = this.props
     const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
     return (
       <List>
-        {routes.length > 0 && (
+        {waypoints.length > 0 && (
           <ListItem>
             <Point text="A" />
             <Delete onClick={(): void => onDelete(0)} />

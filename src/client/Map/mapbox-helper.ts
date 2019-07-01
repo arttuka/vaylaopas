@@ -11,6 +11,7 @@ import { featureIsLane, Lane, LaneCollection, Route } from '../../common/types'
 
 export type MouseEvent = mapboxgl.MapMouseEvent & mapboxgl.EventData
 export type MouseLayerEvent = mapboxgl.MapLayerMouseEvent & mapboxgl.EventData
+export type TouchEvent = mapboxgl.MapTouchEvent & mapboxgl.EventData
 
 const laneCollection = (lanes: Lane[] = []): LaneCollection => ({
   type: 'FeatureCollection',
@@ -44,12 +45,28 @@ const lineLayer = (data: {
   }
 }
 
+interface EventHandlers {
+  handleClick: (e: MouseEvent) => void
+  handleLongTouch: (e: TouchEvent) => void
+  handleContextMenu: (e: MouseEvent) => void
+  handleDragRoute: (e: MouseEvent, route: number) => void
+  handleTouchStart: (e: TouchEvent) => void
+  handleTouchEnd: () => void
+}
+
 export const initializeMap = (
   map: Map,
-  handleClick: (e: MouseEvent) => void,
-  handleContextMenu: (e: MouseEvent) => void,
-  handleDragRoute: (e: MouseEvent, route: number) => void
+  eventHandlers: EventHandlers,
+  longTouchDuration: number
 ): void => {
+  const {
+    handleClick,
+    handleLongTouch,
+    handleContextMenu,
+    handleDragRoute,
+    handleTouchStart,
+    handleTouchEnd,
+  } = eventHandlers
   const canvas = map.getCanvasContainer()
   const onMove = (e: MouseEvent): void => {
     const dragIndicatorSource = map.getSource('dragIndicator') as GeoJSONSource
@@ -61,6 +78,13 @@ export const initializeMap = (
     dragIndicatorSource.setData(pointFeature())
     handleDragRoute(e, route)
   }
+  let longTouchTimer = 0
+  const onTouchEnd = (): void => {
+    window.clearTimeout(longTouchTimer)
+    handleTouchEnd()
+  }
+  map.touchZoomRotate.disableRotation()
+  map.dragRotate.disable()
   map
     .addSource('route', {
       type: 'geojson',
@@ -138,6 +162,19 @@ export const initializeMap = (
         }
       }
     )
+    .on(
+      'touchstart',
+      (e): void => {
+        window.clearTimeout(longTouchTimer)
+        handleTouchStart(e)
+        longTouchTimer = window.setTimeout((): void => {
+          handleLongTouch(e)
+        }, longTouchDuration)
+      }
+    )
+    .on('touchend', onTouchEnd)
+    .on('touchcancel', onTouchEnd)
+    .on('touchmove', onTouchEnd)
 }
 
 export const updateRoute = (map: Map, routes: Route[]): void => {

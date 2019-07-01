@@ -1,7 +1,7 @@
 import React, { Component, ReactElement } from 'react'
 import axios from 'axios'
 import { LngLat } from 'mapbox-gl'
-import styled from 'styled-components'
+import AppBar from './Appbar/Appbar'
 import Map from './Map/Map'
 import Sidebar from './Sidebar/Sidebar'
 import RouteList from './Sidebar/RouteList'
@@ -15,12 +15,6 @@ import {
 } from '../common/util'
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-
-const Container = styled.div`
-  position: relative;
-  width: 100%;
-  height: 100vh;
-`
 
 const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   const { speed, consumption } = settings
@@ -61,6 +55,7 @@ interface AppState {
   waypoints: LngLat[]
   routes: Route[]
   settings: Settings
+  sidebarOpen: boolean
 }
 
 export default class App extends Component<{}, AppState> {
@@ -75,11 +70,14 @@ export default class App extends Component<{}, AppState> {
         speed: getStoredSetting('speed'),
         consumption: getStoredSetting('consumption'),
       },
+      sidebarOpen: false,
     }
     this.addWaypoint = this.addWaypoint.bind(this)
     this.deleteWaypoint = this.deleteWaypoint.bind(this)
     this.moveWaypoint = this.moveWaypoint.bind(this)
     this.updateSetting = this.updateSetting.bind(this)
+    this.openSidebar = this.openSidebar.bind(this)
+    this.closeSidebar = this.closeSidebar.bind(this)
   }
 
   addWaypoint(point: LngLat, index?: number): void {
@@ -118,6 +116,14 @@ export default class App extends Component<{}, AppState> {
     this.setState({ routes: await fetchRoutes(waypoints, settings) })
   }
 
+  openSidebar(): void {
+    this.setState({ sidebarOpen: true })
+  }
+
+  closeSidebar(): void {
+    this.setState({ sidebarOpen: false })
+  }
+
   updateSetting(key: keyof Settings, value?: number): void {
     if (['depth', 'height'].includes(key)) {
       this.setState(
@@ -145,13 +151,22 @@ export default class App extends Component<{}, AppState> {
   render(): ReactElement {
     const { settings, routes, waypoints } = this.state
     return (
-      <Container>
-        <Sidebar>
+      <div>
+        <AppBar openSidebar={this.openSidebar} />
+        <Sidebar
+          open={this.state.sidebarOpen}
+          onOpen={this.openSidebar}
+          onClose={this.closeSidebar}
+        >
           <SettingsContainer
             settings={settings}
             updateSetting={this.updateSetting}
           />
-          <RouteList onDelete={this.deleteWaypoint} routes={routes} />
+          <RouteList
+            onDelete={this.deleteWaypoint}
+            routes={routes}
+            waypoints={waypoints}
+          />
         </Sidebar>
         <Map
           routes={routes}
@@ -159,7 +174,7 @@ export default class App extends Component<{}, AppState> {
           onAddWaypoint={this.addWaypoint}
           onMoveWaypoint={this.moveWaypoint}
         />
-      </Container>
+      </div>
     )
   }
 }
