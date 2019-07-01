@@ -320,18 +320,20 @@ const saveManualLanes = async (): Promise<void> => {
 }
 
 const saveObstructions = async (): Promise<void> => {
-  const query = `
-    UPDATE lane
-    SET height = $1
-    WHERE jnro = $2 AND jnropart = $3 AND segment = $4`
-  for (const { height, lane } of obstructions) {
+  for (const o of obstructions) {
+    const { height, points } = o
+    const line = `ST_MakeLine(Array[${points.map(point).join(',')}])`
+    const query = `
+      UPDATE ${tableTo}
+      SET height = $1
+      WHERE ST_Intersects(geom, ${line})`
     try {
-      const result = await client.query(query, [height, ...lane])
-      if (result.rowCount !== 1) {
-        console.error(`Error inserting obstruction for lane ${lane}`)
+      const result = await client.query(query, [height])
+      if (result.rowCount === 0) {
+        console.error(`Error inserting obstruction ${JSON.stringify(o)}`)
       }
     } catch (err) {
-      console.error(`Error saving obstruction for lane ${lane}`)
+      console.error(`Error saving obstruction ${JSON.stringify(o)}`)
       throw err
     }
   }
