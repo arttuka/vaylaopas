@@ -339,6 +339,48 @@ const saveObstructions = async (): Promise<void> => {
   }
 }
 
+const splitLanesAtObstructions = async (): Promise<Intersection[]> => {
+  const result: Intersection[] = []
+  for (const { points } of obstructions) {
+    const query = `
+      WITH obstruction AS (
+        SELECT ST_MakeLine(Array[${points.map(point).join(',')}]) AS geom
+      ),
+      intersections AS (
+        SELECT
+          lane.id,
+          lane.geom,
+          ${tolerance} / ST_Length(lane.geom) AS distance_diff,
+          ST_LineLocatePoint(lane.geom, ST_Intersection(lane.geom, obstruction.geom)) AS distance
+        FROM ${tableTmp} AS lane, obstruction
+        WHERE ST_Intersects(lane.geom, obstruction.geom)
+      )
+      SELECT
+        id,
+        ST_LineInterpolatePoint(geom, distance - distance_diff) AS p1,
+        ST_LineInterpolatePoint(geom, distance + distance_diff) AS p2
+      FROM intersections`
+    try {
+      for (const { id, p1, p2 } of (await client.query(query)).rows) {
+        result.push({
+          point: p1,
+          laneIds: new Set([id]),
+        })
+        result.push({
+          point: p2,
+          laneIds: new Set([id]),
+        })
+      }
+    } catch (err) {
+      console.error(
+        `Error splitting lanes at obstruction ${JSON.stringify(points)}`
+      )
+      throw err
+    }
+  }
+  return result
+}
+
 const convert = async (): Promise<void> => {
   try {
     await client.connect()
@@ -363,6 +405,19 @@ const convert = async (): Promise<void> => {
         (laneId): void => {
           lanes[laneId].intersections.add(id)
           laneIds.add(laneId)
+        }
+      )
+    }
+
+    count = obstructions.length
+    console.log(`Processing ${count} obstructions`)
+    for (const intersection of await splitLanesAtObstructions()) {
+      progress()
+      const saved = await saveIntersection(intersection)
+      intersections[saved.id] = saved
+      intersection.laneIds.forEach(
+        (id): void => {
+          lanes[id].intersections.add(saved.id)
         }
       )
     }
