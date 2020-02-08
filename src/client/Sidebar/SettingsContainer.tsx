@@ -11,31 +11,31 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import SettingField from './SettingField'
 import { Settings } from '../../common/types'
 
-const ExpansionPanelSummary: ComponentType<
-  ExpansionPanelSummaryProps
-> = withStyles({
-  root: {
-    minHeight: 48,
-    '&$expanded': {
+const ExpansionPanelSummary: ComponentType<ExpansionPanelSummaryProps> = withStyles(
+  {
+    root: {
       minHeight: 48,
+      '&$expanded': {
+        minHeight: 48,
+      },
     },
-  },
-  content: {
-    '&$expanded': {
-      margin: '12px 0',
+    content: {
+      '&$expanded': {
+        margin: '12px 0',
+      },
     },
-  },
-  expanded: {},
-})(MuiExpansionPanelSummary)
+    expanded: {},
+  }
+)(MuiExpansionPanelSummary)
 
-const ExpansionPanelDetails: ComponentType<
-  ExpansionPanelDetailsProps
-> = withStyles({
-  root: {
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-})(MuiExpansionPanelDetails)
+const ExpansionPanelDetails: ComponentType<ExpansionPanelDetailsProps> = withStyles(
+  {
+    root: {
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+  }
+)(MuiExpansionPanelDetails)
 
 type ChangeHandler = (value?: number) => void
 

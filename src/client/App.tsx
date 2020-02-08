@@ -36,11 +36,13 @@ const fetchRoutes = async (
   settings: Settings
 ): Promise<Route[]> => {
   if (waypoints.length > 1) {
-    const routes: Route[] = (await axios.post('/api/route', {
-      points: waypoints,
-      depth: settings.depth,
-      height: settings.height,
-    })).data
+    const routes: Route[] = (
+      await axios.post('/api/route', {
+        points: waypoints,
+        depth: settings.depth,
+        height: settings.height,
+      })
+    ).data
     return enrichRoutes(routes, settings)
   }
   return []

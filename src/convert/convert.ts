@@ -96,9 +96,9 @@ const createTables = async (): Promise<void> => {
       SELECT id, the_geom
       FROM ${verticesTmp}
     `)
-    const maxId = (await client.query(
-      `SELECT MAX(id) + 1 AS maxid FROM ${verticesTo}`
-    )).rows[0].maxid
+    const maxId = (
+      await client.query(`SELECT MAX(id) + 1 AS maxid FROM ${verticesTo}`)
+    ).rows[0].maxid
     await client.query(`
       ALTER SEQUENCE ${verticesTo}_id_seq
       RESTART WITH ${maxId}

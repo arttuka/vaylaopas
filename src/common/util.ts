@@ -10,7 +10,7 @@ export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   return result
 }
 
-export const round = (n: number, decimals: number = 0): number => {
+export const round = (n: number, decimals = 0): number => {
   const m = Math.pow(10, decimals)
   return Math.round(n * m) / m
 }
