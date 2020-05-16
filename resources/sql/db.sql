@@ -31,3 +31,38 @@ $$
 LANGUAGE SQL
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION drop_last(multipoint GEOMETRY(MULTIPOINT))
+RETURNS SETOF GEOMETRY(POINT) AS
+$$
+DECLARE
+  length INTEGER := ST_NumGeometries(multipoint);
+  limit_value INTEGER := length - 1;
+BEGIN
+  IF limit_value < 1 THEN
+    RETURN;
+  ELSE 
+    RETURN QUERY SELECT (ST_Dump(multipoint)).geom LIMIT limit_value;
+  END IF;
+END
+$$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION split_segment(min_length FLOAT, segment GEOMETRY(LINESTRING))
+RETURNS SETOF GEOMETRY(POINT) AS
+$$
+DECLARE
+  segment_length FLOAT := ST_Length(segment);
+BEGIN
+  IF segment_length < min_length THEN
+    RETURN;
+  ELSE
+    RETURN QUERY SELECT drop_last(ST_LineInterpolatePoints(segment, 1.0 / FLOOR(segment_length / min_length)));
+  END IF;
+END
+$$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;

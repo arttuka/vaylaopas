@@ -14,6 +14,7 @@ const verticesTmp = `${tableTmp}_vertices_pgr`
 const tableTo = 'lane'
 const verticesTo = `${tableTo}_vertices_pgr`
 const tolerance = 10
+const splitLength = 100
 
 interface Intersection {
   id?: number
@@ -206,7 +207,8 @@ const findIntersections = async (
     )
     await client.query(
       `
-      CREATE INDEX ${intersectionsTmp}_point_idx ON ${intersectionsTmp} USING GIST(point)`
+      CREATE INDEX ${intersectionsTmp}_point_idx ON ${intersectionsTmp} USING GIST(point)
+      `
     )
     await client.query(
       `
@@ -300,14 +302,32 @@ const saveLane = async (l: Lane): Promise<void> => {
   for (let i = 0; i < l.intersections.size; i += 1) {
     placeholders.push(`$${i + 2}`)
   }
+
   const query = `
-    WITH distances AS (
-      SELECT id, ROW_NUMBER() OVER (ORDER BY distance ASC) AS num, distance
+    WITH current_lane AS (
+      SELECT * FROM ${tableTmp} WHERE id = $1
+    ),
+    vertices AS (
+      SELECT v.id, v.the_geom, ST_LineLocatePoint(l.geom, v.the_geom) distance
+      FROM current_lane l, ${verticesTo} v
+      WHERE v.id IN (${placeholders.join(',')})
+    ),
+    new_vertices AS (
+      INSERT INTO ${verticesTo} (the_geom)
+      SELECT split_segment(${splitLength}, ST_LineSubstring(geom, LAG(distance) OVER (ORDER BY distance ASC), distance))
+      FROM current_lane l, vertices v
+      ORDER BY distance ASC
+      RETURNING id, the_geom
+    ),
+    distances AS (
+      SELECT id, ROW_NUMBER() OVER (ORDER BY distance ASC) num, distance
       FROM (
-        SELECT v.id, ST_LineLocatePoint(l.geom, v.the_geom) AS distance
-        FROM ${tableTmp} l, ${verticesTo} v
-        WHERE l.id = $1 AND v.id IN (${placeholders.join(',')})
-      ) AS d
+        SELECT v.id, COALESCE(distance, ST_LineLocatePoint(l.geom, v.the_geom)) distance
+        FROM current_lane l,
+             (SELECT id, the_geom, distance FROM vertices
+              UNION ALL
+              SELECT id, the_geom, NULL AS distance FROM new_vertices) v
+      ) s
       ORDER BY distance ASC
     )
     INSERT INTO ${tableTo} (segment, source, target, length, geom, jnro, jnropart, name, depth, height)
@@ -315,13 +335,13 @@ const saveLane = async (l: Lane): Promise<void> => {
       "from".num AS segment, "from".id AS source, "to".id AS target, ST_Length(ST_LineSubstring(l.geom, "from".distance, "to".distance)) AS length, ST_LineSubstring(l.geom, "from".distance, "to".distance) AS geom,
       l.jnro, l.jnropart, l.name, l.depth, l.height
     FROM distances AS "from"
-    JOIN distances AS "to" ON "from".num + 1 = "to".num
-    JOIN ${tableTmp} l ON l.id = $1
+    JOIN distances AS "to" ON "from".num + 1 = "to".num,
+         current_lane l
 `
   try {
     await client.query(query, [l.id, ...Array.from(l.intersections)])
   } catch (err) {
-    console.error(`Error saving lane ${l.id}`)
+    console.error(`Error saving lane ${l.id}`, err)
     throw err
   }
 }
