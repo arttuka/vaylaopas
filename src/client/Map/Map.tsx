@@ -1,6 +1,6 @@
 import React, { Component, ReactElement } from 'react'
 import mapboxgl, { LngLat } from 'mapbox-gl'
-import styled from 'styled-components'
+import { styled } from '@material-ui/core/styles'
 import ContextMenu from './ContextMenu'
 import Marker from './Marker'
 import TouchMarker from './TouchMarker'
@@ -14,10 +14,10 @@ declare const clientConfig: ClientConfig
 const elementId = 'mapbox-container'
 const longTouchDuration = 750
 
-const MapContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-`
+const MapContainer = styled('div')({
+  width: '100%',
+  height: '100vh',
+})
 
 interface MapProps {
   routes: Route[]

@@ -22,7 +22,6 @@ if (process.env.NODE_ENV === 'production') {
   const webpackConfig = require('../../webpack.config')
   const clientConfig = webpackConfig[0]
   const compiler = webpack(webpackConfig)
-  const clientCompiler = compiler.compilers[0]
 
   app.use(
     require('webpack-dev-middleware')(compiler, {
@@ -32,7 +31,7 @@ if (process.env.NODE_ENV === 'production') {
     })
   )
   app.use(
-    require('webpack-hot-middleware')(clientCompiler, {
+    require('webpack-hot-middleware')(compiler, {
       path: '/__webpack_hmr',
       heartbeat: 10 * 1000,
     })
