@@ -11,9 +11,12 @@ import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
-import ListItemText from '@material-ui/core/ListItemText'
+import MuiListItemText, {
+  ListItemTextProps,
+} from '@material-ui/core/ListItemText'
 import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
+import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
 import { LngLat } from 'mapbox-gl'
 import { Route } from '../../common/types'
 import {
@@ -54,29 +57,68 @@ class Delete extends PureComponent<{ onClick: () => void }> {
   }
 }
 
-interface RouteSegmentProps {
+const ListItemText: ComponentType<ListItemTextProps> = withStyles({
+  root: {
+    margin: 0,
+  },
+})(MuiListItemText)
+
+const OffsetListItemText: ComponentType<ListItemTextProps> = withStyles({
+  root: {
+    margin: 0,
+    position: 'relative',
+    top: -24,
+  },
+})(MuiListItemText)
+
+interface SegmentProps {
   length: number
   duration?: number
   fuel?: number
-  index?: number
-  onDelete?: () => void
+  index: number
+  onDelete: () => void
+  kind?: 'segment'
 }
+
+interface TotalsProps {
+  length: number
+  duration?: number
+  fuel?: number
+  kind: 'totals'
+}
+
+type RouteSegmentProps = SegmentProps | TotalsProps
 
 class RouteSegment extends PureComponent<RouteSegmentProps> {
   render(): ReactElement {
-    const { index, length, duration, fuel, onDelete } = this.props
+    const { length, duration, fuel } = this.props
     const durationStr = duration ? formatDuration(duration) : ''
     const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
-    return (
-      <ListItem>
-        <Point text={index !== undefined ? numToLetter(index) : '='} />
-        <ListItemText
-          primary={`${toNM(length)} mpk`}
-          secondary={durationStr + fuelStr}
-        />
-        {onDelete && <Delete onClick={onDelete} />}
-      </ListItem>
-    )
+    const listItemTextProps = {
+      primary: length ? `${toNM(length)} mpk` : '\u00a0',
+      secondary: durationStr + fuelStr || '\u00a0',
+    }
+    if (this.props.kind === 'totals') {
+      return (
+        <ListItem divider={true}>
+          <ListItemAvatar>
+            <Avatar>
+              <DirectionsBoatIcon />
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText {...listItemTextProps} />
+        </ListItem>
+      )
+    } else {
+      const { index, onDelete } = this.props
+      return (
+        <ListItem>
+          <Point text={numToLetter(index)} />
+          <OffsetListItemText {...listItemTextProps} />
+          <Delete onClick={onDelete} />
+        </ListItem>
+      )
+    }
   }
 }
 
@@ -106,17 +148,21 @@ interface RouteListProps {
 }
 
 export default class RouteList extends PureComponent<RouteListProps> {
-  render(): ReactElement {
+  render(): ReactElement | null {
     const { routes, waypoints, onDelete } = this.props
     const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
-    return (
-      <List>
-        {waypoints.length > 0 && (
-          <ListItem>
-            <Point text="A" />
-            <Delete onClick={(): void => onDelete(0)} />
-          </ListItem>
-        )}
+    return waypoints.length > 0 ? (
+      <List disablePadding={true}>
+        <RouteSegment
+          length={totalLength}
+          duration={totalDuration}
+          fuel={totalFuel}
+          kind="totals"
+        />
+        <ListItem>
+          <Point text="A" />
+          <Delete onClick={(): void => onDelete(0)} />
+        </ListItem>
         {routes.map(
           ({ length, duration, fuel }, i): ReactNode => (
             <RouteSegment
@@ -129,12 +175,7 @@ export default class RouteList extends PureComponent<RouteListProps> {
             />
           )
         )}
-        <RouteSegment
-          length={totalLength}
-          duration={totalDuration}
-          fuel={totalFuel}
-        />
       </List>
-    )
+    ) : null
   }
 }

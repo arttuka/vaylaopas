@@ -1,5 +1,7 @@
 import React, { ComponentType, PureComponent, ReactElement } from 'react'
-import ExpansionPanel from '@material-ui/core/ExpansionPanel'
+import MuiExpansionPanel, {
+  ExpansionPanelProps,
+} from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary, {
   ExpansionPanelSummaryProps,
 } from '@material-ui/core/ExpansionPanelSummary'
@@ -7,9 +9,18 @@ import MuiExpansionPanelDetails, {
   ExpansionPanelDetailsProps,
 } from '@material-ui/core/ExpansionPanelDetails'
 import { withStyles } from '@material-ui/core/styles'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import SettingsIcon from '@material-ui/icons/Settings'
 import SettingField from './SettingField'
 import { Settings } from '../../common/types'
+
+const ExpansionPanel: ComponentType<ExpansionPanelProps> = withStyles({
+  root: {
+    '&$expanded': {
+      margin: 0,
+    },
+  },
+  expanded: {},
+})(MuiExpansionPanel)
 
 const ExpansionPanelSummary: ComponentType<ExpansionPanelSummaryProps> = withStyles(
   {
@@ -17,11 +28,12 @@ const ExpansionPanelSummary: ComponentType<ExpansionPanelSummaryProps> = withSty
       minHeight: 48,
       '&$expanded': {
         minHeight: 48,
+        margin: 0,
       },
     },
     content: {
       '&$expanded': {
-        margin: '12px 0',
+        margin: 0,
       },
     },
     expanded: {},
@@ -69,7 +81,7 @@ export default class SettingsContainer extends PureComponent<SettingsProps> {
     const { depth, height, speed, consumption } = this.props.settings
     return (
       <ExpansionPanel>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary expandIcon={<SettingsIcon />}>
           Asetukset
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>

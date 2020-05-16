@@ -160,14 +160,14 @@ export default class App extends Component<{}, AppState> {
           onOpen={this.openSidebar}
           onClose={this.closeSidebar}
         >
-          <SettingsContainer
-            settings={settings}
-            updateSetting={this.updateSetting}
-          />
           <RouteList
             onDelete={this.deleteWaypoint}
             routes={routes}
             waypoints={waypoints}
+          />
+          <SettingsContainer
+            settings={settings}
+            updateSetting={this.updateSetting}
           />
         </Sidebar>
         <Map
