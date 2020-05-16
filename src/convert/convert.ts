@@ -8,6 +8,8 @@ import obstructions from './obstructions.json'
 const client = new Client(config.db)
 const tableFrom = 'lane_tmp'
 const tableTmp = 'lane_single'
+const intersectionsTmp = 'intersections_tmp'
+const nearbyFn = 'find_nearby_intersections'
 const verticesTmp = `${tableTmp}_vertices_pgr`
 const tableTo = 'lane'
 const verticesTo = `${tableTo}_vertices_pgr`
@@ -162,54 +164,115 @@ const findGaps = async (vertexId: number): Promise<number[]> => {
 }
 
 const findIntersections = async (
-  laneId: number,
   index: IntersectionIndex
 ): Promise<Intersection[]> => {
   try {
+    console.log('Finding intersections')
+    await client.query(
+      `
+      CREATE TEMPORARY TABLE ${intersectionsTmp} AS (
+        WITH intersections AS (
+          SELECT a.id AS a_id, a.source AS a_source, a.target AS a_target,
+            b.id AS b_id, b.source AS b_source, b.target AS b_target,
+            (ST_Dump(Endpoints(ST_Intersection(a.geom, b.geom)))).geom AS point
+          FROM ${tableTmp} a
+          JOIN ${tableTmp} b
+          ON a.id <> b.id
+          AND ST_Intersects(a.geom, b.geom)
+        ),
+        good_intersections AS (
+          SELECT ARRAY_AGG(DISTINCT a_id) AS laneids, point, v.id
+          FROM intersections i
+          JOIN ${verticesTmp} sa ON a_source = sa.id
+          JOIN ${verticesTmp} ta ON a_target = ta.id
+          JOIN ${verticesTmp} sb ON b_source = sb.id
+          JOIN ${verticesTmp} tb ON b_target = tb.id
+          LEFT JOIN ${verticesTo} v ON (
+            ST_DWithin(point, v.the_geom, ${tolerance})
+            AND v.id NOT IN (a_source, a_target, b_source, b_target)
+          )
+          WHERE NOT ST_DWithin(point, sa.the_geom, ${tolerance})
+          AND NOT ST_DWithin(point, ta.the_geom, ${tolerance})
+          AND NOT ST_DWithin(point, sb.the_geom, ${tolerance})
+          AND NOT ST_DWithin(point, tb.the_geom, ${tolerance})
+          GROUP BY point, v.id
+          ORDER BY point ASC
+        )
+        SELECT row_number() OVER (ORDER BY point, laneids) tmpid, laneids, point, id
+        FROM good_intersections
+        ORDER BY point, laneids
+      )
+      `
+    )
+    await client.query(
+      `
+      CREATE INDEX ${intersectionsTmp}_point_idx ON ${intersectionsTmp} USING GIST(point)`
+    )
+    await client.query(
+      `
+      CREATE OR REPLACE FUNCTION ${nearbyFn}(bigint)
+      RETURNS TABLE(tmpids bigint[], laneids integer[], point geometry, id bigint) AS
+      $$
+      WITH RECURSIVE intersections_r AS (
+        SELECT ARRAY[tmpid] idlist, point, tmpid, laneids, id
+        FROM ${intersectionsTmp}
+        WHERE tmpid = $1
+        UNION ALL
+        SELECT array_append(r.idlist, tmp.tmpid) idlist,
+               r.point,
+               tmp.tmpid,
+               tmp.laneids,
+               COALESCE(r.id, tmp.id) id
+        FROM ${intersectionsTmp} tmp, intersections_r r
+        WHERE ST_DWithin(tmp.point, r.point, ${tolerance})
+        AND NOT r.idlist @> ARRAY[tmp.tmpid]
+      )
+      SELECT array_agg(distinct tmpid) tmpids, array_agg(distinct laneid) laneids, point, id
+      FROM intersections_r, unnest(laneids) as laneid
+      GROUP BY point, id
+      $$
+      LANGUAGE 'sql'
+      `
+    )
+    console.log('Grouping intersections')
     const result = await client.query(
       `
-      WITH intersections AS (
-        SELECT b.id AS id_b, a.source AS a_source, a.target AS a_target, b.source AS b_source, b.target AS b_target,
-        (ST_Dump(Endpoints(ST_Intersection(a.geom, b.geom)))).geom AS point
-        FROM ${tableTmp} a
-        JOIN ${tableTmp} b
-        ON a.id = $1
-        AND b.id < $1
-        AND ST_Intersects(a.geom, b.geom)
+      WITH RECURSIVE groups AS (
+        (SELECT n.tmpids idlist, n.tmpids grouplist, tmpid, n.laneids, n.point, n.id
+          FROM ${intersectionsTmp}, ${nearbyFn}(tmpid) n
+          WHERE tmpid = 1)
+         UNION ALL
+         (SELECT array_cat(g.idlist, n.tmpids) idlist,
+                 n.tmpids grouplist,
+                 tmp.tmpid,
+                 n.laneids,
+                 n.point,
+                 n.id
+          FROM ${intersectionsTmp} tmp, groups g, ${nearbyFn}(tmp.tmpid) n
+          WHERE NOT idlist @> ARRAY[tmp.tmpid]
+          LIMIT 1)
       )
-      SELECT ARRAY_AGG(DISTINCT id_b) AS laneids, point, v.id
-      FROM intersections i
-      JOIN ${verticesTmp} sa ON a_source = sa.id
-      JOIN ${verticesTmp} ta ON a_target = ta.id
-      JOIN ${verticesTmp} sb ON b_source = sb.id
-      JOIN ${verticesTmp} tb ON b_target = tb.id
-      LEFT JOIN ${verticesTo} v ON (
-        ST_DWithin(point, v.the_geom, ${tolerance})
-        AND v.id NOT IN (a_source, a_target, b_source, b_target)
-      )
-      WHERE NOT ST_DWithin(point, sa.the_geom, ${tolerance})
-      AND NOT ST_DWithin(point, ta.the_geom, ${tolerance})
-      AND NOT ST_DWithin(point, sb.the_geom, ${tolerance})
-      AND NOT ST_DWithin(point, tb.the_geom, ${tolerance})
-      GROUP BY point, v.id
-      ORDER BY point ASC`,
-      [laneId]
+      SELECT laneids, point, id
+      FROM groups
+      ORDER BY tmpid
+      `
     )
+    await client.query(`DROP FUNCTION ${nearbyFn}`)
     return result.rows.map(
       ({ laneids, point, id }): Intersection => {
         if (id) {
           const intersection = index[id]
-          addMany(intersection.laneIds, laneId, ...laneids)
+          addMany(intersection.laneIds, ...laneids)
           return intersection
         }
         return {
           point,
-          laneIds: new Set([laneId, ...laneids]),
+          laneIds: new Set(laneids),
         }
       }
     )
   } catch (err) {
-    console.log(`Error intersecting lane ${laneId}`)
+    console.log(`Error intersecting`)
     throw err
   }
 }
@@ -416,28 +479,22 @@ const convert = async (): Promise<void> => {
       })
     }
 
-    count = Object.values(lanes).length
-    console.log(`Processing ${count} lanes`)
-    for (const lane of Object.values(lanes).sort(
-      (l1, l2): number => l1.id - l2.id
-    )) {
+    const allIntersections = await findIntersections(intersections)
+    count = allIntersections.length
+    console.log(`Processing ${count} intersections`)
+    for (const intersection of allIntersections) {
       progress()
-      for (const intersection of await findIntersections(
-        lane.id,
-        intersections
-      )) {
-        let intersectionId: number
-        if (isSaved(intersection)) {
-          intersectionId = intersection.id
-        } else {
-          const saved = await saveIntersection(intersection)
-          intersections[saved.id] = saved
-          intersectionId = saved.id
-        }
-        intersection.laneIds.forEach((id): void => {
-          lanes[id].intersections.add(intersectionId)
-        })
+      let intersectionId: number
+      if (isSaved(intersection)) {
+        intersectionId = intersection.id
+      } else {
+        const saved = await saveIntersection(intersection)
+        intersections[saved.id] = saved
+        intersectionId = saved.id
       }
+      intersection.laneIds.forEach((id): void => {
+        lanes[id].intersections.add(intersectionId)
+      })
     }
 
     count = Object.values(lanes).length

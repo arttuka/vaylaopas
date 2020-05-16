@@ -19,4 +19,6 @@ host=${PGHOST:-localhost}
 shp2pgsql -e -s 3067 -W LATIN1 "$1" public.lane_tmp \
   | psql "-h$host" -Uvaylaopas -1 vaylaopas
 
+psql "-h$host" -Uvaylaopas -1 vaylaopas < resources/sql/db.sql
+
 npm run convert
