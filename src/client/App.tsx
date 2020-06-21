@@ -1,4 +1,5 @@
 import React, { Component, ReactElement } from 'react'
+import { Provider } from 'react-redux'
 import axios from 'axios'
 import { LngLat } from 'mapbox-gl'
 import AppBar from './Appbar/Appbar'
@@ -6,6 +7,7 @@ import Map from './Map/Map'
 import Sidebar from './Sidebar/Sidebar'
 import RouteList from './Sidebar/RouteList'
 import SettingsContainer from './Sidebar/SettingsContainer'
+import store from './redux/store'
 import { Route, Settings } from '../common/types'
 import {
   removeIndex,
@@ -153,7 +155,7 @@ export default class App extends Component<{}, AppState> {
   render(): ReactElement {
     const { settings, routes, waypoints } = this.state
     return (
-      <div>
+      <Provider store={store}>
         <AppBar openSidebar={this.openSidebar} />
         <Sidebar
           open={this.state.sidebarOpen}
@@ -176,7 +178,7 @@ export default class App extends Component<{}, AppState> {
           onAddWaypoint={this.addWaypoint}
           onMoveWaypoint={this.moveWaypoint}
         />
-      </div>
+      </Provider>
     )
   }
 }

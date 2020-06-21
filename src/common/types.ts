@@ -1,4 +1,6 @@
 import { Feature, LineString, FeatureCollection } from 'geojson'
+import { Store } from 'redux'
+import { Task } from 'redux-saga'
 
 export interface LngLat {
   lng: number
@@ -57,4 +59,18 @@ export interface Config {
     database: string
   }
   server: ServerConfig
+}
+
+export type Waypoints = LngLat[]
+
+export type Routes = Route[]
+
+export interface RootState {
+  routes: Routes
+  settings: Settings
+  waypoints: Waypoints
+}
+
+export type SagaStore = Store<RootState> & {
+  runSaga: Task
 }
