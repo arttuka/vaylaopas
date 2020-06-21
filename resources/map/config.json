@@ -1,37 +1,15 @@
 {
   "styles": {
-    "standard": [
-      "klokantech-basic"
-    ],
-    "custom": [
-      "vaylaopas.json"
-    ],
-    "lang": "",
-    "langLatin": true,
-    "langAlts": true
-  },
-  "settings": {
-    "serve": {
-      "vector": true,
-      "raster": true,
-      "services": true,
-      "static": true
-    },
-    "raster": {
-      "format": "PNG_256",
-      "hidpi": 2,
-      "maxsize": 2048
-    },
-    "server": {
-      "title": "",
-      "redirect": "",
-      "domains": []
-    },
-    "memcache": {
-      "size": 1,
-      "servers": [
-        "localhost:11211"
-      ]
+    "vaylaopas": {
+      "style": "vaylaopas.json"
     }
+  },
+  "options": {
+    "paths": {
+      "styles": "/data/styles",
+      "mbtiles": "/data",
+      "fonts": "/data/fonts"
+    },
+    "serveAllFonts": true
   }
 }
