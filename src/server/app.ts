@@ -2,7 +2,7 @@ import express, { RequestHandler } from 'express'
 import * as path from 'path'
 import config from './config'
 import { getRoute } from './db'
-import { LngLat } from '../common/types'
+import { Waypoints } from '../common/types'
 import indexHtml from './indexHtml'
 
 const wrapAsync = (handler: RequestHandler): RequestHandler => (
@@ -27,7 +27,7 @@ app.get('/', (req, res): void => {
 })
 
 interface RouteParams {
-  points: LngLat[]
+  points: Waypoints
   depth?: number
   height?: number
 }

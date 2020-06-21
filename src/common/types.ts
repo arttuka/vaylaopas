@@ -8,8 +8,11 @@ export interface LngLat {
   lat: number
 }
 
+export type WaypointType = 'destination' | 'waypoint'
+
 export interface Waypoint extends LngLat {
   id: string
+  type: WaypointType
 }
 
 export interface LaneProperties {
@@ -27,7 +30,8 @@ export type LaneCollection = FeatureCollection<LineString, LaneProperties>
 
 export interface WaypointProperties {
   id: string
-  letter: string
+  letter?: string
+  type: WaypointType
 }
 
 export type WaypointFeature = Feature<Point, WaypointProperties>

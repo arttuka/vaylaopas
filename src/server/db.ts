@@ -1,8 +1,8 @@
 import { Pool, PoolClient } from 'pg'
 import { LineString } from 'geojson'
 import config from './config'
-import { Lane, LngLat, Route } from '../common/types'
-import { partition } from '../common/util'
+import { Lane, Route, Waypoint, Waypoints, WaypointType } from '../common/types'
+import { partition, takeUntil } from '../common/util'
 
 const pool = new Pool(config.db)
 
@@ -17,11 +17,12 @@ const formatLane = (geometry: LineString, routeNumber: number): Lane => ({
 interface RouteEndpoint {
   id: number
   geometry: LineString
+  type: WaypointType
 }
 
 const getClosestVertex = async (
   client: PoolClient,
-  p: LngLat
+  p: Waypoint
 ): Promise<RouteEndpoint> => {
   const point = `ST_Transform(
     ST_SetSRID(ST_MakePoint($1, $2), 4326),
@@ -37,6 +38,7 @@ const getClosestVertex = async (
   return {
     id,
     geometry: JSON.parse(geometry),
+    type: p.type,
   }
 }
 
@@ -85,8 +87,42 @@ const getRouteBetweenVertices = async (
   return { route, length, startAndEnd }
 }
 
+const mergeRoutes = (r1: Route, r2: Route): Route => ({
+  route: [...r1.route, ...r2.route],
+  startAndEnd: [r1.startAndEnd[0], r2.startAndEnd[1]],
+  length: r1.length + r2.length,
+})
+
+const getRouteSegment = async (
+  client: PoolClient,
+  routeNumber: number,
+  endpoints: RouteEndpoint[],
+  depth?: number,
+  height?: number
+): Promise<Route> => {
+  const routes = await Promise.all(
+    partition(endpoints, 2, 1).map(
+      ([from, to]): Promise<Route> =>
+        getRouteBetweenVertices(client, routeNumber, from, to, depth, height)
+    )
+  )
+  return routes.reduce(mergeRoutes)
+}
+
+const splitEndpoints = (endpoints: RouteEndpoint[]): RouteEndpoint[][] => {
+  const result: RouteEndpoint[][] = []
+  let points = endpoints
+  while (points.length > 1) {
+    const [p, ...rest] = points
+    const ps = takeUntil(rest, (e) => e.type === 'destination')
+    result.push([p, ...ps])
+    points = points.slice(ps.length)
+  }
+  return result
+}
+
 export const getRoute = async (
-  points: LngLat[],
+  points: Waypoints,
   depth?: number,
   height?: number
 ): Promise<Route[]> => {
@@ -97,10 +133,11 @@ export const getRoute = async (
         (point): Promise<RouteEndpoint> => getClosestVertex(client, point)
       )
     )
+    const segments = splitEndpoints(endpoints)
     return await Promise.all(
-      partition(endpoints, 2, 1).map(
-        ([from, to], i): Promise<Route> =>
-          getRouteBetweenVertices(client, i, from, to, depth, height)
+      segments.map(
+        (segment, index): Promise<Route> =>
+          getRouteSegment(client, index, segment, depth, height)
       )
     )
   } finally {

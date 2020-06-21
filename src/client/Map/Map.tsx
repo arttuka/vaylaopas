@@ -31,7 +31,7 @@ const Map: FunctionComponent = () => {
   const waypoints = useSelector(waypointsSelector)
 
   const onAddWaypoint = (): void => {
-    dispatch(waypointAddAction({ point: lastClick }))
+    dispatch(waypointAddAction({ point: lastClick, type: 'destination' }))
     setMenu(closedMenu)
   }
 

@@ -1,7 +1,9 @@
 import {
   partition,
+  takeUntil,
   numToLetter,
   removeIndex,
+  removeWhere,
   updateIndex,
   insertIndex,
   updateWhere,
@@ -36,6 +38,13 @@ test('partition', (): void => {
   ])
 })
 
+test('takeUntil', (): void => {
+  const pred = (i: number): boolean => i === 4
+  expect(takeUntil([0, 1, 2, 3, 4, 5, 6, 7], pred)).toEqual([0, 1, 2, 3, 4])
+  expect(takeUntil([5, 6, 7, 8, 9], pred)).toEqual([5, 6, 7, 8, 9])
+  expect(takeUntil([], pred)).toEqual([])
+})
+
 test('numToLetter', (): void => {
   expect(numToLetter(3)).toEqual('D')
   expect(numToLetter(26 + 2)).toEqual('AC')
@@ -48,6 +57,12 @@ test('removeIndex', (): void => {
   expect(removeIndex(arr, 1)).toEqual([0, 2, 3])
   expect(removeIndex(arr, 2)).toEqual([0, 1, 3])
   expect(removeIndex(arr, 3)).toEqual([0, 1, 2])
+})
+
+test('removeWhere', (): void => {
+  const arr = [0, 1, 2, 3]
+  expect(removeWhere(arr, (i) => i === 2)).toEqual([0, 1, 3])
+  expect(removeWhere(arr, (i) => i === 4)).toEqual([0, 1, 2, 3])
 })
 
 interface TestObj {

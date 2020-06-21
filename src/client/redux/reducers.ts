@@ -9,7 +9,7 @@ import { Waypoints, RootState, Routes, Settings } from '../../common/types'
 import {
   getStoredSetting,
   insertIndex,
-  removeIndex,
+  removeWhere,
   updateWhere,
   hasId,
 } from '../../common/util'
@@ -23,15 +23,15 @@ const waypointReducer = (
 ): Waypoints => {
   switch (action.type) {
     case ActionType.WaypointAdd: {
-      const { point, index } = action.data
+      const { point, index, type } = action.data
       return insertIndex(
         waypoints,
         index !== undefined ? index : waypoints.length,
-        { ...point, id: getId() }
+        { ...point, id: getId(), type }
       )
     }
     case ActionType.WaypointRemove:
-      return removeIndex(waypoints, action.data.index)
+      return removeWhere(waypoints, hasId(action.data.id))
     case ActionType.WaypointMove: {
       const { point, id } = action.data
       return updateWhere(waypoints, hasId(id), point)

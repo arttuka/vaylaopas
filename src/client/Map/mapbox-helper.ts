@@ -56,20 +56,24 @@ const pointFeature = (point?: MapboxLngLat): Feature<MultiPoint, {}> => ({
   properties: {},
 })
 
-const makeWaypointCollection = (waypoints: Waypoints): WaypointCollection => ({
-  type: 'FeatureCollection',
-  features: waypoints.map(({ id, lng, lat }, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [lng, lat],
-    },
-    properties: {
-      id,
-      letter: numToLetter(index),
-    },
-  })),
-})
+const makeWaypointCollection = (waypoints: Waypoints): WaypointCollection => {
+  let i = 0
+  return {
+    type: 'FeatureCollection',
+    features: waypoints.map(({ id, type, lng, lat }) => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [lng, lat],
+      },
+      properties: {
+        id,
+        letter: type === 'destination' ? numToLetter(i++) : undefined,
+        type,
+      },
+    })),
+  }
+}
 
 let waypointCollection = makeWaypointCollection([])
 
@@ -208,8 +212,14 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
       source: 'waypoint',
       type: 'circle',
       paint: {
-        'circle-radius': 16,
-        'circle-color': blue[500],
+        'circle-radius': ['match', ['get', 'type'], 'destination', 16, 10],
+        'circle-color': [
+          'match',
+          ['get', 'type'],
+          'destination',
+          blue[500],
+          '#ffffff',
+        ],
         'circle-stroke-width': 2,
         'circle-stroke-color': '#000000',
       },
@@ -307,7 +317,7 @@ export const createMap = ({
   }
   const handleLongTouch = (e: TouchEvent): void => {
     e.preventDefault()
-    dispatch(waypointAddAction({ point: toLngLat(e) }))
+    dispatch(waypointAddAction({ point: toLngLat(e), type: 'destination' }))
     setTouchMarker(undefined)
   }
   const handleContextMenu = (e: MouseEvent): void => {
@@ -323,6 +333,7 @@ export const createMap = ({
       waypointAddAction({
         point: toLngLat(e),
         index: n + 1,
+        type: 'waypoint',
       })
     )
   }

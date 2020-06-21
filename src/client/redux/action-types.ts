@@ -1,4 +1,4 @@
-import { LngLat, Routes, Settings } from '../../common/types'
+import { LngLat, Routes, Settings, WaypointType } from '../../common/types'
 
 export enum ActionType {
   WaypointAdd = 'WAYPOINT_ADD',
@@ -11,6 +11,7 @@ export enum ActionType {
 export interface WaypointAddProps {
   point: LngLat
   index?: number
+  type: WaypointType
 }
 export interface WaypointAddAction {
   type: ActionType.WaypointAdd
@@ -18,7 +19,7 @@ export interface WaypointAddAction {
 }
 
 export interface WaypointRemoveProps {
-  index: number
+  id: string
 }
 export interface WaypointRemoveAction {
   type: ActionType.WaypointRemove

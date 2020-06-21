@@ -148,10 +148,11 @@ const RouteList: FunctionComponent = () => {
   const dispatch = useDispatch()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
+  const destinations = waypoints.filter(({ type }) => type === 'destination')
   const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
 
-  const onDelete = (index: number): void => {
-    dispatch(waypointRemoveAction({ index }))
+  const onDelete = (id: string): void => {
+    dispatch(waypointRemoveAction({ id }))
   }
 
   return waypoints.length > 0 ? (
@@ -164,7 +165,7 @@ const RouteList: FunctionComponent = () => {
       />
       <ListItem>
         <Point text="A" />
-        <Delete onClick={(): void => onDelete(0)} />
+        <Delete onClick={(): void => onDelete(destinations[0].id)} />
       </ListItem>
       {routes.map(
         ({ length, duration, fuel }, i): ReactNode => (
@@ -174,7 +175,7 @@ const RouteList: FunctionComponent = () => {
             duration={duration}
             fuel={fuel}
             index={i + 1}
-            onDelete={(): void => onDelete(i + 1)}
+            onDelete={(): void => onDelete(destinations[i + 1].id)}
           />
         )
       )}

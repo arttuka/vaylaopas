@@ -10,6 +10,19 @@ export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   return result
 }
 
+export const takeUntil = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
+  const result = []
+  let i = 0
+  while (i < arr.length) {
+    result.push(arr[i])
+    if (pred(arr[i])) {
+      break
+    }
+    ++i
+  }
+  return result
+}
+
 export const round = (n: number, decimals = 0): number => {
   const m = Math.pow(10, decimals)
   return Math.round(n * m) / m
@@ -31,6 +44,15 @@ export const removeIndex = <T>(arr: T[], i: number): T[] => [
   ...arr.slice(0, i),
   ...arr.slice(i + 1),
 ]
+
+export const removeWhere = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
+  const index = arr.findIndex(pred)
+  if (index >= 0) {
+    return removeIndex(arr, index)
+  } else {
+    return arr
+  }
+}
 
 export const updateIndex = <T>(arr: T[], i: number, t: Partial<T>): T[] => [
   ...arr.slice(0, i),
