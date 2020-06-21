@@ -11,6 +11,9 @@ export const getRoutes = async (
       depth,
       height,
     }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   })
 
   if (response.status >= 400) {

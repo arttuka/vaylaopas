@@ -1,11 +1,11 @@
 import React, { Component, ReactElement } from 'react'
-import mapboxgl, { LngLat } from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import { styled } from '@material-ui/core/styles'
 import ContextMenu from './ContextMenu'
 import Marker from './Marker'
 import TouchMarker from './TouchMarker'
 import * as helper from './mapbox-helper'
-import { ClientConfig, Route } from '../../common/types'
+import { ClientConfig, LngLat, Route } from '../../common/types'
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
@@ -50,7 +50,7 @@ const closedMenu = {
 }
 
 const defaultState: MapState = {
-  lastClick: new LngLat(0, 0),
+  lastClick: { lng: 0, lat: 0 },
   markers: [],
   menu: closedMenu,
   touchMarker: undefined,

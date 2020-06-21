@@ -1,79 +1,36 @@
 import React, { Component, ReactElement } from 'react'
-import { Provider } from 'react-redux'
-import axios from 'axios'
-import { LngLat } from 'mapbox-gl'
+import { connect } from 'react-redux'
 import AppBar from './Appbar/Appbar'
 import Map from './Map/Map'
 import Sidebar from './Sidebar/Sidebar'
 import RouteList from './Sidebar/RouteList'
 import SettingsContainer from './Sidebar/SettingsContainer'
-import store from './redux/store'
-import { Route, Settings } from '../common/types'
 import {
-  removeIndex,
-  replaceIndex,
-  insertIndex,
-  calculateDuration,
-} from '../common/util'
-
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-
-const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
-  const { speed, consumption } = settings
-  return routes.map(
-    (route): Route => {
-      const duration = speed && calculateDuration(route.length, speed)
-      const fuel = duration && consumption && (duration * consumption) / 60
-      return {
-        ...route,
-        duration,
-        fuel,
-      }
-    }
-  )
-}
-
-const fetchRoutes = async (
-  waypoints: LngLat[],
-  settings: Settings
-): Promise<Route[]> => {
-  if (waypoints.length > 1) {
-    const routes: Route[] = (
-      await axios.post('/api/route', {
-        points: waypoints,
-        depth: settings.depth,
-        height: settings.height,
-      })
-    ).data
-    return enrichRoutes(routes, settings)
-  }
-  return []
-}
-
-const getStoredSetting = (key: keyof Settings): number | undefined => {
-  const value = localStorage.getItem(key)
-  return value ? parseFloat(value) : undefined
-}
+  waypointAddAction,
+  waypointRemoveAction,
+  waypointMoveAction,
+  settingsSetAction,
+} from './redux/actions'
+import { LngLat, Route, Settings, RootState } from '../common/types'
 
 interface AppState {
-  waypoints: LngLat[]
-  routes: Route[]
-  settings: Settings
   sidebarOpen: boolean
 }
 
-export default class App extends Component<{}, AppState> {
-  constructor(props: {}) {
+interface ReduxAppProps {
+  waypoints: LngLat[]
+  routes: Route[]
+  settings: Settings
+}
+
+interface AppProps extends ReduxAppProps {
+  dispatch: Function
+}
+
+class App extends Component<AppProps, AppState> {
+  constructor(props: AppProps) {
     super(props)
     this.state = {
-      waypoints: [],
-      routes: [],
-      settings: {
-        height: getStoredSetting('height'),
-        depth: getStoredSetting('depth'),
-        speed: getStoredSetting('speed'),
-        consumption: getStoredSetting('consumption'),
-      },
       sidebarOpen: false,
     }
     this.addWaypoint = this.addWaypoint.bind(this)
@@ -85,39 +42,18 @@ export default class App extends Component<{}, AppState> {
   }
 
   addWaypoint(point: LngLat, index?: number): void {
-    this.setState(
-      ({ waypoints }) => ({
-        waypoints: insertIndex(
-          waypoints,
-          index !== undefined ? index : waypoints.length,
-          point
-        ),
-      }),
-      this.updateRoutes
-    )
+    const { dispatch } = this.props
+    dispatch(waypointAddAction({ point, index }))
   }
 
   deleteWaypoint(index: number): void {
-    this.setState(
-      ({ waypoints }) => ({
-        waypoints: removeIndex(waypoints, index),
-      }),
-      this.updateRoutes
-    )
+    const { dispatch } = this.props
+    dispatch(waypointRemoveAction({ index }))
   }
 
   moveWaypoint(point: LngLat, index: number): void {
-    this.setState(
-      ({ waypoints }) => ({
-        waypoints: replaceIndex(waypoints, index, point),
-      }),
-      this.updateRoutes
-    )
-  }
-
-  async updateRoutes(): Promise<void> {
-    const { settings, waypoints } = this.state
-    this.setState({ routes: await fetchRoutes(waypoints, settings) })
+    const { dispatch } = this.props
+    dispatch(waypointMoveAction({ point, index }))
   }
 
   openSidebar(): void {
@@ -129,33 +65,14 @@ export default class App extends Component<{}, AppState> {
   }
 
   updateSetting(key: keyof Settings, value?: number): void {
-    if (['depth', 'height'].includes(key)) {
-      this.setState(
-        ({ settings }) => ({
-          settings: { ...settings, [key]: value },
-        }),
-        this.updateRoutes
-      )
-    } else {
-      this.setState(({ routes, settings }) => {
-        const newSettings = { ...settings, [key]: value }
-        return {
-          settings: newSettings,
-          routes: enrichRoutes(routes, newSettings),
-        }
-      })
-    }
-    if (value !== undefined) {
-      localStorage.setItem(key, value.toString())
-    } else {
-      localStorage.removeItem(key)
-    }
+    const { dispatch } = this.props
+    dispatch(settingsSetAction({ key, value }))
   }
 
   render(): ReactElement {
-    const { settings, routes, waypoints } = this.state
+    const { settings, routes, waypoints } = this.props
     return (
-      <Provider store={store}>
+      <>
         <AppBar openSidebar={this.openSidebar} />
         <Sidebar
           open={this.state.sidebarOpen}
@@ -178,7 +95,21 @@ export default class App extends Component<{}, AppState> {
           onAddWaypoint={this.addWaypoint}
           onMoveWaypoint={this.moveWaypoint}
         />
-      </Provider>
+      </>
     )
   }
 }
+
+const mapStateToProps = ({
+  waypoints,
+  routes,
+  settings,
+}: RootState): ReduxAppProps => ({
+  waypoints,
+  routes,
+  settings,
+})
+
+const connectedApp = connect(mapStateToProps)(App)
+
+export default connectedApp

@@ -17,8 +17,7 @@ import MuiListItemText, {
 import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
-import { LngLat } from 'mapbox-gl'
-import { Route } from '../../common/types'
+import { Routes, Waypoints } from '../../common/types'
 import {
   add,
   formatDuration,
@@ -128,7 +127,7 @@ interface Totals {
   totalLength: number
 }
 
-const calculateTotals = (routes: Route[]): Totals =>
+const calculateTotals = (routes: Routes): Totals =>
   routes.reduce<Totals>(
     (
       { totalDuration, totalFuel, totalLength },
@@ -142,8 +141,8 @@ const calculateTotals = (routes: Route[]): Totals =>
   )
 
 interface RouteListProps {
-  routes: Route[]
-  waypoints: LngLat[]
+  routes: Routes
+  waypoints: Waypoints
   onDelete: (index: number) => void
 }
 

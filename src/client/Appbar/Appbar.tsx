@@ -19,7 +19,6 @@ interface AppBarProps {
 
 export default class AppBar extends PureComponent<AppBarProps> {
   render(): ReactElement {
-    console.log('render AppBar')
     return (
       <div>
         <StyledAppBar position="fixed">

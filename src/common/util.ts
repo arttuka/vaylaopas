@@ -1,4 +1,4 @@
-import { Index } from '../common/types'
+import { Index, Route, Settings } from '../common/types'
 
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   const result = []
@@ -73,3 +73,18 @@ export const formatDuration = (minutes: number): string => {
 
 export const add = (n1?: number, n2?: number): number | undefined =>
   n1 !== undefined && n2 !== undefined ? n1 + n2 : undefined
+
+export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
+  const { speed, consumption } = settings
+  return routes.map(
+    (route): Route => {
+      const duration = speed && calculateDuration(route.length, speed)
+      const fuel = duration && consumption && (duration * consumption) / 60
+      return {
+        ...route,
+        duration,
+        fuel,
+      }
+    }
+  )
+}

@@ -1,5 +1,6 @@
 import blue from '@material-ui/core/colors/blue'
-import mapboxgl, { LngLat } from 'mapbox-gl'
+import mapboxgl, { LngLat as MapboxLngLat } from 'mapbox-gl'
+import { LngLat } from '../../common/types'
 import { numToLetter } from '../../common/util'
 
 const createMarker = (i: number): mapboxgl.Marker => {
@@ -35,20 +36,21 @@ export default class Marker {
   movePoint: (point: LngLat, i: number) => void
   constructor(
     i: number,
-    point: LngLat,
+    { lng, lat }: LngLat,
     movePoint: (point: LngLat, i: number) => void
   ) {
     this.i = i
     this.movePoint = movePoint
     this.onDragEnd = this.onDragEnd.bind(this)
     this.marker = createMarker(i)
-      .setLngLat(point)
+      .setLngLat(new MapboxLngLat(lng, lat))
       .setDraggable(true)
       .on('dragend', this.onDragEnd)
   }
 
   onDragEnd(): void {
-    this.movePoint(this.marker.getLngLat(), this.i)
+    const { lng, lat } = this.marker.getLngLat()
+    this.movePoint({ lng, lat }, this.i)
   }
 
   addTo(map: mapboxgl.Map): this {
