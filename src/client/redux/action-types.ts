@@ -1,4 +1,4 @@
-import { LngLat, Route, Settings } from '../../common/types'
+import { LngLat, Routes, Settings } from '../../common/types'
 
 export enum ActionType {
   WaypointAdd = 'WAYPOINT_ADD',
@@ -39,15 +39,15 @@ export type WaypointAction =
   | WaypointRemoveAction
   | WaypointMoveAction
 
-export interface RouteSuccessProps {
-  routes: Route[]
+export interface RouteUpdateProps {
+  routes: Routes
 }
-export interface RouteSuccessAction {
+export interface RouteUpdateAction {
   type: ActionType.RouteSuccess
-  data: RouteSuccessProps
+  data: RouteUpdateProps
 }
 
-export type RouteAction = RouteSuccessAction
+export type RouteAction = RouteUpdateAction
 
 export interface SettingsSetProps {
   key: keyof Settings

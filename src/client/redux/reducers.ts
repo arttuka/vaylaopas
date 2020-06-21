@@ -6,7 +6,12 @@ import {
   SettingsSetAction,
 } from './action-types'
 import { Waypoints, RootState, Routes, Settings } from '../../common/types'
-import { insertIndex, removeIndex, replaceIndex } from '../../common/util'
+import {
+  getStoredSetting,
+  insertIndex,
+  removeIndex,
+  replaceIndex,
+} from '../../common/util'
 
 const waypointReducer = (
   waypoints: Waypoints,
@@ -59,7 +64,12 @@ const settingsReducer = (
 
 const defaultInitialState: RootState = {
   routes: [],
-  settings: {},
+  settings: {
+    height: getStoredSetting('height'),
+    depth: getStoredSetting('depth'),
+    speed: getStoredSetting('speed'),
+    consumption: getStoredSetting('consumption'),
+  },
   waypoints: [],
 }
 

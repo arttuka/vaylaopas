@@ -4,7 +4,7 @@ import {
   WaypointAddProps,
   WaypointRemoveProps,
   WaypointMoveProps,
-  RouteSuccessProps,
+  RouteUpdateProps,
   SettingsSetProps,
 } from './action-types'
 
@@ -23,7 +23,7 @@ export const waypointMoveAction = (data: WaypointMoveProps): Action => ({
   data,
 })
 
-export const routeSuccessAction = (data: RouteSuccessProps): Action => ({
+export const routeUpdateAction = (data: RouteUpdateProps): Action => ({
   type: ActionType.RouteSuccess,
   data,
 })

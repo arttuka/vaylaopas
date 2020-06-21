@@ -88,3 +88,16 @@ export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
     }
   )
 }
+
+export const getStoredSetting = (key: keyof Settings): number | undefined => {
+  const value = localStorage.getItem(key)
+  return value ? parseFloat(value) : undefined
+}
+
+export const storeSetting = (key: keyof Settings, value?: number): void => {
+  if (value !== undefined) {
+    localStorage.setItem(key, value.toString())
+  } else {
+    localStorage.removeItem(key)
+  }
+}
