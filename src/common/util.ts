@@ -32,11 +32,26 @@ export const removeIndex = <T>(arr: T[], i: number): T[] => [
   ...arr.slice(i + 1),
 ]
 
-export const replaceIndex = <T>(arr: T[], i: number, t: T): T[] => [
+export const updateIndex = <T>(arr: T[], i: number, t: Partial<T>): T[] => [
   ...arr.slice(0, i),
-  t,
+  { ...arr[i], ...t },
   ...arr.slice(i + 1),
 ]
+
+export const updateWhere = <T>(
+  arr: T[],
+  pred: (t: T) => boolean,
+  t: Partial<T>
+): T[] => {
+  const index = arr.findIndex(pred)
+  if (index >= 0) {
+    return updateIndex(arr, index, t)
+  } else {
+    return arr
+  }
+}
+
+export const hasId = (id: string) => (t: { id: string }): boolean => id === t.id
 
 export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
   ...arr.slice(0, i),

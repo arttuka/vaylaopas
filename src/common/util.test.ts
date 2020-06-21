@@ -2,8 +2,10 @@ import {
   partition,
   numToLetter,
   removeIndex,
-  replaceIndex,
+  updateIndex,
   insertIndex,
+  updateWhere,
+  hasId,
   addMany,
   mapBy,
   calculateDuration,
@@ -48,12 +50,35 @@ test('removeIndex', (): void => {
   expect(removeIndex(arr, 3)).toEqual([0, 1, 2])
 })
 
-test('replaceIndex', (): void => {
-  const arr = [0, 1, 2, 3]
-  expect(replaceIndex(arr, 0, 9)).toEqual([9, 1, 2, 3])
-  expect(replaceIndex(arr, 1, 9)).toEqual([0, 9, 2, 3])
-  expect(replaceIndex(arr, 2, 9)).toEqual([0, 1, 9, 3])
-  expect(replaceIndex(arr, 3, 9)).toEqual([0, 1, 2, 9])
+interface TestObj {
+  id: string
+  n: number
+}
+
+test('updateIndex', (): void => {
+  const arr: TestObj[] = [
+    { id: '0', n: 0 },
+    { id: '1', n: 1 },
+  ]
+  expect(updateIndex(arr, 0, { n: 9 })).toEqual([
+    { id: '0', n: 9 },
+    { id: '1', n: 1 },
+  ])
+})
+
+test('updateWhere', (): void => {
+  const arr: TestObj[] = [
+    { id: '0', n: 0 },
+    { id: '1', n: 1 },
+  ]
+  expect(updateWhere(arr, hasId('0'), { n: 9 })).toEqual([
+    { id: '0', n: 9 },
+    { id: '1', n: 1 },
+  ])
+  expect(updateWhere(arr, hasId('9'), { n: 9 })).toEqual([
+    { id: '0', n: 0 },
+    { id: '1', n: 1 },
+  ])
 })
 
 test('insertIndex', (): void => {

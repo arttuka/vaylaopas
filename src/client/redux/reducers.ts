@@ -10,8 +10,12 @@ import {
   getStoredSetting,
   insertIndex,
   removeIndex,
-  replaceIndex,
+  updateWhere,
+  hasId,
 } from '../../common/util'
+
+let waypointId = 0
+const getId = (): string => `waypoint-${waypointId++}`
 
 const waypointReducer = (
   waypoints: Waypoints,
@@ -23,14 +27,14 @@ const waypointReducer = (
       return insertIndex(
         waypoints,
         index !== undefined ? index : waypoints.length,
-        point
+        { ...point, id: getId() }
       )
     }
     case ActionType.WaypointRemove:
       return removeIndex(waypoints, action.data.index)
     case ActionType.WaypointMove: {
-      const { point, index } = action.data
-      return replaceIndex(waypoints, index, point)
+      const { point, id } = action.data
+      return updateWhere(waypoints, hasId(id), point)
     }
     default:
       return waypoints

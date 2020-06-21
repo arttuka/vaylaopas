@@ -3,10 +3,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import mapboxgl from 'mapbox-gl'
 import { styled } from '@material-ui/core/styles'
 import ContextMenu from './ContextMenu'
-import Marker from './Marker'
 import TouchMarker from './TouchMarker'
 import * as helper from './mapbox-helper'
-import { waypointAddAction, waypointMoveAction } from '../redux/actions'
+import { waypointAddAction } from '../redux/actions'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
 import { LngLat, MenuState, TouchMarkerState } from '../../common/types'
 
@@ -26,15 +25,10 @@ const Map: FunctionComponent = () => {
   const mapRef = useRef<mapboxgl.Map>()
   const containerRef = useRef<HTMLDivElement>(null)
   const [lastClick, setLastClick] = useState<LngLat>({ lng: 0, lat: 0 })
-  const [markers, setMarkers] = useState<Marker[]>([])
   const [menu, setMenu] = useState<MenuState>(closedMenu)
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState | undefined>()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
-
-  const onMoveWaypoint = (point: LngLat, index: number): void => {
-    dispatch(waypointMoveAction({ point, index }))
-  }
 
   const onAddWaypoint = (): void => {
     dispatch(waypointAddAction({ point: lastClick }))
@@ -65,15 +59,7 @@ const Map: FunctionComponent = () => {
   useEffect(() => {
     const map = mapRef.current
     if (map) {
-      markers.forEach((m): void => {
-        m.remove()
-      })
-      setMarkers(
-        waypoints.map(
-          (waypoint, index): Marker =>
-            new Marker(index, waypoint, onMoveWaypoint).addTo(map)
-        )
-      )
+      helper.updateWaypoints(map, waypoints)
     }
   }, [waypoints])
 

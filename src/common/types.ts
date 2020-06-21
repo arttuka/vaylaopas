@@ -1,4 +1,4 @@
-import { Feature, LineString, FeatureCollection } from 'geojson'
+import { Feature, Point, LineString, FeatureCollection } from 'geojson'
 import { Dispatch, SetStateAction } from 'react'
 import { Store } from 'redux'
 import { Task } from 'redux-saga'
@@ -6,6 +6,10 @@ import { Task } from 'redux-saga'
 export interface LngLat {
   lng: number
   lat: number
+}
+
+export interface Waypoint extends LngLat {
+  id: string
 }
 
 export interface LaneProperties {
@@ -20,6 +24,22 @@ export const featureIsLane = (feature?: Feature): feature is Lane =>
   feature.properties.hasOwnProperty('route')
 
 export type LaneCollection = FeatureCollection<LineString, LaneProperties>
+
+export interface WaypointProperties {
+  id: string
+  letter: string
+}
+
+export type WaypointFeature = Feature<Point, WaypointProperties>
+
+export const featureIsWaypoint = (
+  feature?: Feature
+): feature is WaypointFeature =>
+  feature !== undefined &&
+  feature.properties !== null &&
+  feature.properties.hasOwnProperty('id')
+
+export type WaypointCollection = FeatureCollection<Point, WaypointProperties>
 
 export interface Route {
   route: Lane[]
@@ -62,7 +82,7 @@ export interface Config {
   server: ServerConfig
 }
 
-export type Waypoints = LngLat[]
+export type Waypoints = Waypoint[]
 
 export type Routes = Route[]
 

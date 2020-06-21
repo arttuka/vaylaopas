@@ -1,5 +1,5 @@
 import { Dispatch } from 'redux'
-import { Feature, MultiPoint } from 'geojson'
+import { Feature, FeatureCollection, Geometry, MultiPoint } from 'geojson'
 import mapboxgl, {
   AnySourceImpl,
   GeoJSONSource,
@@ -9,10 +9,12 @@ import mapboxgl, {
   LngLat as MapboxLngLat,
   Map,
 } from 'mapbox-gl'
-import { waypointAddAction } from '../redux/actions'
+import blue from '@material-ui/core/colors/blue'
+import { waypointAddAction, waypointMoveAction } from '../redux/actions'
 import {
   ClientConfig,
   featureIsLane,
+  featureIsWaypoint,
   Lane,
   LaneCollection,
   LngLat,
@@ -20,7 +22,10 @@ import {
   Route,
   SetState,
   TouchMarkerState,
+  WaypointCollection,
+  Waypoints,
 } from '../../common/types'
+import { numToLetter } from '../../common/util'
 
 declare const clientConfig: ClientConfig
 
@@ -50,6 +55,23 @@ const pointFeature = (point?: MapboxLngLat): Feature<MultiPoint, {}> => ({
   properties: {},
 })
 
+const makeWaypointCollection = (waypoints: Waypoints): WaypointCollection => ({
+  type: 'FeatureCollection',
+  features: waypoints.map(({ id, lng, lat }, index) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: [lng, lat],
+    },
+    properties: {
+      id,
+      letter: numToLetter(index),
+    },
+  })),
+})
+
+let waypointCollection = makeWaypointCollection([])
+
 const lineLayer = (data: {
   id: string
   source: string | GeoJSONSourceRaw
@@ -72,6 +94,17 @@ const sourceIsGeoJSONSource = (
   source?: AnySourceImpl
 ): source is GeoJSONSource => source !== undefined && source.type === 'geojson'
 
+const setSourceData = (
+  map: Map,
+  sourceName: string,
+  data: Feature<Geometry> | FeatureCollection<Geometry>
+): void => {
+  const source = map.getSource(sourceName)
+  if (sourceIsGeoJSONSource(source)) {
+    source.setData(data)
+  }
+}
+
 interface EventHandlers {
   handleClick: (e: MouseEvent) => void
   handleLongTouch: (e: TouchEvent) => void
@@ -79,6 +112,7 @@ interface EventHandlers {
   handleDragRoute: (e: MouseEvent, route: number) => void
   handleTouchStart: (e: TouchEvent) => void
   handleTouchEnd: () => void
+  handleMoveWaypoint: (e: MouseEvent, id: string) => void
 }
 
 export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
@@ -89,22 +123,18 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
     handleDragRoute,
     handleTouchStart,
     handleTouchEnd,
+    handleMoveWaypoint,
   } = eventHandlers
   const canvas = map.getCanvasContainer()
   const onMove = (e: MouseEvent): void => {
-    const dragIndicatorSource = map.getSource('dragIndicator')
-    if (sourceIsGeoJSONSource(dragIndicatorSource)) {
-      dragIndicatorSource.setData(pointFeature(e.lngLat))
-    }
+    setSourceData(map, 'dragIndicator', pointFeature(e.lngLat))
   }
   const onUp = (e: MouseEvent, route: number): void => {
     map.off('mousemove', onMove)
-    const dragIndicatorSource = map.getSource('dragIndicator')
-    if (sourceIsGeoJSONSource(dragIndicatorSource)) {
-      dragIndicatorSource.setData(pointFeature())
-      handleDragRoute(e, route)
-    }
+    setSourceData(map, 'dragIndicator', pointFeature())
+    handleDragRoute(e, route)
   }
+
   let longTouchTimer = 0
   const onTouchEnd = (): void => {
     window.clearTimeout(longTouchTimer)
@@ -157,6 +187,35 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
         'circle-stroke-color': '#000000',
       },
     })
+    .addSource('waypoint', {
+      type: 'geojson',
+      data: waypointCollection,
+    })
+    .addLayer({
+      id: 'waypoint',
+      source: 'waypoint',
+      type: 'circle',
+      paint: {
+        'circle-radius': 16,
+        'circle-color': blue[500],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#000000',
+      },
+    })
+    .addLayer({
+      id: 'waypointText',
+      source: 'waypoint',
+      type: 'symbol',
+      layout: {
+        'text-field': ['get', 'letter'],
+        'text-font': ['Roboto Medium'],
+        'text-size': 24,
+        'text-offset': [0, 0.15],
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
+    })
     .on('contextmenu', handleContextMenu)
     .on('click', handleClick)
     .on('mouseenter', 'route', (): void => {
@@ -174,6 +233,35 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
         map.once('mouseup', (e: MouseEvent): void =>
           onUp(e, feature.properties.route)
         )
+      }
+    })
+    .on('mouseenter', 'waypoint', (): void => {
+      canvas.style.cursor = 'move'
+    })
+    .on('mouseleave', 'waypoint', (): void => {
+      canvas.style.cursor = ''
+    })
+    .on('mousedown', 'waypoint', (e): void => {
+      e.preventDefault()
+      canvas.style.cursor = 'grab'
+      const feature = e.features && e.features[0]
+      if (featureIsWaypoint(feature)) {
+        const waypointId = feature.properties.id
+        const index = waypointCollection.features.findIndex(
+          ({ properties }) => properties.id === waypointId
+        )
+        if (index >= 0) {
+          const onMove = (e: MouseEvent): void => {
+            const { lng, lat } = e.lngLat
+            waypointCollection.features[index].geometry.coordinates = [lng, lat]
+            setSourceData(map, 'waypoint', waypointCollection)
+          }
+          map.on('mousemove', onMove)
+          map.once('mouseup', (e: MouseEvent): void => {
+            map.off('mousemove', onMove)
+            handleMoveWaypoint(e, waypointId)
+          })
+        }
       }
     })
     .on('touchstart', (e): void => {
@@ -247,6 +335,14 @@ export const createMap = ({
   const handleTouchEnd = (): void => {
     setTouchMarker(undefined)
   }
+  const handleMoveWaypoint = (e: MouseEvent, id: string): void => {
+    dispatch(
+      waypointMoveAction({
+        point: toLngLat(e),
+        id,
+      })
+    )
+  }
   map.on('load', (): void => {
     initializeMap(map, {
       handleClick,
@@ -255,32 +351,31 @@ export const createMap = ({
       handleDragRoute,
       handleTouchStart,
       handleTouchEnd,
+      handleMoveWaypoint,
     })
   })
   return map
 }
 
+export const updateWaypoints = (map: Map, waypoints: Waypoints): void => {
+  waypointCollection = makeWaypointCollection(waypoints)
+  setSourceData(map, 'waypoint', waypointCollection)
+}
+
 export const updateRoute = (map: Map, routes: Route[]): void => {
-  const startAndEndSource = map.getSource('routeStartAndEnd')
-  const routeSource = map.getSource('route')
-  if (
-    sourceIsGeoJSONSource(startAndEndSource) &&
-    sourceIsGeoJSONSource(routeSource)
-  ) {
-    if (routes.length) {
-      const { route, startAndEnd } = routes.reduce(
-        (acc, route): Route => ({
-          route: acc.route.concat(route.route),
-          startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
-          length: acc.length + route.length,
-        }),
-        { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
-      )
-      routeSource.setData(laneCollection(route))
-      startAndEndSource.setData(laneCollection(startAndEnd))
-    } else {
-      routeSource.setData(laneCollection())
-      startAndEndSource.setData(laneCollection())
-    }
+  if (routes.length) {
+    const { route, startAndEnd } = routes.reduce(
+      (acc, route): Route => ({
+        route: acc.route.concat(route.route),
+        startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
+        length: acc.length + route.length,
+      }),
+      { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
+    )
+    setSourceData(map, 'route', laneCollection(route))
+    setSourceData(map, 'routeStartAndEnd', laneCollection(startAndEnd))
+  } else {
+    setSourceData(map, 'route', laneCollection())
+    setSourceData(map, 'routeStartAndEnd', laneCollection())
   }
 }

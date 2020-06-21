@@ -23,16 +23,6 @@ const indexHtml = (cfg, bundle) => `
         -ms-user-select: none;
         user-select: none;
       }
-      .mapboxgl-marker label {
-        position: absolute;
-        width: 32px;
-        line-height: 32px;
-        text-align: center;
-        color: white;
-        font-weight: bold;
-        font-size: 24px;
-        font-family: 'Roboto', 'Helvetica Neue', sans-serif;
-      }
     </style>
     <meta
       name="viewport"

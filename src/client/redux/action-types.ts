@@ -27,7 +27,7 @@ export interface WaypointRemoveAction {
 
 export interface WaypointMoveProps {
   point: LngLat
-  index: number
+  id: string
 }
 export interface WaypointMoveAction {
   type: ActionType.WaypointMove
