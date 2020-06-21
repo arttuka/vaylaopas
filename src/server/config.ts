@@ -20,6 +20,10 @@ if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
       password: process.env.DB_PASSWORD!,
       database: process.env.DB_NAME!,
     },
+    server: {
+      host: process.env.HOST!,
+      port: parseInt(process.env.PORT!, 10),
+    },
   }
   /* eslint-enable */
 }

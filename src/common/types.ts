@@ -41,6 +41,12 @@ export interface ClientConfig {
   mapserver: string
 }
 
+export interface ServerConfig {
+  host: string
+  port: number
+  devserverPort?: number
+}
+
 export interface Config {
   client: ClientConfig
   db: {
@@ -50,4 +56,5 @@ export interface Config {
     password: string
     database: string
   }
+  server: ServerConfig
 }
