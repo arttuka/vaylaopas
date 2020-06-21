@@ -1,5 +1,4 @@
 import express, { RequestHandler } from 'express'
-import * as path from 'path'
 import config from './config'
 import { getRoute } from './db'
 import { Waypoints } from '../common/types'
@@ -16,14 +15,14 @@ const wrapAsync = (handler: RequestHandler): RequestHandler => (
 const app = express()
 app.use(express.json())
 app.use(
-  '/static',
-  express.static(path.join(__dirname, 'public'), {
+  '/js',
+  express.static('./dist/js', {
     maxAge: 86400000,
   })
 )
 
 app.get('/', (req, res): void => {
-  res.send(indexHtml(config.client))
+  res.send(indexHtml(config.client, '/js/bundle.js'))
 })
 
 interface RouteParams {
