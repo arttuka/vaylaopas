@@ -1,9 +1,11 @@
 import React, {
   ComponentType,
+  FunctionComponent,
   PureComponent,
   ReactElement,
   ReactNode,
 } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import blue from '@material-ui/core/colors/blue'
 import MuiAvatar, { AvatarProps } from '@material-ui/core/Avatar'
 import IconButton from '@material-ui/core/IconButton'
@@ -17,7 +19,8 @@ import MuiListItemText, {
 import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
-import { Routes, Waypoints } from '../../common/types'
+import { routesSelector, waypointsSelector } from '../redux/selectors'
+import { Routes } from '../../common/types'
 import {
   add,
   formatDuration,
@@ -25,6 +28,7 @@ import {
   numToLetter,
   round,
 } from '../../common/util'
+import { waypointRemoveAction } from '../redux/actions'
 
 const Avatar: ComponentType<AvatarProps> = withStyles({
   root: {
@@ -140,41 +144,42 @@ const calculateTotals = (routes: Routes): Totals =>
     { totalDuration: 0, totalFuel: 0, totalLength: 0 }
   )
 
-interface RouteListProps {
-  routes: Routes
-  waypoints: Waypoints
-  onDelete: (index: number) => void
+const RouteList: FunctionComponent = () => {
+  const dispatch = useDispatch()
+  const routes = useSelector(routesSelector)
+  const waypoints = useSelector(waypointsSelector)
+  const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
+
+  const onDelete = (index: number): void => {
+    dispatch(waypointRemoveAction({ index }))
+  }
+
+  return waypoints.length > 0 ? (
+    <List disablePadding={true}>
+      <RouteSegment
+        length={totalLength}
+        duration={totalDuration}
+        fuel={totalFuel}
+        kind="totals"
+      />
+      <ListItem>
+        <Point text="A" />
+        <Delete onClick={(): void => onDelete(0)} />
+      </ListItem>
+      {routes.map(
+        ({ length, duration, fuel }, i): ReactNode => (
+          <RouteSegment
+            key={`route-segment-${i}`}
+            length={length}
+            duration={duration}
+            fuel={fuel}
+            index={i + 1}
+            onDelete={(): void => onDelete(i + 1)}
+          />
+        )
+      )}
+    </List>
+  ) : null
 }
 
-export default class RouteList extends PureComponent<RouteListProps> {
-  render(): ReactElement | null {
-    const { routes, waypoints, onDelete } = this.props
-    const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
-    return waypoints.length > 0 ? (
-      <List disablePadding={true}>
-        <RouteSegment
-          length={totalLength}
-          duration={totalDuration}
-          fuel={totalFuel}
-          kind="totals"
-        />
-        <ListItem>
-          <Point text="A" />
-          <Delete onClick={(): void => onDelete(0)} />
-        </ListItem>
-        {routes.map(
-          ({ length, duration, fuel }, i): ReactNode => (
-            <RouteSegment
-              key={`route-segment-${i}`}
-              length={length}
-              duration={duration}
-              fuel={fuel}
-              index={i + 1}
-              onDelete={(): void => onDelete(i + 1)}
-            />
-          )
-        )}
-      </List>
-    ) : null
-  }
-}
+export default RouteList

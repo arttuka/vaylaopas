@@ -1,4 +1,5 @@
 import { Feature, LineString, FeatureCollection } from 'geojson'
+import { Dispatch, SetStateAction } from 'react'
 import { Store } from 'redux'
 import { Task } from 'redux-saga'
 
@@ -73,4 +74,18 @@ export interface RootState {
 
 export type SagaStore = Store<RootState> & {
   runSaga: Task
+}
+
+export type SetState<T> = Dispatch<SetStateAction<T>>
+
+export interface MenuState {
+  open: boolean
+  top: number
+  left: number
+}
+
+export interface TouchMarkerState {
+  direction: 'up' | 'down'
+  top: number
+  left: number
 }

@@ -1,4 +1,5 @@
-import React, { ComponentType, PureComponent, ReactElement } from 'react'
+import React, { ComponentType, FunctionComponent } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import MuiExpansionPanel, {
   ExpansionPanelProps,
 } from '@material-ui/core/ExpansionPanel'
@@ -11,7 +12,9 @@ import MuiExpansionPanelDetails, {
 import { withStyles } from '@material-ui/core/styles'
 import SettingsIcon from '@material-ui/icons/Settings'
 import SettingField from './SettingField'
+import { settingsSelector } from '../redux/selectors'
 import { Settings } from '../../common/types'
+import { settingsSetAction } from '../redux/actions'
 
 const ExpansionPanel: ComponentType<ExpansionPanelProps> = withStyles({
   root: {
@@ -49,68 +52,45 @@ const ExpansionPanelDetails: ComponentType<ExpansionPanelDetailsProps> = withSty
   }
 )(MuiExpansionPanelDetails)
 
-type ChangeHandler = (value?: number) => void
-
-interface SettingsProps {
-  settings: Settings
-  updateSetting: (key: keyof Settings, value?: number) => void
+const SettingsContainer: FunctionComponent = () => {
+  const dispatch = useDispatch()
+  const { depth, height, speed, consumption } = useSelector(settingsSelector)
+  const updateSetting = (key: keyof Settings) => (value?: number): void => {
+    dispatch(settingsSetAction({ key, value }))
+  }
+  return (
+    <ExpansionPanel>
+      <ExpansionPanelSummary expandIcon={<SettingsIcon />}>
+        Asetukset
+      </ExpansionPanelSummary>
+      <ExpansionPanelDetails>
+        <SettingField
+          id="settingfield-depth"
+          label="Syväys (m)"
+          value={depth}
+          onChange={updateSetting('depth')}
+        />
+        <SettingField
+          id="settingfield-height"
+          label="Korkeus (m)"
+          value={height}
+          onChange={updateSetting('height')}
+        />
+        <SettingField
+          id="settingfield-speed"
+          label="Nopeus (kn)"
+          value={speed}
+          onChange={updateSetting('speed')}
+        />
+        <SettingField
+          id="settingfield-consumption"
+          label="Kulutus (l/h)"
+          value={consumption}
+          onChange={updateSetting('consumption')}
+        />
+      </ExpansionPanelDetails>
+    </ExpansionPanel>
+  )
 }
 
-export default class SettingsContainer extends PureComponent<SettingsProps> {
-  handleUpdateDepth: ChangeHandler
-  handleUpdateHeight: ChangeHandler
-  handleUpdateSpeed: ChangeHandler
-  handleUpdateConsumption: ChangeHandler
-  constructor(props: SettingsProps) {
-    super(props)
-    this.handleUpdateDepth = (value?: number): void =>
-      this.handleUpdate('depth', value)
-    this.handleUpdateHeight = (value?: number): void =>
-      this.handleUpdate('height', value)
-    this.handleUpdateSpeed = (value?: number): void =>
-      this.handleUpdate('speed', value)
-    this.handleUpdateConsumption = (value?: number): void =>
-      this.handleUpdate('consumption', value)
-  }
-
-  handleUpdate(key: keyof Settings, value?: number): void {
-    this.props.updateSetting(key, value)
-  }
-
-  render(): ReactElement {
-    const { depth, height, speed, consumption } = this.props.settings
-    return (
-      <ExpansionPanel>
-        <ExpansionPanelSummary expandIcon={<SettingsIcon />}>
-          Asetukset
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <SettingField
-            id="settingfield-depth"
-            label="Syväys (m)"
-            value={depth}
-            onChange={this.handleUpdateDepth}
-          />
-          <SettingField
-            id="settingfield-height"
-            label="Korkeus (m)"
-            value={height}
-            onChange={this.handleUpdateHeight}
-          />
-          <SettingField
-            id="settingfield-speed"
-            label="Nopeus (kn)"
-            value={speed}
-            onChange={this.handleUpdateSpeed}
-          />
-          <SettingField
-            id="settingfield-consumption"
-            label="Kulutus (l/h)"
-            value={consumption}
-            onChange={this.handleUpdateConsumption}
-          />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
-    )
-  }
-}
+export default SettingsContainer
