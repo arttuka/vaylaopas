@@ -8,6 +8,7 @@ import mapboxgl, {
   LinePaint,
   LngLat as MapboxLngLat,
   Map,
+  MapboxGeoJSONFeature,
 } from 'mapbox-gl'
 import blue from '@material-ui/core/colors/blue'
 import { waypointAddAction, waypointMoveAction } from '../redux/actions'
@@ -105,6 +106,27 @@ const setSourceData = (
   }
 }
 
+const makeDraggable = (
+  map: Map,
+  layer: string,
+  handler: (feature?: MapboxGeoJSONFeature) => void
+): void => {
+  const canvas = map.getCanvasContainer()
+  map
+    .on('mouseenter', layer, (): void => {
+      canvas.style.cursor = 'move'
+    })
+    .on('mouseleave', layer, (): void => {
+      canvas.style.cursor = ''
+    })
+    .on('mousedown', layer, (e): void => {
+      e.preventDefault()
+      canvas.style.cursor = 'grab'
+      const feature = e.features && e.features[0]
+      handler(feature)
+    })
+}
+
 interface EventHandlers {
   handleClick: (e: MouseEvent) => void
   handleLongTouch: (e: TouchEvent) => void
@@ -125,16 +147,6 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
     handleTouchEnd,
     handleMoveWaypoint,
   } = eventHandlers
-  const canvas = map.getCanvasContainer()
-  const onMove = (e: MouseEvent): void => {
-    setSourceData(map, 'dragIndicator', pointFeature(e.lngLat))
-  }
-  const onUp = (e: MouseEvent, route: number): void => {
-    map.off('mousemove', onMove)
-    setSourceData(map, 'dragIndicator', pointFeature())
-    handleDragRoute(e, route)
-  }
-
   let longTouchTimer = 0
   const onTouchEnd = (): void => {
     window.clearTimeout(longTouchTimer)
@@ -218,52 +230,6 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
     })
     .on('contextmenu', handleContextMenu)
     .on('click', handleClick)
-    .on('mouseenter', 'route', (): void => {
-      canvas.style.cursor = 'move'
-    })
-    .on('mouseleave', 'route', (): void => {
-      canvas.style.cursor = ''
-    })
-    .on('mousedown', 'route', (e): void => {
-      e.preventDefault()
-      canvas.style.cursor = 'grab'
-      const feature = e.features && e.features[0]
-      if (featureIsLane(feature)) {
-        map.on('mousemove', onMove)
-        map.once('mouseup', (e: MouseEvent): void =>
-          onUp(e, feature.properties.route)
-        )
-      }
-    })
-    .on('mouseenter', 'waypoint', (): void => {
-      canvas.style.cursor = 'move'
-    })
-    .on('mouseleave', 'waypoint', (): void => {
-      canvas.style.cursor = ''
-    })
-    .on('mousedown', 'waypoint', (e): void => {
-      e.preventDefault()
-      canvas.style.cursor = 'grab'
-      const feature = e.features && e.features[0]
-      if (featureIsWaypoint(feature)) {
-        const waypointId = feature.properties.id
-        const index = waypointCollection.features.findIndex(
-          ({ properties }) => properties.id === waypointId
-        )
-        if (index >= 0) {
-          const onMove = (e: MouseEvent): void => {
-            const { lng, lat } = e.lngLat
-            waypointCollection.features[index].geometry.coordinates = [lng, lat]
-            setSourceData(map, 'waypoint', waypointCollection)
-          }
-          map.on('mousemove', onMove)
-          map.once('mouseup', (e: MouseEvent): void => {
-            map.off('mousemove', onMove)
-            handleMoveWaypoint(e, waypointId)
-          })
-        }
-      }
-    })
     .on('touchstart', (e): void => {
       window.clearTimeout(longTouchTimer)
       handleTouchStart(e)
@@ -274,6 +240,41 @@ export const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
     .on('touchend', onTouchEnd)
     .on('touchcancel', onTouchEnd)
     .on('touchmove', onTouchEnd)
+
+  makeDraggable(map, 'route', (feature?: MapboxGeoJSONFeature): void => {
+    if (featureIsLane(feature)) {
+      const onMove = (e: MouseEvent): void => {
+        setSourceData(map, 'dragIndicator', pointFeature(e.lngLat))
+      }
+      map.on('mousemove', onMove)
+      map.once('mouseup', (e: MouseEvent): void => {
+        map.off('mousemove', onMove)
+        setSourceData(map, 'dragIndicator', pointFeature())
+        handleDragRoute(e, feature.properties.route)
+      })
+    }
+  })
+
+  makeDraggable(map, 'waypoint', (feature?: MapboxGeoJSONFeature): void => {
+    if (featureIsWaypoint(feature)) {
+      const waypointId = feature.properties.id
+      const index = waypointCollection.features.findIndex(
+        ({ properties }) => properties.id === waypointId
+      )
+      if (index >= 0) {
+        const onMove = (e: MouseEvent): void => {
+          const { lng, lat } = e.lngLat
+          waypointCollection.features[index].geometry.coordinates = [lng, lat]
+          setSourceData(map, 'waypoint', waypointCollection)
+        }
+        map.on('mousemove', onMove)
+        map.once('mouseup', (e: MouseEvent): void => {
+          map.off('mousemove', onMove)
+          handleMoveWaypoint(e, waypointId)
+        })
+      }
+    }
+  })
 }
 
 export const createMap = ({
