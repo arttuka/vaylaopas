@@ -138,3 +138,6 @@ export const storeSetting = (key: keyof Settings, value?: number): void => {
     localStorage.removeItem(key)
   }
 }
+
+export const range = (count: number, start = 0): number[] =>
+  [...Array(count).keys()].map((i) => i + start)

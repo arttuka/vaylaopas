@@ -12,6 +12,7 @@ import {
   mapBy,
   calculateDuration,
   formatDuration,
+  range,
 } from './util'
 import { Index } from '../common/types'
 
@@ -133,4 +134,10 @@ test('formatDuration', (): void => {
   expect(formatDuration(59)).toEqual('59 min')
   expect(formatDuration(60)).toEqual('1 h 0 min')
   expect(formatDuration(61)).toEqual('1 h 1 min')
+})
+
+test('range', (): void => {
+  expect(range(0)).toEqual([])
+  expect(range(3)).toEqual([0, 1, 2])
+  expect(range(3, 10)).toEqual([10, 11, 12])
 })
