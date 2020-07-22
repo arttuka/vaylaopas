@@ -13,7 +13,7 @@ const nearbyFn = 'find_nearby_intersections'
 const verticesTmp = `${tableTmp}_vertices_pgr`
 const tableTo = 'lane'
 const verticesTo = `${tableTo}_vertices_pgr`
-const tolerance = 10
+const tolerance = 20
 
 interface Intersection {
   id?: number
@@ -307,6 +307,10 @@ const saveLane = async (l: Lane): Promise<void> => {
         SELECT v.id, ST_LineLocatePoint(l.geom, v.the_geom) AS distance
         FROM ${tableTmp} l, ${verticesTo} v
         WHERE l.id = $1 AND v.id IN (${placeholders.join(',')})
+        UNION
+        SELECT l.target AS id, 1.0 AS distance
+        FROM ${tableTmp} l
+        WHERE l.id = $1
       ) AS d
       ORDER BY distance ASC
     )
