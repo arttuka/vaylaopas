@@ -45,13 +45,10 @@ export const removeIndex = <T>(arr: T[], i: number): T[] => [
   ...arr.slice(i + 1),
 ]
 
+const complement = <T>(pred: (t: T) => boolean) => (t: T): boolean => !pred(t)
+
 export const removeWhere = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
-  const index = arr.findIndex(pred)
-  if (index >= 0) {
-    return removeIndex(arr, index)
-  } else {
-    return arr
-  }
+  return arr.filter(complement(pred))
 }
 
 export const updateIndex = <T>(arr: T[], i: number, t: Partial<T>): T[] => [
@@ -74,6 +71,9 @@ export const updateWhere = <T>(
 }
 
 export const hasId = (id: string) => (t: { id: string }): boolean => id === t.id
+
+export const hasAnyId = (ids: string[]) => (t: { id: string }): boolean =>
+  ids.includes(t.id)
 
 export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
   ...arr.slice(0, i),

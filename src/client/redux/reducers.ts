@@ -12,10 +12,26 @@ import {
   removeWhere,
   updateWhere,
   hasId,
+  hasAnyId,
 } from '../../common/util'
 
 let waypointId = 0
 const getId = (): string => `waypoint-${waypointId++}`
+const getAdjacentWaypointIds = (waypoints: Waypoints, id: string): string[] => {
+  const idx = waypoints.findIndex(hasId(id))
+  const result = [id]
+  let i = idx + 1
+  while (i < waypoints.length && waypoints[i].type === 'waypoint') {
+    result.push(waypoints[i].id)
+    i++
+  }
+  i = idx - 1
+  while (i >= 0 && waypoints[i].type === 'waypoint') {
+    result.push(waypoints[i].id)
+    i--
+  }
+  return result
+}
 
 const waypointReducer = (
   waypoints: Waypoints,
@@ -31,7 +47,8 @@ const waypointReducer = (
       )
     }
     case ActionType.WaypointRemove:
-      return removeWhere(waypoints, hasId(action.data.id))
+      const ids = getAdjacentWaypointIds(waypoints, action.data.id)
+      return removeWhere(waypoints, hasAnyId(ids))
     case ActionType.WaypointMove: {
       const { point, id } = action.data
       return updateWhere(waypoints, hasId(id), point)
