@@ -25,7 +25,8 @@ interface RouteEndpoint {
 
 const getClosestPoint = async (
   client: PoolClient,
-  p: Waypoint
+  p: Waypoint,
+  depth?: number
 ): Promise<RouteEndpoint> => {
   const { lng, lat, type } = p
   const point = `ST_Transform(
@@ -36,6 +37,7 @@ const getClosestPoint = async (
     `
     WITH closest AS (
       SELECT id, source, target, ST_ClosestPoint(geom, ${point}) point FROM lane
+      ${depth ? `WHERE depth IS NULL OR depth >= ${depth}` : ''}
       ORDER BY geom <-> ${point}
       LIMIT 1
     )
@@ -159,7 +161,7 @@ export const getRoute = async (
   try {
     const endpoints = await Promise.all(
       points.map(
-        (point): Promise<RouteEndpoint> => getClosestPoint(client, point)
+        (point): Promise<RouteEndpoint> => getClosestPoint(client, point, depth)
       )
     )
     return await Promise.all(
