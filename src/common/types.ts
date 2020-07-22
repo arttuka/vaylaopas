@@ -51,6 +51,7 @@ export interface Route {
   length: number
   duration?: number
   fuel?: number
+  type?: WaypointType
 }
 
 export interface Index<T> {

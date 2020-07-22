@@ -2,7 +2,7 @@ import { Pool, PoolClient } from 'pg'
 import { LineString, Point } from 'geojson'
 import config from './config'
 import { Lane, Route, Waypoint, Waypoints, WaypointType } from '../common/types'
-import { partition, range, takeUntil } from '../common/util'
+import { partition, range } from '../common/util'
 
 const pool = new Pool(config.db)
 const [lIdFrom1, lIdFrom2, vIdFrom, lIdTo1, lIdTo2, vIdTo] = range(6, 1000000)
@@ -147,41 +147,7 @@ const getRouteBetweenVertices = async (
     formatLane(from.geometry, routeNumber),
     formatLane(to.geometry, routeNumber),
   ]
-  return { route, length, startAndEnd }
-}
-
-const mergeRoutes = (r1: Route, r2: Route): Route => ({
-  route: [...r1.route, ...r2.route],
-  startAndEnd: [r1.startAndEnd[0], r2.startAndEnd[1]],
-  length: r1.length + r2.length,
-})
-
-const getRouteSegment = async (
-  client: PoolClient,
-  routeNumber: number,
-  endpoints: RouteEndpoint[],
-  depth?: number,
-  height?: number
-): Promise<Route> => {
-  const routes = await Promise.all(
-    partition(endpoints, 2, 1).map(
-      ([from, to]): Promise<Route> =>
-        getRouteBetweenVertices(client, routeNumber, from, to, depth, height)
-    )
-  )
-  return routes.reduce(mergeRoutes)
-}
-
-const splitEndpoints = (endpoints: RouteEndpoint[]): RouteEndpoint[][] => {
-  const result: RouteEndpoint[][] = []
-  let points = endpoints
-  while (points.length > 1) {
-    const [p, ...rest] = points
-    const ps = takeUntil(rest, (e) => e.type === 'destination')
-    result.push([p, ...ps])
-    points = points.slice(ps.length)
-  }
-  return result
+  return { route, length, startAndEnd, type: to.type }
 }
 
 export const getRoute = async (
@@ -196,11 +162,10 @@ export const getRoute = async (
         (point): Promise<RouteEndpoint> => getClosestPoint(client, point)
       )
     )
-    const segments = splitEndpoints(endpoints)
     return await Promise.all(
-      segments.map(
-        (segment, index): Promise<Route> =>
-          getRouteSegment(client, index, segment, depth, height)
+      partition(endpoints, 2, 1).map(
+        ([from, to], index): Promise<Route> =>
+          getRouteBetweenVertices(client, index, from, to, depth, height)
       )
     )
   } finally {

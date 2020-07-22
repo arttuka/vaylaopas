@@ -111,6 +111,26 @@ export const formatDuration = (minutes: number): string => {
 export const add = (n1?: number, n2?: number): number | undefined =>
   n1 !== undefined && n2 !== undefined ? n1 + n2 : undefined
 
+const mergeRoutes = (r1: Route, r2: Route): Route => ({
+  route: [...r1.route, ...r2.route],
+  startAndEnd: [r1.startAndEnd[0], r2.startAndEnd[1]],
+  length: r1.length + r2.length,
+  type: r2.type,
+  duration: add(r1.duration, r2.duration),
+  fuel: add(r1.fuel, r2.fuel),
+})
+
+export const combineSegments = (routes: Route[]): Route[] => {
+  const result: Route[] = []
+  let remainingRoutes = routes
+  while (remainingRoutes.length > 0) {
+    const rs = takeUntil(remainingRoutes, (r) => r.type === 'destination')
+    result.push(rs.reduce(mergeRoutes))
+    remainingRoutes = remainingRoutes.slice(rs.length)
+  }
+  return result
+}
+
 export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   const { speed, consumption } = settings
   return routes.map(

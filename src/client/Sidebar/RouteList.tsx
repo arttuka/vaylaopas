@@ -23,6 +23,7 @@ import { routesSelector, waypointsSelector } from '../redux/selectors'
 import { Routes } from '../../common/types'
 import {
   add,
+  combineSegments,
   formatDuration,
   toNM,
   numToLetter,
@@ -149,6 +150,7 @@ const RouteList: FunctionComponent = () => {
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
   const destinations = waypoints.filter(({ type }) => type === 'destination')
+  const combinedRoutes = combineSegments(routes)
   const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
 
   const onDelete = (id: string): void => {
@@ -167,7 +169,7 @@ const RouteList: FunctionComponent = () => {
         <Point text="A" />
         <Delete onClick={(): void => onDelete(destinations[0].id)} />
       </ListItem>
-      {routes.map(
+      {combinedRoutes.map(
         ({ length, duration, fuel }, i): ReactNode => (
           <RouteSegment
             key={`route-segment-${i}`}
