@@ -58,6 +58,9 @@ const createTable = async (table: string): Promise<void> => {
   await client.query(
     `SELECT AddGeometryColumn('public', '${table}', 'geom', '3067', 'LINESTRING', 2)`
   )
+  await client.query(
+    `CREATE INDEX ${table}_geom_idx ON ${table} USING GIST(geom)`
+  )
 }
 
 const createTables = async (): Promise<void> => {

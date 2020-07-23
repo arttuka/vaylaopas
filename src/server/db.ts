@@ -43,12 +43,13 @@ const getClosestPoint = async (
   const result = await client.query(
     `
     WITH closest AS (
-      SELECT id, source, target, ST_ClosestPoint(geom, ${point}) point FROM lane
+      SELECT id, source, target, ST_ClosestPoint(lane.geom, origin.geom) point, origin.geom origin
+      FROM lane, (VALUES (${point})) origin(geom)
       ${depth ? `WHERE depth IS NULL OR depth >= ${depth}` : ''}
-      ORDER BY geom <-> ${point}
+      ORDER BY lane.geom <-> origin.geom
       LIMIT 1
     )
-    SELECT c.id AS lane, c.point, AsJSON(ST_MakeLine(${point}, c.point)) AS geometry,
+    SELECT c.id AS lane, c.point, AsJSON(ST_MakeLine(c.origin, c.point)) AS geometry,
       CASE c.point
         WHEN s.the_geom THEN c.source
         WHEN t.the_geom THEN c.target
@@ -133,7 +134,7 @@ const getRouteBetweenVertices = async (
 
   const query = `
     WITH ids AS (SELECT edge AS id FROM pgr_dijkstra(
-      '${escape(laneQuery)}', $1::bigint, $2::bigint
+      '${escape(laneQuery)}', $1::bigint, $2::bigint, directed := false
     ))
     SELECT length, AsJSON(geom) AS geometry
     FROM lane JOIN ids ON lane.id = ids.id
