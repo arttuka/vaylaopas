@@ -1,6 +1,6 @@
 import { Layer, Map } from 'mapbox-gl'
 import blue from '@material-ui/core/colors/blue'
-import { DragStartHandler, LayerId, MouseEvent, SourceId } from './types'
+import { DragStartHandler, Event, LayerId, SourceId } from './types'
 
 const addLayer = (
   map: Map,
@@ -83,6 +83,20 @@ export const makeLayerDraggable = (
   handler: DragStartHandler
 ): void => {
   const canvas = map.getCanvasContainer()
+  const onDragStart = (e: Event, type: 'mouse' | 'touch'): void => {
+    e.preventDefault()
+    canvas.style.cursor = 'grab'
+    const [move, end] =
+      type === 'mouse' ? ['mousemove', 'mouseup'] : ['touchmove', 'touchend']
+    const feature = e.features && e.features[0]
+    const { onMove, onMoveEnd } = handler(e.target, feature)
+    map.on(move, onMove)
+    map.once(end, (e: Event): void => {
+      map.off(move, onMove)
+      onMoveEnd(e)
+      canvas.style.cursor = ''
+    })
+  }
   map
     .on('mouseenter', layer, (): void => {
       canvas.style.cursor = 'move'
@@ -90,15 +104,6 @@ export const makeLayerDraggable = (
     .on('mouseleave', layer, (): void => {
       canvas.style.cursor = ''
     })
-    .on('mousedown', layer, (e): void => {
-      e.preventDefault()
-      canvas.style.cursor = 'grab'
-      const feature = e.features && e.features[0]
-      const { onMove, onMoveEnd } = handler(e.target, feature)
-      map.on('mousemove', onMove)
-      map.once('mouseup', (e: MouseEvent): void => {
-        map.off('mousemove', onMove)
-        onMoveEnd(e)
-      })
-    })
+    .on('mousedown', layer, (e): void => onDragStart(e, 'mouse'))
+    .on('touchstart', layer, (e): void => onDragStart(e, 'touch'))
 }

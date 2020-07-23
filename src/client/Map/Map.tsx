@@ -90,12 +90,12 @@ const Map: FunctionComponent = () => {
     feature?: MapboxGeoJSONFeature
   ): DragEventHandlers => {
     if (featureIsLane(feature)) {
-      const onMove = (e: MouseEvent): void =>
+      const onMove = (e: Event): void =>
         setSourceData(map, {
           id: 'dragIndicator',
           data: pointFeature(e.lngLat),
         })
-      const onMoveEnd = (e: MouseEvent): void => {
+      const onMoveEnd = (e: Event): void => {
         setSourceData(map, { id: 'dragIndicator', data: pointFeature() })
         dispatch(
           waypointAddAction({
@@ -121,14 +121,14 @@ const Map: FunctionComponent = () => {
       const index = waypointCollection.features.findIndex(
         ({ properties }) => properties.id === waypointId
       )
-      const onMove = (e: MouseEvent): void => {
+      const onMove = (e: Event): void => {
         if (index >= 0) {
           const { lng, lat } = e.lngLat
           waypointCollection.features[index].geometry.coordinates = [lng, lat]
           setSourceData(map, { id: 'waypoint', data: waypointCollection })
         }
       }
-      const onMoveEnd = (e: MouseEvent): void => {
+      const onMoveEnd = (e: Event): void => {
         dispatch(
           waypointMoveAction({
             point: toLngLat(e),

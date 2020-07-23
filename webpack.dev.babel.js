@@ -14,8 +14,8 @@ module.exports = merge(common, {
   devServer: {
     hot: true,
     compress: true,
+    host: '0.0.0.0',
     port: devserverPort,
-    allowedHosts: [host],
     public: `${host}:${devserverPort}`,
     historyApiFallback: true,
     proxy: {
