@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Index, Route, Settings } from '../common/types'
 
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
@@ -161,3 +162,19 @@ export const storeSetting = (key: keyof Settings, value?: number): void => {
 
 export const range = (count: number, start = 0): number[] =>
   [...Array(count).keys()].map((i) => i + start)
+
+export const useInterval = (callback: () => void, ms: number): void => {
+  const callbackRef = useRef(callback)
+
+  useEffect(() => {
+    callbackRef.current = callback
+  }, [callback])
+
+  useEffect(() => {
+    const tick = (): void => callbackRef.current()
+    const id = setInterval(tick, ms)
+    return (): void => {
+      clearInterval(id)
+    }
+  }, [ms])
+}
