@@ -4,8 +4,15 @@ import {
   WaypointAction,
   RouteAction,
   SettingsSetAction,
+  NotificationAction,
 } from './action-types'
-import { Waypoints, RootState, Routes, Settings } from '../../common/types'
+import {
+  Waypoints,
+  RootState,
+  Routes,
+  Settings,
+  Notification,
+} from '../../common/types'
 import {
   getStoredSetting,
   insertIndex,
@@ -83,6 +90,35 @@ const settingsReducer = (
   }
 }
 
+const generateKey = ((): (() => string) => {
+  let i = 0
+  return (): string => `notification_${i++}`
+})()
+
+const notificationReducer = (
+  notifications: Notification[],
+  action: NotificationAction
+): Notification[] => {
+  switch (action.type) {
+    case ActionType.NotificationEnqueue:
+      const { key, message, variant } = action.data
+      return [
+        ...notifications,
+        {
+          key: key || generateKey(),
+          message,
+          variant,
+        },
+      ]
+    case ActionType.NotificationRemove:
+      return notifications.map((n) =>
+        n.key === action.data.key ? { ...n, dismissed: true } : n
+      )
+    default:
+      return notifications
+  }
+}
+
 const defaultInitialState: RootState = {
   routes: [],
   settings: {
@@ -92,6 +128,7 @@ const defaultInitialState: RootState = {
     consumption: getStoredSetting('consumption'),
   },
   waypoints: [],
+  notifications: [],
 }
 
 export const rootReducer = (initialState = defaultInitialState): Reducer =>
@@ -102,4 +139,6 @@ export const rootReducer = (initialState = defaultInitialState): Reducer =>
       routeReducer(state, action),
     settings: (state = initialState.settings, action) =>
       settingsReducer(state, action),
+    notifications: (state = initialState.notifications, action) =>
+      notificationReducer(state, action),
   })

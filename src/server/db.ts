@@ -1,7 +1,14 @@
 import { Pool, PoolClient } from 'pg'
 import { LineString, Point } from 'geojson'
 import config from './config'
-import { Lane, Route, Waypoint, Waypoints, WaypointType } from '../common/types'
+import {
+  Lane,
+  Route,
+  RouteNotFoundError,
+  Waypoint,
+  Waypoints,
+  WaypointType,
+} from '../common/types'
 import { partition, range } from '../common/util'
 
 const pool = new Pool(config.db)
@@ -138,6 +145,11 @@ const getRouteBetweenVertices = async (
     from.vertex || vIdFrom,
     to.vertex || vIdTo,
   ])
+
+  if (result.rows.length === 0) {
+    throw new RouteNotFoundError()
+  }
+
   const route = result.rows.map(
     ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
   )

@@ -6,6 +6,8 @@ import {
   WaypointMoveProps,
   RouteUpdateProps,
   SettingsSetProps,
+  NotificationEnqueueProps,
+  NotificationRemoveProps,
 } from './action-types'
 
 export const waypointAddAction = (data: WaypointAddProps): Action => ({
@@ -30,5 +32,19 @@ export const routeUpdateAction = (data: RouteUpdateProps): Action => ({
 
 export const settingsSetAction = (data: SettingsSetProps): Action => ({
   type: ActionType.SettingsSet,
+  data,
+})
+
+export const notificationEnqueueAction = (
+  data: NotificationEnqueueProps
+): Action => ({
+  type: ActionType.NotificationEnqueue,
+  data,
+})
+
+export const notificationRemoveAction = (
+  data: NotificationRemoveProps
+): Action => ({
+  type: ActionType.NotificationRemove,
   data,
 })

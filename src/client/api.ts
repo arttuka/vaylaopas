@@ -1,4 +1,9 @@
-import { Routes, Settings, Waypoints } from '../common/types'
+import {
+  RouteNotFoundError,
+  Routes,
+  Settings,
+  Waypoints,
+} from '../common/types'
 
 export const getRoutes = async (
   waypoints: Waypoints,
@@ -16,7 +21,9 @@ export const getRoutes = async (
     },
   })
 
-  if (response.status >= 400) {
+  if (response.status === 404) {
+    throw new RouteNotFoundError()
+  } else if (response.status >= 400) {
     throw new Error(`Call to /api/route failed with code ${response.status}`)
   }
   return response.json()

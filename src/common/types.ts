@@ -2,6 +2,7 @@ import { Feature, Point, LineString, FeatureCollection } from 'geojson'
 import { Dispatch, SetStateAction } from 'react'
 import { Store } from 'redux'
 import { Task } from 'redux-saga'
+import { VariantType } from 'notistack'
 
 export interface LngLat {
   lng: number
@@ -91,10 +92,19 @@ export type Waypoints = Waypoint[]
 
 export type Routes = Route[]
 
+export type Key = string | number
+
+export interface Notification {
+  key: Key
+  message: string
+  variant: VariantType
+}
+
 export interface RootState {
   routes: Routes
   settings: Settings
   waypoints: Waypoints
+  notifications: Notification[]
 }
 
 export type SagaStore = Store<RootState> & {
@@ -114,3 +124,5 @@ export interface TouchMarkerState {
   top: number
   left: number
 }
+
+export class RouteNotFoundError extends Error {}

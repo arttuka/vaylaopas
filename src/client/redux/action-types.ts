@@ -1,4 +1,5 @@
-import { LngLat, Routes, Settings, WaypointType } from '../../common/types'
+import { VariantType } from 'notistack'
+import { Key, LngLat, Routes, Settings, WaypointType } from '../../common/types'
 
 export enum ActionType {
   WaypointAdd = 'WAYPOINT_ADD',
@@ -6,6 +7,8 @@ export enum ActionType {
   WaypointMove = 'WAYPOINT_MOVE',
   RouteSuccess = 'ROUTE_SUCCESS',
   SettingsSet = 'SETTINGS_SET',
+  NotificationEnqueue = 'NOTIFICATION_ENQUEUE',
+  NotificationRemove = 'NOTIFICATION_REMOVE',
 }
 
 export interface WaypointAddProps {
@@ -59,4 +62,32 @@ export interface SettingsSetAction {
   data: SettingsSetProps
 }
 
-export type Action = WaypointAction | RouteAction | SettingsSetAction
+export interface NotificationEnqueueProps {
+  key?: Key
+  message: string
+  variant: VariantType
+}
+
+export interface NotificationEnqueueAction {
+  type: ActionType.NotificationEnqueue
+  data: NotificationEnqueueProps
+}
+
+export interface NotificationRemoveProps {
+  key: Key
+}
+
+export interface NotificationRemoveAction {
+  type: ActionType.NotificationRemove
+  data: NotificationRemoveProps
+}
+
+export type NotificationAction =
+  | NotificationEnqueueAction
+  | NotificationRemoveAction
+
+export type Action =
+  | WaypointAction
+  | RouteAction
+  | SettingsSetAction
+  | NotificationAction

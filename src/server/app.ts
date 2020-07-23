@@ -1,7 +1,7 @@
 import express, { RequestHandler } from 'express'
 import config from './config'
 import { getRoute } from './db'
-import { Waypoints } from '../common/types'
+import { RouteNotFoundError, Waypoints } from '../common/types'
 import indexHtml from './indexHtml'
 
 const wrapAsync = (handler: RequestHandler): RequestHandler => (
@@ -36,7 +36,16 @@ app.post(
   wrapAsync(
     async (req, res): Promise<void> => {
       const { points, depth, height }: RouteParams = req.body
-      res.send(await getRoute(points, depth, height))
+      try {
+        res.send(await getRoute(points, depth, height))
+      } catch (err) {
+        if (err instanceof RouteNotFoundError) {
+          res.status(404)
+          res.send()
+        } else {
+          throw err
+        }
+      }
     }
   )
 )

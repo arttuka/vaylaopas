@@ -11,6 +11,7 @@
     "@material-ui/icons": "^4.9.1",
     "express": "^4.17.1",
     "mapbox-gl": "^1.10.1",
+    "notistack": "^0.9.17",
     "pg": "^8.2.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
