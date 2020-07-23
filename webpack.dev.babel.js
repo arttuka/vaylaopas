@@ -1,5 +1,5 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import merge from 'webpack-merge'
+import { merge } from 'webpack-merge'
 import config from './config.json'
 import indexHtml from './src/server/indexHtml'
 import common from './webpack.common'

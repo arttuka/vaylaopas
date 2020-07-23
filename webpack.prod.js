@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const TerserWebpackPlugin = require('terser-webpack-plugin')
-const merge = require('webpack-merge')
+const { merge } = require('webpack-merge')
 const path = require('path')
 const common = require('./webpack.common.js')
 

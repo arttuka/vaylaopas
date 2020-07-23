@@ -1,3 +1,4 @@
+import { hot } from 'react-hot-loader/root'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
@@ -5,7 +6,7 @@ import { SnackbarProvider } from 'notistack'
 import App from './App'
 import store from './redux/store'
 
-const WrappedApp = (
+const WrappedApp = () => (
   <Provider store={store}>
     <SnackbarProvider>
       <App />
@@ -13,4 +14,6 @@ const WrappedApp = (
   </Provider>
 )
 
-ReactDOM.render(WrappedApp, document.getElementById('root'))
+const HotApp = hot(WrappedApp)
+
+ReactDOM.render(<HotApp />, document.getElementById('root'))

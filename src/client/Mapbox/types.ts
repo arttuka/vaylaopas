@@ -46,7 +46,7 @@ export type WaypointFeatureCollection = FeatureCollection<
   Point,
   WaypointProperties
 >
-export type PointFeature = Feature<MultiPoint, {}>
+export type PointFeature = Feature<MultiPoint>
 
 export interface RouteSource {
   id: 'route'

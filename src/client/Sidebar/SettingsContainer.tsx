@@ -1,14 +1,12 @@
 import React, { ComponentType, FunctionComponent } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import MuiExpansionPanel, {
-  ExpansionPanelProps,
-} from '@material-ui/core/ExpansionPanel'
-import MuiExpansionPanelSummary, {
-  ExpansionPanelSummaryProps,
-} from '@material-ui/core/ExpansionPanelSummary'
-import MuiExpansionPanelDetails, {
-  ExpansionPanelDetailsProps,
-} from '@material-ui/core/ExpansionPanelDetails'
+import MuiAccordion, { AccordionProps } from '@material-ui/core/Accordion'
+import MuiAccordionSummary, {
+  AccordionSummaryProps,
+} from '@material-ui/core/AccordionSummary'
+import MuiAccordionDetails, {
+  AccordionDetailsProps,
+} from '@material-ui/core/AccordionDetails'
 import { withStyles } from '@material-ui/core/styles'
 import SettingsIcon from '@material-ui/icons/Settings'
 import SettingField from './SettingField'
@@ -16,41 +14,37 @@ import { settingsSelector } from '../redux/selectors'
 import { Settings } from '../../common/types'
 import { settingsSetAction } from '../redux/actions'
 
-const ExpansionPanel: ComponentType<ExpansionPanelProps> = withStyles({
+const Accordion: ComponentType<AccordionProps> = withStyles({
   root: {
     '&$expanded': {
       margin: 0,
     },
   },
   expanded: {},
-})(MuiExpansionPanel)
+})(MuiAccordion)
 
-const ExpansionPanelSummary: ComponentType<ExpansionPanelSummaryProps> = withStyles(
-  {
-    root: {
+const AccordionSummary: ComponentType<AccordionSummaryProps> = withStyles({
+  root: {
+    minHeight: 48,
+    '&$expanded': {
       minHeight: 48,
-      '&$expanded': {
-        minHeight: 48,
-        margin: 0,
-      },
+      margin: 0,
     },
-    content: {
-      '&$expanded': {
-        margin: 0,
-      },
+  },
+  content: {
+    '&$expanded': {
+      margin: 0,
     },
-    expanded: {},
-  }
-)(MuiExpansionPanelSummary)
+  },
+  expanded: {},
+})(MuiAccordionSummary)
 
-const ExpansionPanelDetails: ComponentType<ExpansionPanelDetailsProps> = withStyles(
-  {
-    root: {
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    },
-  }
-)(MuiExpansionPanelDetails)
+const AccordionDetails: ComponentType<AccordionDetailsProps> = withStyles({
+  root: {
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+})(MuiAccordionDetails)
 
 const SettingsContainer: FunctionComponent = () => {
   const dispatch = useDispatch()
@@ -59,11 +53,11 @@ const SettingsContainer: FunctionComponent = () => {
     dispatch(settingsSetAction({ key, value }))
   }
   return (
-    <ExpansionPanel>
-      <ExpansionPanelSummary expandIcon={<SettingsIcon />}>
+    <Accordion>
+      <AccordionSummary expandIcon={<SettingsIcon />}>
         Asetukset
-      </ExpansionPanelSummary>
-      <ExpansionPanelDetails>
+      </AccordionSummary>
+      <AccordionDetails>
         <SettingField
           id="settingfield-depth"
           label="Syväys (m)"
@@ -88,8 +82,8 @@ const SettingsContainer: FunctionComponent = () => {
           value={consumption}
           onChange={updateSetting('consumption')}
         />
-      </ExpansionPanelDetails>
-    </ExpansionPanel>
+      </AccordionDetails>
+    </Accordion>
   )
 }
 
