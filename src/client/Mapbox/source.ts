@@ -6,7 +6,7 @@ import {
   WaypointFeatureCollection,
   sourceIsGeoJSON,
 } from './types'
-import { Lane, Waypoints } from '../../common/types'
+import { Lane, Route, Routes, Waypoints } from '../../common/types'
 import { numToLetter } from '../../common/util'
 
 export const laneFeatureCollection = (
@@ -46,15 +46,32 @@ export const pointFeature = (point?: LngLat): PointFeature => ({
   properties: {},
 })
 
+export const generateRouteSources = (routes: Routes): [Source, Source] => {
+  let route: Lane[] = []
+  let startAndEnd: Lane[] = []
+  if (routes.length) {
+    /* eslint-disable-next-line @typescript-eslint/no-extra-semi */
+    ;({ route, startAndEnd } = routes.reduce(
+      (acc, route): Route => ({
+        route: acc.route.concat(route.route),
+        startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
+        length: acc.length + route.length,
+      }),
+      { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
+    ))
+  }
+  return [
+    { id: 'route', data: laneFeatureCollection(route) },
+    { id: 'routeStartAndEnd', data: laneFeatureCollection(startAndEnd) },
+  ]
+}
+
 const addSource = (map: Map, { id, data }: Source): void => {
   map.addSource(id, { type: 'geojson', data })
 }
 
-export const addSources = (map: Map): void => {
-  addSource(map, { id: 'route', data: laneFeatureCollection() })
-  addSource(map, { id: 'routeStartAndEnd', data: laneFeatureCollection() })
-  addSource(map, { id: 'dragIndicator', data: pointFeature() })
-  addSource(map, { id: 'waypoint', data: waypointFeatureCollection() })
+export const addSources = (map: Map, sources: Source[]): void => {
+  sources.forEach((source) => addSource(map, source))
 }
 
 export const setSourceData = (map: Map, { id, data }: Source): void => {

@@ -4,6 +4,7 @@ import { addSources } from './source'
 import {
   DragStartHandler,
   MouseEventHandler,
+  Source,
   TouchEvent,
   TouchEventHandler,
 } from './types'
@@ -22,7 +23,11 @@ interface EventHandlers {
   handleDragWaypoint: DragStartHandler
 }
 
-const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
+const initializeMap = (
+  map: Map,
+  eventHandlers: EventHandlers,
+  sources: Source[]
+): void => {
   const {
     handleClick,
     handleRightClick,
@@ -40,7 +45,7 @@ const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
   }
 
   map.touchZoomRotate.disableRotation()
-  addSources(map)
+  addSources(map, sources)
   addLayers(map)
   map
     .on('click', handleClick)
@@ -62,7 +67,8 @@ const initializeMap = (map: Map, eventHandlers: EventHandlers): void => {
 
 export const createMap = (
   container: HTMLDivElement,
-  eventHandlers: EventHandlers
+  eventHandlers: EventHandlers,
+  sources: Source[]
 ): Map => {
   const map = new Map({
     container,
@@ -73,7 +79,7 @@ export const createMap = (
     dragRotate: false,
   })
   map.on('load', (): void => {
-    initializeMap(map, eventHandlers)
+    initializeMap(map, eventHandlers, sources)
   })
   return map
 }

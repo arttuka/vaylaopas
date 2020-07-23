@@ -6,7 +6,7 @@ import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
 import { createMap, longTouchDuration } from '../Mapbox/map'
 import {
-  laneFeatureCollection,
+  generateRouteSources,
   pointFeature,
   setSourceData,
   waypointFeatureCollection,
@@ -23,10 +23,8 @@ import { routesSelector, waypointsSelector } from '../redux/selectors'
 import {
   featureIsLane,
   featureIsWaypoint,
-  Lane,
   LngLat,
   MenuState,
-  Route,
   TouchMarkerState,
 } from '../../common/types'
 
@@ -50,14 +48,14 @@ const Map: FunctionComponent = () => {
   const dispatch = useDispatch()
   const mapRef = useRef<mapboxgl.Map>()
   const containerRef = useRef<HTMLDivElement>(null)
-  const waypointsRef = useRef<WaypointFeatureCollection>(
-    waypointFeatureCollection()
-  )
   const [lastClick, setLastClick] = useState<LngLat>({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState<MenuState>(closedMenu)
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState | undefined>()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
+  const waypointsRef = useRef<WaypointFeatureCollection>(
+    waypointFeatureCollection(waypoints)
+  )
 
   const handleClick = (): void => setMenu(closedMenu)
 
@@ -151,38 +149,32 @@ const Map: FunctionComponent = () => {
     const container = containerRef.current
     if (container && mapRef.current === undefined) {
       container.style.height = `${window.innerHeight}px`
-      mapRef.current = createMap(container, {
-        handleClick,
-        handleRightClick,
-        handleLongTouch,
-        handleDragRoute,
-        handleTouchStart,
-        handleTouchEnd,
-        handleDragWaypoint,
-      })
+      mapRef.current = createMap(
+        container,
+        {
+          handleClick,
+          handleRightClick,
+          handleLongTouch,
+          handleDragRoute,
+          handleTouchStart,
+          handleTouchEnd,
+          handleDragWaypoint,
+        },
+        [
+          ...generateRouteSources(routes),
+          { id: 'dragIndicator', data: pointFeature() },
+          { id: 'waypoint', data: waypointsRef.current },
+        ]
+      )
     }
   }, [containerRef])
 
   useEffect(() => {
     const map = mapRef.current
     if (map) {
-      let route: Lane[] = []
-      let startAndEnd: Lane[] = []
-      if (routes.length) {
-        ;({ route, startAndEnd } = routes.reduce(
-          (acc, route): Route => ({
-            route: acc.route.concat(route.route),
-            startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
-            length: acc.length + route.length,
-          }),
-          { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
-        ))
-      }
-      setSourceData(map, { id: 'route', data: laneFeatureCollection(route) })
-      setSourceData(map, {
-        id: 'routeStartAndEnd',
-        data: laneFeatureCollection(startAndEnd),
-      })
+      generateRouteSources(routes).forEach((source) =>
+        setSourceData(map, source)
+      )
     }
   }, [routes])
 
