@@ -76,7 +76,7 @@ const OffsetListItemText: ComponentType<ListItemTextProps> = withStyles({
 })(MuiListItemText)
 
 interface SegmentProps {
-  length: number
+  length?: number
   duration?: number
   fuel?: number
   index: number
@@ -165,21 +165,31 @@ const RouteList: FunctionComponent = () => {
         fuel={totalFuel}
         kind="totals"
       />
-      <ListItem>
-        <Point text="A" />
-        <Delete onClick={(): void => onDelete(destinations[0].id)} />
-      </ListItem>
-      {combinedRoutes.map(
-        ({ length, duration, fuel }, i): ReactNode => (
-          <RouteSegment
-            key={`route-segment-${i}`}
-            length={length}
-            duration={duration}
-            fuel={fuel}
-            index={i + 1}
-            onDelete={(): void => onDelete(destinations[i + 1].id)}
-          />
-        )
+      {destinations.map(
+        ({ id }, i): ReactNode => {
+          const key = `route-segment-${i}`
+          if (i > 0 && i <= combinedRoutes.length) {
+            const { length, duration, fuel } = combinedRoutes[i - 1]
+            return (
+              <RouteSegment
+                key={key}
+                length={length}
+                duration={duration}
+                fuel={fuel}
+                index={i}
+                onDelete={(): void => onDelete(id)}
+              />
+            )
+          } else {
+            return (
+              <RouteSegment
+                key={key}
+                index={i}
+                onDelete={(): void => onDelete(id)}
+              />
+            )
+          }
+        }
       )}
     </List>
   ) : null

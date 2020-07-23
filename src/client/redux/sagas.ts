@@ -45,6 +45,7 @@ function* getRouteSaga(): SagaGenerator {
               variant: 'error',
             }
       yield put(notificationEnqueueAction(notification))
+      yield put(routeUpdateAction({ routes: [] }))
     }
   } else {
     yield put(routeUpdateAction({ routes: [] }))
