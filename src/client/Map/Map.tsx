@@ -1,13 +1,34 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import mapboxgl from 'mapbox-gl'
+import mapboxgl, { MapboxGeoJSONFeature } from 'mapbox-gl'
 import { styled } from '@material-ui/core/styles'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
-import * as helper from './mapbox-helper'
-import { waypointAddAction } from '../redux/actions'
+import { createMap, longTouchDuration } from '../Mapbox/map'
+import {
+  laneFeatureCollection,
+  pointFeature,
+  setSourceData,
+  waypointFeatureCollection,
+} from '../Mapbox/source'
+import {
+  DragEventHandlers,
+  Event,
+  MouseEvent,
+  TouchEvent,
+  WaypointFeatureCollection,
+} from '../Mapbox/types'
+import { waypointAddAction, waypointMoveAction } from '../redux/actions'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
-import { LngLat, MenuState, TouchMarkerState } from '../../common/types'
+import {
+  featureIsLane,
+  featureIsWaypoint,
+  Lane,
+  LngLat,
+  MenuState,
+  Route,
+  TouchMarkerState,
+} from '../../common/types'
 
 const MapContainer = styled('div')({
   width: '100%',
@@ -20,15 +41,106 @@ const closedMenu = {
   left: 0,
 }
 
+const toLngLat = (e: Event): LngLat => ({
+  lng: e.lngLat.lng,
+  lat: e.lngLat.lat,
+})
+
 const Map: FunctionComponent = () => {
   const dispatch = useDispatch()
   const mapRef = useRef<mapboxgl.Map>()
   const containerRef = useRef<HTMLDivElement>(null)
+  const waypointsRef = useRef<WaypointFeatureCollection>(
+    waypointFeatureCollection()
+  )
   const [lastClick, setLastClick] = useState<LngLat>({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState<MenuState>(closedMenu)
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState | undefined>()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
+
+  const handleClick = (): void => setMenu(closedMenu)
+
+  const handleRightClick = (e: MouseEvent): void => {
+    setLastClick(toLngLat(e))
+    setMenu({
+      open: true,
+      top: e.point.y,
+      left: e.point.x,
+    })
+  }
+
+  const handleLongTouch = (e: TouchEvent): void => {
+    e.preventDefault()
+    dispatch(waypointAddAction({ point: toLngLat(e), type: 'destination' }))
+    setTouchMarker(undefined)
+  }
+
+  const handleTouchStart = (e: TouchEvent): void =>
+    setTouchMarker({
+      direction: 'up',
+      top: e.point.y,
+      left: e.point.x,
+    })
+
+  const handleTouchEnd = (): void => setTouchMarker(undefined)
+
+  const handleDragRoute = (
+    map: mapboxgl.Map,
+    feature?: MapboxGeoJSONFeature
+  ): DragEventHandlers => {
+    if (featureIsLane(feature)) {
+      const onMove = (e: MouseEvent): void =>
+        setSourceData(map, {
+          id: 'dragIndicator',
+          data: pointFeature(e.lngLat),
+        })
+      const onMoveEnd = (e: MouseEvent): void => {
+        setSourceData(map, { id: 'dragIndicator', data: pointFeature() })
+        dispatch(
+          waypointAddAction({
+            point: toLngLat(e),
+            index: feature.properties.route + 1,
+            type: 'waypoint',
+          })
+        )
+      }
+      return { onMove, onMoveEnd }
+    } else {
+      throw new Error('dragIndicator feature had unexpected type')
+    }
+  }
+
+  const handleDragWaypoint = (
+    map: mapboxgl.Map,
+    feature?: MapboxGeoJSONFeature
+  ): DragEventHandlers => {
+    if (featureIsWaypoint(feature)) {
+      const waypointId = feature.properties.id
+      const waypointCollection = waypointsRef.current
+      const index = waypointCollection.features.findIndex(
+        ({ properties }) => properties.id === waypointId
+      )
+      const onMove = (e: MouseEvent): void => {
+        if (index >= 0) {
+          const { lng, lat } = e.lngLat
+          waypointCollection.features[index].geometry.coordinates = [lng, lat]
+          setSourceData(map, { id: 'waypoint', data: waypointCollection })
+        }
+      }
+      const onMoveEnd = (e: MouseEvent): void => {
+        dispatch(
+          waypointMoveAction({
+            point: toLngLat(e),
+            id: waypointId,
+          })
+        )
+      }
+      return { onMove, onMoveEnd }
+    } else {
+      throw new Error('waypoint feature had unexpected type')
+    }
+  }
 
   const onAddWaypoint = (): void => {
     dispatch(waypointAddAction({ point: lastClick, type: 'destination' }))
@@ -39,12 +151,14 @@ const Map: FunctionComponent = () => {
     const container = containerRef.current
     if (container && mapRef.current === undefined) {
       container.style.height = `${window.innerHeight}px`
-      mapRef.current = helper.createMap({
-        container,
-        dispatch,
-        setLastClick,
-        setMenu,
-        setTouchMarker,
+      mapRef.current = createMap(container, {
+        handleClick,
+        handleRightClick,
+        handleLongTouch,
+        handleDragRoute,
+        handleTouchStart,
+        handleTouchEnd,
+        handleDragWaypoint,
       })
     }
   }, [containerRef])
@@ -52,14 +166,31 @@ const Map: FunctionComponent = () => {
   useEffect(() => {
     const map = mapRef.current
     if (map) {
-      helper.updateRoute(map, routes)
+      let route: Lane[] = []
+      let startAndEnd: Lane[] = []
+      if (routes.length) {
+        ;({ route, startAndEnd } = routes.reduce(
+          (acc, route): Route => ({
+            route: acc.route.concat(route.route),
+            startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
+            length: acc.length + route.length,
+          }),
+          { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
+        ))
+      }
+      setSourceData(map, { id: 'route', data: laneFeatureCollection(route) })
+      setSourceData(map, {
+        id: 'routeStartAndEnd',
+        data: laneFeatureCollection(startAndEnd),
+      })
     }
   }, [routes])
 
   useEffect(() => {
     const map = mapRef.current
     if (map) {
-      helper.updateWaypoints(map, waypoints)
+      waypointsRef.current = waypointFeatureCollection(waypoints)
+      setSourceData(map, { id: 'waypoint', data: waypointsRef.current })
     }
   }, [waypoints])
 
@@ -77,7 +208,7 @@ const Map: FunctionComponent = () => {
           top={touchMarker.top}
           left={touchMarker.left}
           direction={touchMarker.direction}
-          duration={helper.longTouchDuration}
+          duration={longTouchDuration}
         />
       )}
     </>
