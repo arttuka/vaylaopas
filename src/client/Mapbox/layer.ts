@@ -48,6 +48,15 @@ export const addLayers = (map: Map): void => {
       'circle-stroke-color': '#000000',
     },
   })
+  addLayer(map, 'location', 'location', {
+    type: 'circle',
+    paint: {
+      'circle-radius': 8,
+      'circle-color': '#ff0000',
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#ffffff',
+    },
+  })
   addLayer(map, 'waypoint', 'waypoint', {
     type: 'circle',
     paint: {

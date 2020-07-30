@@ -63,6 +63,11 @@ export interface DragIndicatorSource {
   data: PointFeature
 }
 
+export interface LocationSource {
+  id: 'location'
+  data: PointFeature
+}
+
 export interface WaypointSource {
   id: 'waypoint'
   data: WaypointFeatureCollection
@@ -72,6 +77,7 @@ export type Source =
   | RouteSource
   | RouteStartAndEndSource
   | DragIndicatorSource
+  | LocationSource
   | WaypointSource
 
 export type SourceId = Source['id']
@@ -80,6 +86,7 @@ export type LayerId =
   | 'route'
   | 'routeStartAndEnd'
   | 'dragIndicator'
+  | 'location'
   | 'waypoint'
   | 'waypointText'
 

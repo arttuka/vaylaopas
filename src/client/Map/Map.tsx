@@ -27,6 +27,7 @@ import {
   MenuState,
   TouchMarkerState,
 } from '../../common/types'
+import { useLocation } from '../../common/util'
 
 const MapContainer = styled('div')({
   width: '100%',
@@ -163,6 +164,7 @@ const Map: FunctionComponent = () => {
         [
           ...generateRouteSources(routes),
           { id: 'dragIndicator', data: pointFeature() },
+          { id: 'location', data: pointFeature() },
           { id: 'waypoint', data: waypointsRef.current },
         ]
       )
@@ -185,6 +187,18 @@ const Map: FunctionComponent = () => {
       setSourceData(map, { id: 'waypoint', data: waypointsRef.current })
     }
   }, [waypoints])
+
+  useLocation((coords?: Coordinates): void => {
+    const map = mapRef.current
+    if (map) {
+      setSourceData(map, {
+        id: 'location',
+        data: pointFeature(
+          coords && new mapboxgl.LngLat(coords.longitude, coords.latitude)
+        ),
+      })
+    }
+  })
 
   return (
     <>
