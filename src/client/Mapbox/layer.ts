@@ -1,6 +1,7 @@
 import { Layer, Map } from 'mapbox-gl'
 import blue from '@material-ui/core/colors/blue'
 import { DragStartHandler, Event, LayerId, SourceId } from './types'
+import { throttle } from '../../common/util'
 
 const addLayer = (
   map: Map,
@@ -99,9 +100,10 @@ export const makeLayerDraggable = (
       type === 'mouse' ? ['mousemove', 'mouseup'] : ['touchmove', 'touchend']
     const feature = e.features && e.features[0]
     const { onMove, onMoveEnd } = handler(e.target, feature)
-    map.on(move, onMove)
+    const throttledOnMove = throttle(onMove, 50)
+    map.on(move, throttledOnMove)
     map.once(end, (e: Event): void => {
-      map.off(move, onMove)
+      map.off(move, throttledOnMove)
       onMoveEnd(e)
       canvas.style.cursor = ''
     })

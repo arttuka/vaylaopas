@@ -13,8 +13,14 @@ import {
   calculateDuration,
   formatDuration,
   range,
+  throttle,
 } from './util'
 import { Index } from '../common/types'
+
+const timeout = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 
 test('partition', (): void => {
   const arr = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -140,4 +146,19 @@ test('range', (): void => {
   expect(range(0)).toEqual([])
   expect(range(3)).toEqual([0, 1, 2])
   expect(range(3, 10)).toEqual([10, 11, 12])
+})
+
+test('throttle', async (done): Promise<void> => {
+  const fn = jest.fn()
+  const throttledFn = throttle(fn, 50)
+  throttledFn(1)
+  throttledFn(2)
+  throttledFn(3)
+  await timeout(50)
+  throttledFn(4)
+  throttledFn(5)
+  throttledFn(6)
+  expect(fn).toHaveBeenCalledTimes(2)
+  expect(fn.mock.calls).toEqual([[1], [4]])
+  done()
 })

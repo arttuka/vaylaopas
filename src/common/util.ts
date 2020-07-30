@@ -197,3 +197,19 @@ export const useLocation = (callback: (coords?: Coordinates) => void): void => {
     }
   }, [])
 }
+
+export const throttle = <T>(
+  fn: (t: T) => void,
+  ms: number
+): ((t: T) => void) => {
+  let throttled = false
+  return (t: T): void => {
+    if (!throttled) {
+      throttled = true
+      fn(t)
+      setTimeout(() => {
+        throttled = false
+      }, ms)
+    }
+  }
+}
