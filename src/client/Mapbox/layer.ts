@@ -111,6 +111,10 @@ export const makeLayerDraggable = (
     .on('mouseleave', layer, (): void => {
       canvas.style.cursor = ''
     })
-    .on('mousedown', layer, (e): void => onDragStart(e, 'mouse'))
+    .on('mousedown', layer, (e): void => {
+      if (e.originalEvent.button === 0) {
+        onDragStart(e, 'mouse')
+      }
+    })
     .on('touchstart', layer, (e): void => onDragStart(e, 'touch'))
 }

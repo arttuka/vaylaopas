@@ -2,17 +2,16 @@ import React, { PureComponent, ReactNode } from 'react'
 import MenuList from '@material-ui/core/MenuList'
 import MenuItem from '@material-ui/core/MenuItem'
 import Paper from '@material-ui/core/Paper'
+import { MenuState } from '../../common/types'
 
-interface ContextMenuProps {
-  open: boolean
-  top: number
-  left: number
+interface ContextMenuProps extends MenuState {
   onAdd: () => void
+  onDelete: (id: string) => void
 }
 
 export default class ContextMenu extends PureComponent<ContextMenuProps> {
   render(): ReactNode {
-    const { open, top, left, onAdd } = this.props
+    const { open, top, left, waypoint, onAdd, onDelete } = this.props
     return (
       open && (
         <Paper
@@ -23,7 +22,13 @@ export default class ContextMenu extends PureComponent<ContextMenuProps> {
           }}
         >
           <MenuList>
-            <MenuItem onClick={onAdd}>Lisää reitille</MenuItem>
+            {waypoint === undefined ? (
+              <MenuItem onClick={onAdd}>Lisää reitille</MenuItem>
+            ) : (
+              <MenuItem onClick={() => onDelete(waypoint)}>
+                Poista reittipiste
+              </MenuItem>
+            )}
           </MenuList>
         </Paper>
       )

@@ -18,7 +18,11 @@ import {
   TouchEvent,
   WaypointFeatureCollection,
 } from '../Mapbox/types'
-import { waypointAddAction, waypointMoveAction } from '../redux/actions'
+import {
+  waypointAddAction,
+  waypointMoveAction,
+  waypointRemoveAction,
+} from '../redux/actions'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
 import {
   featureIsLane,
@@ -61,11 +65,16 @@ const Map: FunctionComponent = () => {
   const handleClick = (): void => setMenu(closedMenu)
 
   const handleRightClick = (e: MouseEvent): void => {
+    const feature = e.features && e.features[0]
+    const waypoint = featureIsWaypoint(feature) && feature.properties.id
+    e.preventDefault()
     setLastClick(toLngLat(e))
     setMenu({
+      ...menu,
       open: true,
       top: e.point.y,
       left: e.point.x,
+      ...(waypoint ? { waypoint } : {}),
     })
   }
 
@@ -146,6 +155,11 @@ const Map: FunctionComponent = () => {
     setMenu(closedMenu)
   }
 
+  const onDeleteWaypoint = (id: string): void => {
+    dispatch(waypointRemoveAction({ id }))
+    setMenu(closedMenu)
+  }
+
   useEffect(() => {
     const container = containerRef.current
     if (container && mapRef.current === undefined) {
@@ -205,9 +219,8 @@ const Map: FunctionComponent = () => {
       <MapContainer ref={containerRef} />
       <ContextMenu
         onAdd={onAddWaypoint}
-        open={menu.open}
-        top={menu.top}
-        left={menu.left}
+        onDelete={onDeleteWaypoint}
+        {...menu}
       />
       {touchMarker && (
         <TouchMarker

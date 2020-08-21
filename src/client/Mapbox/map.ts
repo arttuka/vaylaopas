@@ -50,6 +50,7 @@ const initializeMap = (
   map
     .on('click', handleClick)
     .on('contextmenu', handleRightClick)
+    .on('contextmenu', 'waypoint', handleRightClick)
     .on('touchstart', (e): void => {
       window.clearTimeout(longTouchTimer)
       handleTouchStart(e)
