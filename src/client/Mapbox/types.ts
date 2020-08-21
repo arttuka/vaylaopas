@@ -11,7 +11,6 @@ import {
   AnySourceImpl,
   EventData,
   GeoJSONSource,
-  Map,
   MapboxGeoJSONFeature,
   MapMouseEvent,
   MapTouchEvent,
@@ -30,7 +29,7 @@ export interface DragEventHandlers {
   onMoveEnd: EventHandler
 }
 export type DragStartHandler = (
-  map: Map,
+  e: Event,
   feature?: MapboxGeoJSONFeature
 ) => DragEventHandlers
 

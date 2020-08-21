@@ -31,7 +31,7 @@ import {
   MenuState,
   TouchMarkerState,
 } from '../../common/types'
-import { useLocation } from '../../common/util'
+import { useLocation, calculateOffset, applyOffset } from '../../common/util'
 
 const MapContainer = styled('div')({
   width: '100%',
@@ -94,10 +94,11 @@ const Map: FunctionComponent = () => {
   const handleTouchEnd = (): void => setTouchMarker(undefined)
 
   const handleDragRoute = (
-    map: mapboxgl.Map,
+    e: Event,
     feature?: MapboxGeoJSONFeature
   ): DragEventHandlers => {
     if (featureIsLane(feature)) {
+      const map = e.target
       const onMove = (e: Event): void =>
         setSourceData(map, {
           id: 'dragIndicator',
@@ -120,10 +121,12 @@ const Map: FunctionComponent = () => {
   }
 
   const handleDragWaypoint = (
-    map: mapboxgl.Map,
+    e: Event,
     feature?: MapboxGeoJSONFeature
   ): DragEventHandlers => {
     if (featureIsWaypoint(feature)) {
+      const map = e.target
+      const offset = calculateOffset(e.lngLat, feature.geometry.coordinates)
       const waypointId = feature.properties.id
       const waypointCollection = waypointsRef.current
       const index = waypointCollection.features.findIndex(
@@ -131,7 +134,7 @@ const Map: FunctionComponent = () => {
       )
       const onMove = (e: Event): void => {
         if (index >= 0) {
-          const { lng, lat } = e.lngLat
+          const { lng, lat } = applyOffset(e.lngLat, offset)
           waypointCollection.features[index].geometry.coordinates = [lng, lat]
           setSourceData(map, { id: 'waypoint', data: waypointCollection })
         }
@@ -139,7 +142,7 @@ const Map: FunctionComponent = () => {
       const onMoveEnd = (e: Event): void => {
         dispatch(
           waypointMoveAction({
-            point: toLngLat(e),
+            point: applyOffset(e.lngLat, offset),
             id: waypointId,
           })
         )

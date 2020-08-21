@@ -14,6 +14,8 @@ import {
   formatDuration,
   range,
   throttle,
+  calculateOffset,
+  applyOffset,
 } from './util'
 import { Index } from '../common/types'
 
@@ -161,4 +163,13 @@ test('throttle', async (done): Promise<void> => {
   expect(fn).toHaveBeenCalledTimes(2)
   expect(fn.mock.calls).toEqual([[1], [4]])
   done()
+})
+
+test('positionOffset', (): void => {
+  const offset = calculateOffset({ lng: 50, lat: 40 }, [49, 42])
+  expect(offset).toEqual([1, -2])
+  expect(applyOffset({ lng: 60, lat: 50 }, offset)).toEqual({
+    lng: 59,
+    lat: 52,
+  })
 })

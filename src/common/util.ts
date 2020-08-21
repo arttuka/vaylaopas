@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Index, Route, Settings } from '../common/types'
+import geojson from 'geojson'
+import { Index, LngLat, Route, Settings } from './types'
 
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   const result = []
@@ -213,3 +214,16 @@ export const throttle = <T>(
     }
   }
 }
+
+export const calculateOffset = (
+  lngLat: LngLat,
+  point: geojson.Position
+): geojson.Position => [lngLat.lng - point[0], lngLat.lat - point[1]]
+
+export const applyOffset = (
+  lngLat: LngLat,
+  offset: geojson.Position
+): LngLat => ({
+  lng: lngLat.lng - offset[0],
+  lat: lngLat.lat - offset[1],
+})

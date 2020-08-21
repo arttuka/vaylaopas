@@ -95,7 +95,7 @@ export const makeLayerDraggable = (
     const [move, end] =
       type === 'mouse' ? ['mousemove', 'mouseup'] : ['touchmove', 'touchend']
     const feature = e.features && e.features[0]
-    const { onMove, onMoveEnd } = handler(e.target, feature)
+    const { onMove, onMoveEnd } = handler(e, feature)
     const throttledOnMove = throttle(onMove, 50)
     map.on(move, throttledOnMove)
     map.once(end, (e: Event): void => {
