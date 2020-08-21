@@ -6,7 +6,6 @@ import React, {
   ReactNode,
 } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import blue from '@material-ui/core/colors/blue'
 import MuiAvatar, { AvatarProps } from '@material-ui/core/Avatar'
 import IconButton from '@material-ui/core/IconButton'
 import List from '@material-ui/core/List'
@@ -31,13 +30,13 @@ import {
 } from '../../common/util'
 import { waypointRemoveAction } from '../redux/actions'
 
-const Avatar: ComponentType<AvatarProps> = withStyles({
+const Avatar: ComponentType<AvatarProps> = withStyles(({ palette }) => ({
   root: {
     color: '#ffffff',
-    backgroundColor: blue[500],
+    backgroundColor: palette.primary.main,
     fontWeight: 'bold',
   },
-})(MuiAvatar)
+}))(MuiAvatar)
 
 class Point extends PureComponent<{ text: string }> {
   render(): ReactElement {

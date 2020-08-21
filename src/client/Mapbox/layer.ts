@@ -1,5 +1,5 @@
 import { Layer, Map } from 'mapbox-gl'
-import blue from '@material-ui/core/colors/blue'
+import indigo from '@material-ui/core/colors/indigo'
 import { DragStartHandler, Event, LayerId, SourceId } from './types'
 import { throttle } from '../../common/util'
 
@@ -41,12 +41,11 @@ export const addLayers = (map: Map): void => {
     },
   })
   addLayer(map, 'dragIndicator', 'dragIndicator', {
-    type: 'circle',
-    paint: {
-      'circle-radius': 10,
-      'circle-color': '#ffffff',
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#000000',
+    type: 'symbol',
+    layout: {
+      'icon-image': 'circle',
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
     },
   })
   addLayer(map, 'location', 'location', {
@@ -59,30 +58,27 @@ export const addLayers = (map: Map): void => {
     },
   })
   addLayer(map, 'waypoint', 'waypoint', {
-    type: 'circle',
-    paint: {
-      'circle-radius': ['match', ['get', 'type'], 'destination', 16, 10],
-      'circle-color': [
+    type: 'symbol',
+    layout: {
+      'icon-image': ['match', ['get', 'type'], 'destination', 'pin', 'circle'],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-anchor': [
         'match',
         ['get', 'type'],
         'destination',
-        blue[500],
-        '#ffffff',
+        'bottom',
+        'center',
       ],
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#000000',
-    },
-  })
-  addLayer(map, 'waypointText', 'waypoint', {
-    type: 'symbol',
-    layout: {
       'text-field': ['get', 'letter'],
       'text-font': ['Roboto Medium'],
       'text-size': 24,
-      'text-offset': [0, 0.15],
+      'text-offset': [0, -1.5],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
     },
     paint: {
-      'text-color': '#ffffff',
+      'text-color': indigo[500],
     },
   })
 }

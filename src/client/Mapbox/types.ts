@@ -88,7 +88,6 @@ export type LayerId =
   | 'dragIndicator'
   | 'location'
   | 'waypoint'
-  | 'waypointText'
 
 export const sourceIsGeoJSON = (
   source?: AnySourceImpl

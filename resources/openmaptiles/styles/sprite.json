@@ -1,8 +1,15 @@
 {
-  "waypoint": {
-    "height": 48,
+  "circle": {
+    "height": 24,
     "pixelRatio": 1,
-    "width": 32,
+    "width": 24,
+    "x": 36,
+    "y": 0
+  },
+  "pin": {
+    "height": 57,
+    "pixelRatio": 1,
+    "width": 36,
     "x": 0,
     "y": 0
   }
