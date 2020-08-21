@@ -1,21 +1,16 @@
-import React, {
-  ChangeEvent,
-  ComponentType,
-  PureComponent,
-  ReactElement,
-} from 'react'
+import React, { ChangeEvent, PureComponent, ReactElement } from 'react'
 import CancelIcon from '@material-ui/icons/Cancel'
-import MuiIconButton, { IconButtonProps } from '@material-ui/core/IconButton'
+import MuiIconButton from '@material-ui/core/IconButton'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { withStyles } from '@material-ui/core/styles'
-import MuiTextField, { TextFieldProps } from '@material-ui/core/TextField'
+import MuiTextField from '@material-ui/core/TextField'
 
 interface ClearButtonProps {
   disabled: boolean
   onClick: () => void
 }
 
-const IconButton: ComponentType<IconButtonProps> = withStyles({
+const IconButton = withStyles({
   root: {
     padding: 0,
   },
@@ -34,7 +29,7 @@ class ClearButton extends PureComponent<ClearButtonProps> {
   }
 }
 
-const TextField: ComponentType<TextFieldProps> = withStyles({
+const TextField = withStyles({
   root: {
     flexBasis: 90,
   },

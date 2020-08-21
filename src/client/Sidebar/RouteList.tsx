@@ -1,20 +1,17 @@
 import React, {
-  ComponentType,
   FunctionComponent,
   PureComponent,
   ReactElement,
   ReactNode,
 } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import MuiAvatar, { AvatarProps } from '@material-ui/core/Avatar'
+import MuiAvatar from '@material-ui/core/Avatar'
 import IconButton from '@material-ui/core/IconButton'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
-import MuiListItemText, {
-  ListItemTextProps,
-} from '@material-ui/core/ListItemText'
+import MuiListItemText from '@material-ui/core/ListItemText'
 import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
@@ -30,7 +27,7 @@ import {
 } from '../../common/util'
 import { waypointRemoveAction } from '../redux/actions'
 
-const Avatar: ComponentType<AvatarProps> = withStyles(({ palette }) => ({
+const Avatar = withStyles(({ palette }) => ({
   root: {
     color: '#ffffff',
     backgroundColor: palette.primary.main,
@@ -60,13 +57,13 @@ class Delete extends PureComponent<{ onClick: () => void }> {
   }
 }
 
-const ListItemText: ComponentType<ListItemTextProps> = withStyles({
+const ListItemText = withStyles({
   root: {
     margin: 0,
   },
 })(MuiListItemText)
 
-const OffsetListItemText: ComponentType<ListItemTextProps> = withStyles({
+const OffsetListItemText = withStyles({
   root: {
     margin: 0,
     position: 'relative',

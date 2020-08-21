@@ -26,7 +26,7 @@
     "watch:server": "BABEL_ENV=server NODE_ENV=development nodemon -e js,ts,tsx --exec 'babel-node -x \".js\",\".ts\",\".tsx\"' src/server/server.ts",
     "watch:client": "BABEL_ENV=server NODE_ENV=development webpack-dev-server -d --colors --progress --config webpack.dev.babel.js",
     "watch": "concurrently -k -n server,client 'npm run watch:server' 'npm run watch:client'",
-    "lint": "eslint . --ext .js,.ts,.tsx --max-warnings=0 && prettier --check src/**/*.{js,ts,tsx}",
+    "lint": "tsc --noEmit && eslint src/**/*.{js,ts,tsx} --max-warnings=0 && prettier --check src/**/*.{js,ts,tsx}",
     "test": "BABEL_ENV=server jest",
     "test:watch": "BABEL_ENV=server jest --watch",
     "convert": "NODE_ENV=development ts-node ./src/convert/convert.ts",

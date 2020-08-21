@@ -1,12 +1,10 @@
-import React, { ComponentType, PureComponent, ReactElement } from 'react'
+import React, { PureComponent, ReactElement } from 'react'
 import Hidden from '@material-ui/core/Hidden'
-import MuiPaper, { PaperProps } from '@material-ui/core/Paper'
-import MuiSwipeableDrawer, {
-  SwipeableDrawerProps,
-} from '@material-ui/core/SwipeableDrawer'
+import MuiPaper from '@material-ui/core/Paper'
+import MuiSwipeableDrawer from '@material-ui/core/SwipeableDrawer'
 import { withStyles } from '@material-ui/core/styles'
 
-const Paper: ComponentType<PaperProps> = withStyles({
+const Paper = withStyles({
   root: {
     width: 280,
     position: 'absolute',
@@ -16,18 +14,14 @@ const Paper: ComponentType<PaperProps> = withStyles({
   },
 })(MuiPaper)
 
-const styles = {
+const SwipeableDrawer = withStyles({
   docked: {
     width: 280,
   },
   paper: {
     width: 280,
   },
-}
-
-const SwipeableDrawer: ComponentType<SwipeableDrawerProps> = withStyles(styles)(
-  MuiSwipeableDrawer
-)
+})(MuiSwipeableDrawer)
 
 interface SidebarProps {
   open: boolean

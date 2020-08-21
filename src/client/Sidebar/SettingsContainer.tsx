@@ -1,12 +1,8 @@
-import React, { ComponentType, FunctionComponent } from 'react'
+import React, { FunctionComponent } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import MuiAccordion, { AccordionProps } from '@material-ui/core/Accordion'
-import MuiAccordionSummary, {
-  AccordionSummaryProps,
-} from '@material-ui/core/AccordionSummary'
-import MuiAccordionDetails, {
-  AccordionDetailsProps,
-} from '@material-ui/core/AccordionDetails'
+import MuiAccordion from '@material-ui/core/Accordion'
+import MuiAccordionSummary from '@material-ui/core/AccordionSummary'
+import MuiAccordionDetails from '@material-ui/core/AccordionDetails'
 import { withStyles } from '@material-ui/core/styles'
 import SettingsIcon from '@material-ui/icons/Settings'
 import SettingField from './SettingField'
@@ -14,7 +10,7 @@ import { settingsSelector } from '../redux/selectors'
 import { Settings } from '../../common/types'
 import { settingsSetAction } from '../redux/actions'
 
-const Accordion: ComponentType<AccordionProps> = withStyles({
+const Accordion = withStyles({
   root: {
     '&$expanded': {
       margin: 0,
@@ -23,7 +19,7 @@ const Accordion: ComponentType<AccordionProps> = withStyles({
   expanded: {},
 })(MuiAccordion)
 
-const AccordionSummary: ComponentType<AccordionSummaryProps> = withStyles({
+const AccordionSummary = withStyles({
   root: {
     minHeight: 48,
     '&$expanded': {
@@ -39,7 +35,7 @@ const AccordionSummary: ComponentType<AccordionSummaryProps> = withStyles({
   expanded: {},
 })(MuiAccordionSummary)
 
-const AccordionDetails: ComponentType<AccordionDetailsProps> = withStyles({
+const AccordionDetails = withStyles({
   root: {
     flexWrap: 'wrap',
     justifyContent: 'space-between',
