@@ -50,7 +50,8 @@ const SettingsContainer: FunctionComponent = () => {
   const dispatch = useDispatch()
   const { depth, height, speed, consumption } = useSelector(settingsSelector)
   const updateSetting = (key: keyof Settings) => (value?: number): void => {
-    dispatch(settingsSetAction({ key, value }))
+    const posValue = value && Math.max(0, value)
+    dispatch(settingsSetAction({ key, value: posValue }))
   }
   return (
     <Accordion>
