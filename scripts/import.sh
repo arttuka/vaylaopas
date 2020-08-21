@@ -2,23 +2,5 @@
 
 set -euo pipefail
 
-help() {
-  cat <<EOF
-Usage: ${0##*/} shapefile
-Import data from given shapefile
-EOF
-}
-
-if [[ ! $# -eq 1 ]]; then
-  help
-  exit 1
-fi
-
-host=${PGHOST:-localhost}
-
-shp2pgsql -e -s 3067 -W LATIN1 "$1" public.lane_tmp \
-  | psql "-h$host" -Uvaylaopas -1 vaylaopas
-
-psql "-h$host" -Uvaylaopas -1 vaylaopas < resources/sql/db.sql
-
-npm run convert
+docker build . -t arttuka/vaylaopas-import -f ./resources/import/Dockerfile
+docker run --rm -t --network=vaylaopas_default arttuka/vaylaopas-import

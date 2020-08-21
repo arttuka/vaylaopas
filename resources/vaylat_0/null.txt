@@ -1,1 +1,1 @@
-http://livigeo-vip.vally.local:80/geoserver/wfs?SERVICE=wfs&version=1.0.0&request=GetFeature&srsName=EPSG:3067&outputFormat=SHAPE-ZIP&typeNames=vaylat&bbox=14552,6583404,809176,7526508
+http://livigeo-vip.vally.local/geoserver/wfs?SERVICE=wfs&version=1.0.0&request=GetFeature&srsName=EPSG:3067&outputFormat=SHAPE-ZIP&typeNames=vaylat&bbox=6384,6574328,811556,7330740

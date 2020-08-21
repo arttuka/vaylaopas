@@ -1,0 +1,17 @@
+{
+  "client": {
+    "mapserver": "http://localhost:8000/styles/vaylaopas/style.json"
+  },
+  "db": {
+    "host": "localhost",
+    "port": 54321,
+    "user": "vaylaopas",
+    "password": "vaylaopas",
+    "database": "vaylaopas"
+  },
+  "server": {
+    "host": "localhost",
+    "port": 8080,
+    "devserverPort": 8081
+  }
+}

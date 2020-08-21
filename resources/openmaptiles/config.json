@@ -1,0 +1,15 @@
+{
+  "styles": {
+    "vaylaopas": {
+      "style": "vaylaopas.json"
+    }
+  },
+  "options": {
+    "paths": {
+      "styles": "/data/styles",
+      "mbtiles": "/data",
+      "fonts": "/data/fonts"
+    },
+    "serveAllFonts": true
+  }
+}
