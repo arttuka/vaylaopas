@@ -1,10 +1,9 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import mapboxgl, { MapboxGeoJSONFeature } from 'mapbox-gl'
-import { styled } from '@material-ui/core/styles'
+import mapboxgl, { Map, MapboxGeoJSONFeature } from 'mapbox-gl'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
-import { createMap, longTouchDuration } from '../Mapbox/map'
+import { initializeMap, longTouchDuration } from '../Mapbox/map'
 import {
   generateRouteSources,
   pointFeature,
@@ -16,7 +15,6 @@ import {
   Event,
   MouseEvent,
   TouchEvent,
-  WaypointFeatureCollection,
 } from '../Mapbox/types'
 import {
   waypointAddAction,
@@ -33,12 +31,7 @@ import {
 } from '../../common/types'
 import { useLocation, calculateOffset, applyOffset } from '../../common/util'
 
-const MapContainer = styled('div')({
-  width: '100%',
-  height: '100vh',
-})
-
-const closedMenu = {
+const closedMenu: MenuState = {
   open: false,
   top: 0,
   left: 0,
@@ -49,18 +42,20 @@ const toLngLat = (e: Event): LngLat => ({
   lat: e.lngLat.lat,
 })
 
-const Map: FunctionComponent = () => {
+interface MapFeaturesProps {
+  map: Map
+}
+
+const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
+  map,
+}: MapFeaturesProps) => {
   const dispatch = useDispatch()
-  const mapRef = useRef<mapboxgl.Map>()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [lastClick, setLastClick] = useState<LngLat>({ lng: 0, lat: 0 })
-  const [menu, setMenu] = useState<MenuState>(closedMenu)
-  const [touchMarker, setTouchMarker] = useState<TouchMarkerState | undefined>()
+  const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
+  const [menu, setMenu] = useState(closedMenu)
+  const [touchMarker, setTouchMarker] = useState<TouchMarkerState>()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
-  const waypointsRef = useRef<WaypointFeatureCollection>(
-    waypointFeatureCollection(waypoints)
-  )
+  const waypointsRef = useRef(waypointFeatureCollection(waypoints))
 
   const handleClick = (): void => setMenu(closedMenu)
 
@@ -98,7 +93,6 @@ const Map: FunctionComponent = () => {
     feature?: MapboxGeoJSONFeature
   ): DragEventHandlers => {
     if (featureIsLane(feature)) {
-      const map = e.target
       const onMove = (e: Event): void =>
         setSourceData(map, {
           id: 'dragIndicator',
@@ -125,7 +119,6 @@ const Map: FunctionComponent = () => {
     feature?: MapboxGeoJSONFeature
   ): DragEventHandlers => {
     if (featureIsWaypoint(feature)) {
-      const map = e.target
       const offset = calculateOffset(e.lngLat, feature.geometry.coordinates)
       const waypointId = feature.properties.id
       const waypointCollection = waypointsRef.current
@@ -133,11 +126,9 @@ const Map: FunctionComponent = () => {
         ({ properties }) => properties.id === waypointId
       )
       const onMove = (e: Event): void => {
-        if (index >= 0) {
-          const { lng, lat } = applyOffset(e.lngLat, offset)
-          waypointCollection.features[index].geometry.coordinates = [lng, lat]
-          setSourceData(map, { id: 'waypoint', data: waypointCollection })
-        }
+        const { lng, lat } = applyOffset(e.lngLat, offset)
+        waypointCollection.features[index].geometry.coordinates = [lng, lat]
+        setSourceData(map, { id: 'waypoint', data: waypointCollection })
       }
       const onMoveEnd = (e: Event): void => {
         dispatch(
@@ -164,62 +155,46 @@ const Map: FunctionComponent = () => {
   }
 
   useEffect(() => {
-    const container = containerRef.current
-    if (container && mapRef.current === undefined) {
-      container.style.height = `${window.innerHeight}px`
-      mapRef.current = createMap(
-        container,
-        {
-          handleClick,
-          handleRightClick,
-          handleLongTouch,
-          handleDragRoute,
-          handleTouchStart,
-          handleTouchEnd,
-          handleDragWaypoint,
-        },
-        [
-          ...generateRouteSources(routes),
-          { id: 'dragIndicator', data: pointFeature() },
-          { id: 'location', data: pointFeature() },
-          { id: 'waypoint', data: waypointsRef.current },
-        ]
-      )
-    }
-  }, [containerRef])
+    initializeMap(
+      map,
+      {
+        handleClick,
+        handleRightClick,
+        handleLongTouch,
+        handleDragRoute,
+        handleTouchStart,
+        handleTouchEnd,
+        handleDragWaypoint,
+      },
+      [
+        ...generateRouteSources(routes),
+        { id: 'dragIndicator', data: pointFeature() },
+        { id: 'location', data: pointFeature() },
+        { id: 'waypoint', data: waypointsRef.current },
+      ]
+    )
+  }, [])
 
   useEffect(() => {
-    const map = mapRef.current
-    if (map) {
-      generateRouteSources(routes).forEach((source) =>
-        setSourceData(map, source)
-      )
-    }
+    generateRouteSources(routes).forEach((source) => setSourceData(map, source))
   }, [routes])
 
   useEffect(() => {
-    const map = mapRef.current
-    if (map) {
-      waypointsRef.current = waypointFeatureCollection(waypoints)
-      setSourceData(map, { id: 'waypoint', data: waypointsRef.current })
-    }
+    waypointsRef.current = waypointFeatureCollection(waypoints)
+    setSourceData(map, { id: 'waypoint', data: waypointsRef.current })
   }, [waypoints])
 
   useLocation((coords?: Coordinates): void => {
-    const map = mapRef.current
-    if (map) {
-      setSourceData(map, {
-        id: 'location',
-        data: pointFeature(
-          coords && new mapboxgl.LngLat(coords.longitude, coords.latitude)
-        ),
-      })
-    }
+    setSourceData(map, {
+      id: 'location',
+      data: pointFeature(
+        coords && new mapboxgl.LngLat(coords.longitude, coords.latitude)
+      ),
+    })
   })
 
   return (
     <>
-      <MapContainer ref={containerRef} />
       <ContextMenu
         onAdd={onAddWaypoint}
         onDelete={onDeleteWaypoint}
@@ -237,4 +212,4 @@ const Map: FunctionComponent = () => {
   )
 }
 
-export default Map
+export default MapFeatures

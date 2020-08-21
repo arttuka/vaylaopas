@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react'
 import AppBar from './Appbar/Appbar'
-import Map from './Map/Map'
+import MapContainer from './Map/MapContainer'
 import Notifier from './Notifier/Notifier'
 import Sidebar from './Sidebar/Sidebar'
 import RouteList from './Sidebar/RouteList'
@@ -21,7 +21,7 @@ const App: FunctionComponent = () => {
         <RouteList />
         <SettingsContainer />
       </Sidebar>
-      <Map />
+      <MapContainer />
     </>
   )
 }

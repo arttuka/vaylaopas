@@ -182,6 +182,11 @@ export const useInterval = (callback: () => void, ms: number): void => {
 
 export const useLocation = (callback: (coords?: Coordinates) => void): void => {
   const callbackRef = useRef(callback)
+
+  useEffect(() => {
+    callbackRef.current = callback
+  }, [callback])
+
   useEffect(() => {
     if (navigator.geolocation) {
       const onSuccess = ({ coords }: Position): void =>

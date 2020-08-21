@@ -1,3 +1,4 @@
+import { useCallback, useRef, useState } from 'react'
 import { Map } from 'mapbox-gl'
 import { addLayers, makeLayerDraggable } from './layer'
 import { addSources } from './source'
@@ -23,7 +24,7 @@ interface EventHandlers {
   handleDragWaypoint: DragStartHandler
 }
 
-const initializeMap = (
+export const initializeMap = (
   map: Map,
   eventHandlers: EventHandlers,
   sources: Source[]
@@ -66,21 +67,31 @@ const initializeMap = (
   makeLayerDraggable(map, 'waypoint', handleDragWaypoint)
 }
 
-export const createMap = (
-  container: HTMLDivElement,
-  eventHandlers: EventHandlers,
-  sources: Source[]
-): Map => {
-  const map = new Map({
-    container,
-    style: clientConfig.mapserver,
-    hash: true,
-    zoom: 11,
-    center: [24.94, 60.17],
-    dragRotate: false,
-  })
-  map.on('load', (): void => {
-    initializeMap(map, eventHandlers, sources)
-  })
-  return map
+export const useMap = (): [
+  (container: HTMLDivElement) => void,
+  Map | undefined
+] => {
+  const mapRef = useRef<Map>()
+  const [initialized, setInitialized] = useState(false)
+  const setContainerRef = useCallback((container: HTMLDivElement | null) => {
+    if (container == null) {
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = undefined
+      }
+      setInitialized(false)
+    } else {
+      const map = new Map({
+        container,
+        style: clientConfig.mapserver,
+        hash: true,
+        zoom: 11,
+        center: [24.94, 60.17],
+        dragRotate: false,
+      })
+      map.on('load', (): void => setInitialized(true))
+      mapRef.current = map
+    }
+  }, [])
+  return [setContainerRef, initialized ? mapRef.current : undefined]
 }
