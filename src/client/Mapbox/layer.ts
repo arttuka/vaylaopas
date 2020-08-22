@@ -69,9 +69,10 @@ export const addLayers = (map: Map): void => {
         'bottom',
         'center',
       ],
+      'icon-size': ['case', ['get', 'dragged'], 1.5, 1],
       'text-field': ['get', 'letter'],
       'text-font': ['Roboto Medium'],
-      'text-size': 24,
+      'text-size': ['case', ['get', 'dragged'], 36, 24],
       'text-offset': [0, -1.5],
       'text-allow-overlap': true,
       'text-ignore-placement': true,
@@ -95,7 +96,7 @@ export const makeLayerDraggable = (
       type === 'mouse' ? ['mousemove', 'mouseup'] : ['touchmove', 'touchend']
     const feature = e.features && e.features[0]
     if (feature !== undefined) {
-      const { onMove, onMoveEnd } = handler(e, feature)
+      const { onMove, onMoveEnd } = handler(e, feature, type)
       const throttledOnMove = throttle(onMove, 50)
       map.on(move, throttledOnMove)
       map.once(end, (e: Event): void => {

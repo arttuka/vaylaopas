@@ -30,6 +30,7 @@ export interface WaypointProperties {
   id: string
   letter?: string
   type: WaypointType
+  dragged: boolean
 }
 
 export type WaypointFeature = Feature<Point, WaypointProperties>

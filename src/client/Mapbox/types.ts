@@ -23,7 +23,8 @@ export type MouseEventHandler = (e: MouseEvent) => void
 export type TouchEventHandler = (e: TouchEvent) => void
 export type DragStartHandler = (
   e: Event,
-  feature: MapboxGeoJSONFeature
+  feature: MapboxGeoJSONFeature,
+  type: 'mouse' | 'touch'
 ) => {
   onMove: (e: Event) => void
   onMoveEnd: (e: Event) => void

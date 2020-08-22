@@ -111,7 +111,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
     }
   }
 
-  const handleDragWaypoint: DragStartHandler = (e, feature) => {
+  const handleDragWaypoint: DragStartHandler = (e, feature, type) => {
     if (featureIsWaypoint(feature)) {
       const offset = calculateOffset(e.lngLat, feature.geometry.coordinates)
       const waypointId = feature.properties.id
@@ -119,9 +119,13 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
       const index = waypointCollection.features.findIndex(
         ({ properties }) => properties.id === waypointId
       )
+      const waypoint = waypointCollection.features[index]
+      if (type === 'touch') {
+        waypoint.properties.dragged = true
+      }
       const onMove = (e: Event): void => {
         const { lng, lat } = applyOffset(e.lngLat, offset)
-        waypointCollection.features[index].geometry.coordinates = [lng, lat]
+        waypoint.geometry.coordinates = [lng, lat]
         setSourceData(map, { id: 'waypoint', data: waypointCollection })
       }
       const onMoveEnd = (e: Event): void => {

@@ -32,6 +32,7 @@ export const waypointFeatureCollection = (
         id,
         letter: type === 'destination' ? numToLetter(i++) : undefined,
         type,
+        dragged: false,
       },
     })),
   }
