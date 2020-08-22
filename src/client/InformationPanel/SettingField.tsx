@@ -31,7 +31,7 @@ class ClearButton extends PureComponent<ClearButtonProps> {
 
 const TextField = withStyles({
   root: {
-    flexBasis: 90,
+    flexBasis: '40%',
   },
 })(MuiTextField)
 
