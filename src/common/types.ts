@@ -42,13 +42,16 @@ export const featureIsWaypoint = (
   feature.properties !== null &&
   feature.properties.hasOwnProperty('id')
 
-export interface Route {
-  route: Lane[]
-  startAndEnd: Lane[]
+export interface RouteProps {
   found: boolean
   length?: number
   duration?: number
   fuel?: number
+}
+
+export interface Route extends RouteProps {
+  route: Lane
+  startAndEnd: Lane[]
   type?: WaypointType
 }
 

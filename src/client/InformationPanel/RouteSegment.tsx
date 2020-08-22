@@ -75,7 +75,7 @@ interface TotalsProps {
   length?: number
   duration?: number
   fuel?: number
-  found?: boolean
+  found: boolean
   kind: 'totals'
 }
 
@@ -85,7 +85,7 @@ type RouteSegmentProps = (SegmentProps | TotalsProps) & {
 
 class RouteSegment extends PureComponent<RouteSegmentProps> {
   render(): ReactElement {
-    const { length, duration, fuel, found = true, onClick } = this.props
+    const { length, duration, fuel, found, onClick } = this.props
     const durationStr = duration ? formatDuration(duration) : ''
     const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
     const listItemTextProps = found

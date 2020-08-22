@@ -4,28 +4,8 @@ import List from '@material-ui/core/List'
 import { withStyles } from '@material-ui/core/styles'
 import RouteSegment from './RouteSegment'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
-import { Route } from '../../common/types'
-import { add, combineSegments } from '../../common/util'
+import { combineSegments, mergeRoutes } from '../../common/util'
 import { waypointRemoveAction } from '../redux/actions'
-
-interface Totals {
-  totalDuration?: number
-  totalFuel?: number
-  totalLength?: number
-}
-
-const calculateTotals = (routes: Route[]): Totals =>
-  routes.reduce<Totals>(
-    (
-      { totalDuration, totalFuel, totalLength },
-      { duration, fuel, length }
-    ) => ({
-      totalDuration: add(duration, totalDuration),
-      totalFuel: add(fuel, totalFuel),
-      totalLength: add(length, totalLength),
-    }),
-    { totalDuration: 0, totalFuel: 0, totalLength: 0 }
-  )
 
 const OuterList = withStyles({
   root: {
@@ -52,7 +32,12 @@ const RouteList: FunctionComponent<RouteListProps> = ({
   const waypoints = useSelector(waypointsSelector)
   const destinations = waypoints.filter(({ type }) => type === 'destination')
   const combinedRoutes = combineSegments(routes)
-  const { totalDuration, totalFuel, totalLength } = calculateTotals(routes)
+  const totals = combinedRoutes.reduce(mergeRoutes, {
+    length: 0,
+    duration: 0,
+    fuel: 0,
+    found: true,
+  })
 
   const onDelete = (id: string): void => {
     dispatch(waypointRemoveAction({ id }))
@@ -61,9 +46,10 @@ const RouteList: FunctionComponent<RouteListProps> = ({
   return (
     <OuterList disablePadding={true}>
       <RouteSegment
-        length={totalLength}
-        duration={totalDuration}
-        fuel={totalFuel}
+        length={totals.length}
+        duration={totals.duration}
+        fuel={totals.fuel}
+        found={totals.found}
         kind="totals"
         onClick={onClick}
       />

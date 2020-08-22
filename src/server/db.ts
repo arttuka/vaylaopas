@@ -2,10 +2,9 @@ import { Pool, PoolClient } from 'pg'
 import { LineString, Position } from 'geojson'
 import config from './config'
 import { Lane, Route, Waypoint, WaypointType } from '../common/types'
-import { partition, range } from '../common/util'
+import { partition } from '../common/util'
 
 const pool = new Pool(config.db)
-const [lIdFrom1, lIdFrom2, vIdFrom, lIdTo1, lIdTo2, vIdTo] = range(6, 1000000)
 
 const formatLane = (geometry: LineString, routeNumber: number): Lane => ({
   type: 'Feature',
@@ -23,6 +22,7 @@ const makeLinestring = (p1: Position, p2: Position): LineString => ({
 interface RouteEndpoint {
   lane: number
   vertex: number | null
+  i: number
   geometry: LineString
   point: string
   type: WaypointType
@@ -30,6 +30,7 @@ interface RouteEndpoint {
 
 const getClosestPoint = async (
   client: PoolClient,
+  i: number,
   p: Waypoint,
   depth?: number
 ): Promise<RouteEndpoint> => {
@@ -51,11 +52,12 @@ const getClosestPoint = async (
       CASE c.point
         WHEN s.the_geom THEN c.source
         WHEN t.the_geom THEN c.target
-      END AS vertex
+      END AS vertex,
+      $3 AS i
     FROM closest c
     JOIN lane_vertices_pgr s ON c.source = s.id
     JOIN lane_vertices_pgr t ON c.target = t.id`,
-    [lng, lat]
+    [lng, lat, -i]
   )
   const { geometry, ...endpoint } = result.rows[0]
   return {
@@ -73,18 +75,23 @@ const assertNumber = (n?: number): void => {
 
 const escape = (sql: string): string => sql.replace(/'/g, "''")
 
-const extraLaneQuery = (
-  lId1: number,
-  lId2: number,
-  vId: number,
-  point: string,
-  laneId: number
-): string => `
-  SELECT s.id, s.source, s.target, s.length, l.depth, l.height, s.geom
-  FROM lane l,
-  LATERAL split_linestring(${lId1}, ${lId2}, ${vId}, l.geom, l.source, l.target, l.length, '${point}') AS s(id int, source int, target int, length float, geom geometry)
-  WHERE l.id = ${laneId}
-`
+const insertExtraLanes = async (
+  client: PoolClient,
+  endpoints: RouteEndpoint[]
+): Promise<void> => {
+  let lId = -10000
+  const query = `
+    INSERT INTO extra_lane (id, source, target, length, depth, height, geom)
+    SELECT s.id, s.source, s.target, s.length, l.depth, l.height, s.geom
+    FROM lane l,
+    LATERAL split_linestring($1, $2, $3, l.geom, l.source, l.target, l.length, $4) AS s(id INT, source INT, target INT, length FLOAT, geom Geometry)
+    WHERE l.id = $5
+  `
+  const filteredEndpoints = endpoints.filter(({ vertex }) => vertex === null)
+  for (const { point, lane, i } of filteredEndpoints) {
+    await client.query(query, [--lId, --lId, i, point, lane])
+  }
+}
 
 const getRouteBetweenVertices = async (
   client: PoolClient,
@@ -96,24 +103,7 @@ const getRouteBetweenVertices = async (
 ): Promise<Route> => {
   assertNumber(depth)
   assertNumber(height)
-  let extraLanesSql = ''
-  if (from.vertex === null || to.vertex === null) {
-    const query = [
-      from.vertex === null &&
-        extraLaneQuery(lIdFrom1, lIdFrom2, vIdFrom, from.point, from.lane),
-      to.vertex === null &&
-        extraLaneQuery(lIdTo1, lIdTo2, vIdTo, to.point, to.lane),
-    ]
-      .filter((x) => !!x)
-      .join(' UNION ')
-    const result = await client.query(query)
-    extraLanesSql = `(values ${result.rows
-      .map(
-        ({ id, source, target, length, depth, height, geom }) =>
-          `(${id}, ${source}, ${target}, ${length}, ${depth}::FLOAT, ${height}::FLOAT, '${geom}'::GEOMETRY(LINESTRING))`
-      )
-      .join(',')}) e(id, source, target, length, depth, height, geom)`
-  }
+
   const settingsWhere = `
     WHERE true
     ${depth ? `AND depth IS NULL OR depth >= ${depth}` : ''}
@@ -125,49 +115,43 @@ const getRouteBetweenVertices = async (
     ${settingsWhere}
     ${from.vertex === null ? `AND id <> ${from.lane}` : ''}
     ${to.vertex === null ? `AND id <> ${to.lane}` : ''}
-    ${
-      extraLanesSql &&
-      `UNION SELECT id, source, target, length AS cost, length AS reverse_cost FROM ${extraLanesSql} ${settingsWhere}`
-    }`
+    UNION
+    SELECT id, source, target, length AS cost, length AS reverse_cost
+    FROM extra_lane
+    ${settingsWhere}`
 
   const query = `
-    WITH ids AS (SELECT edge AS id FROM pgr_dijkstra(
+    WITH ids AS (SELECT edge AS id, node, seq FROM pgr_dijkstra(
       '${escape(laneQuery)}', $1::bigint, $2::bigint, directed := false
-    ))
-    SELECT length, AsJSON(geom) AS geometry
-    FROM lane JOIN ids ON lane.id = ids.id
-    ${
-      extraLanesSql &&
-      `UNION SELECT length, AsJSON(geom) AS geometry FROM ${extraLanesSql} JOIN ids ON e.id = ids.id`
-    }`
+    )),
+    lanes AS (SELECT length, geom, node = source AS forward, ids.seq
+              FROM lane JOIN ids ON lane.id = ids.id
+              UNION
+              SELECT length, geom, node = source AS forward, ids.seq
+              FROM extra_lane e JOIN ids ON e.id = ids.id)
+    SELECT SUM(length) AS length, AsJSON(ST_MakeLine(CASE WHEN forward THEN geom ELSE ST_Reverse(geom) END ORDER BY seq ASC)) AS geometry FROM lanes`
+
   const result = await client.query(query, [
-    from.vertex || vIdFrom,
-    to.vertex || vIdTo,
+    from.vertex || from.i,
+    to.vertex || to.i,
   ])
+  const { geometry, length } = result.rows[0]
   const startAndEnd = [
     formatLane(from.geometry, routeNumber),
     formatLane(to.geometry, routeNumber),
   ]
 
-  if (result.rows.length === 0) {
-    const route = [
-      formatLane(
-        makeLinestring(
-          startAndEnd[0].geometry.coordinates[1],
-          startAndEnd[1].geometry.coordinates[1]
-        ),
-        routeNumber
+  if (length === null) {
+    const route = formatLane(
+      makeLinestring(
+        startAndEnd[0].geometry.coordinates[1],
+        startAndEnd[1].geometry.coordinates[1]
       ),
-    ]
+      routeNumber
+    )
     return { route, startAndEnd, found: false, type: to.type }
   } else {
-    const route = result.rows.map(
-      ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
-    )
-    const length = result.rows.reduce<number>(
-      (sum, { length }) => sum + length,
-      0
-    )
+    const route = formatLane(JSON.parse(geometry), routeNumber)
     return { route, length, startAndEnd, found: true, type: to.type }
   }
 }
@@ -179,11 +163,17 @@ export const getRoute = async (
 ): Promise<Route[]> => {
   const client = await pool.connect()
   try {
+    await client.query('BEGIN')
+    await client.query(
+      'CREATE TEMPORARY TABLE extra_lane (id INT, source INT, target INT, length FLOAT, depth FLOAT, height FLOAT, geom Geometry) ON COMMIT DROP'
+    )
     const endpoints = await Promise.all(
       points.map(
-        (point): Promise<RouteEndpoint> => getClosestPoint(client, point, depth)
+        (point, i): Promise<RouteEndpoint> =>
+          getClosestPoint(client, i, point, depth)
       )
     )
+    await insertExtraLanes(client, endpoints)
     return await Promise.all(
       partition(endpoints, 2, 1).map(
         ([from, to], index): Promise<Route> =>
@@ -191,6 +181,7 @@ export const getRoute = async (
       )
     )
   } finally {
+    await client.query('COMMIT')
     client.release()
   }
 }

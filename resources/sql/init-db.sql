@@ -38,9 +38,6 @@ RETURNS NULL ON NULL INPUT;
 CREATE OR REPLACE FUNCTION split_linestring(id1 int, id2 int, vertex_id int, geom GEOMETRY(LINESTRING), source int, target int, length float, point GEOMETRY(POINT))
 RETURNS SETOF RECORD
 AS $$
-  WITH midpoint AS (
-    SELECT ST_LineLocatePoint(geom, point) AS distance
-  )
   SELECT
     case t.id
       WHEN source THEN id1
@@ -53,10 +50,11 @@ AS $$
       WHEN target THEN length * (1 - distance)
     END AS length,
     CASE t.id
-      WHEN source THEN ST_LineSubstring(geom, 0, distance)
+      WHEN source THEN ST_Reverse(ST_LineSubstring(geom, 0, distance))
       WHEN target THEN ST_LineSubstring(geom, distance, 1)
     END AS geom
-  FROM UNNEST(ARRAY[source, target]) t(id), midpoint
+  FROM (VALUES (source), (target)) t(id),
+  (SELECT ST_LineLocatePoint(geom, point) AS distance) p(distance)
 $$
 LANGUAGE SQL
 IMMUTABLE;

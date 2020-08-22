@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import geojson from 'geojson'
-import { Index, LngLat, Route, Settings } from './types'
+import { Index, LngLat, Route, RouteProps, Settings } from './types'
 
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   const result = []
@@ -111,21 +111,21 @@ export const formatDuration = (minutes: number): string => {
 export const add = (n1?: number, n2?: number): number | undefined =>
   n1 !== undefined && n2 !== undefined ? n1 + n2 : undefined
 
-const mergeRoutes = (r1: Route, r2: Route): Route => ({
-  route: [...r1.route, ...r2.route],
-  startAndEnd: [r1.startAndEnd[0], r2.startAndEnd[1]],
+export const mergeRoutes = (r1: RouteProps, r2: RouteProps): RouteProps => ({
   found: r1.found && r2.found,
   length: add(r1.length, r2.length),
-  type: r2.type,
   duration: add(r1.duration, r2.duration),
   fuel: add(r1.fuel, r2.fuel),
 })
 
-export const combineSegments = (routes: Route[]): Route[] => {
-  const result: Route[] = []
+export const combineSegments = (routes: Route[]): RouteProps[] => {
+  const result: RouteProps[] = []
   let remainingRoutes = routes
   while (remainingRoutes.length > 0) {
-    const rs = takeUntil(remainingRoutes, (r) => r.type === 'destination')
+    const rs: RouteProps[] = takeUntil(
+      remainingRoutes,
+      (r) => r.type === 'destination'
+    )
     result.push(rs.reduce(mergeRoutes))
     remainingRoutes = remainingRoutes.slice(rs.length)
   }
@@ -160,9 +160,6 @@ export const storeSetting = (key: keyof Settings, value?: number): void => {
     localStorage.removeItem(key)
   }
 }
-
-export const range = (count: number, start = 0): number[] =>
-  [...Array(count).keys()].map((i) => i + start)
 
 export const useInterval = (callback: () => void, ms: number): void => {
   const callbackRef = useRef(callback)
