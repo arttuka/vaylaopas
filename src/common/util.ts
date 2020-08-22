@@ -67,10 +67,13 @@ export const updateWhere = <T>(
   }
 }
 
-export const hasId = (id: string) => (t: { id: string }): boolean => id === t.id
+export const hasId = <T extends { id: string }>(id: string) => (
+  t: T
+): boolean => id === t.id
 
-export const hasAnyId = (ids: string[]) => (t: { id: string }): boolean =>
-  ids.includes(t.id)
+export const hasAnyId = <T extends { id: string }>(ids: string[]) => (
+  t: T
+): boolean => ids.includes(t.id)
 
 export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
   ...arr.slice(0, i),

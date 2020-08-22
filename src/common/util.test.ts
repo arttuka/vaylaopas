@@ -16,7 +16,7 @@ import {
   calculateOffset,
   applyOffset,
 } from './util'
-import { Index } from '../common/types'
+import { Index } from './types'
 
 const timeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {

@@ -46,7 +46,7 @@ const getAdjacentWaypointIds = (
   return result
 }
 
-const waypointReducer = (
+export const waypointReducer = (
   waypoints: Waypoint[],
   action: WaypointAction
 ): Waypoint[] => {
