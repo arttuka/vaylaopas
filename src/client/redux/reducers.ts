@@ -114,9 +114,7 @@ const notificationReducer = (
         },
       ]
     case ActionType.NotificationRemove:
-      return notifications.map((n) =>
-        n.key === action.data.key ? { ...n, dismissed: true } : n
-      )
+      return notifications.filter((n) => n.key !== action.data.key)
     default:
       return notifications
   }
