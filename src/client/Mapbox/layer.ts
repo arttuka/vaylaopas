@@ -47,15 +47,6 @@ export const addLayers = (map: Map): void => {
       'icon-ignore-placement': true,
     },
   })
-  addLayer(map, 'location', {
-    type: 'circle',
-    paint: {
-      'circle-radius': 8,
-      'circle-color': '#ff0000',
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
-    },
-  })
   addLayer(map, 'waypoint', {
     type: 'symbol',
     layout: {

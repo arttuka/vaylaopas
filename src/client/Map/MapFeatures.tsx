@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import mapboxgl, { Map } from 'mapbox-gl'
+import { Map } from 'mapbox-gl'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
 import { initializeMap, longTouchDuration } from '../Mapbox/map'
@@ -29,7 +29,7 @@ import {
   MenuState,
   TouchMarkerState,
 } from '../../common/types'
-import { useLocation, calculateOffset, applyOffset } from '../../common/util'
+import { calculateOffset, applyOffset } from '../../common/util'
 
 const closedMenu: MenuState = {
   open: false,
@@ -167,7 +167,6 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
       [
         ...generateRouteSources(routes),
         { id: 'dragIndicator', data: pointFeature() },
-        { id: 'location', data: pointFeature() },
         { id: 'waypoint', data: waypointsRef.current },
       ]
     )
@@ -181,15 +180,6 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
     waypointsRef.current = waypointFeatureCollection(waypoints)
     setSourceData(map, { id: 'waypoint', data: waypointsRef.current })
   }, [waypoints])
-
-  useLocation((coords?: Coordinates): void => {
-    setSourceData(map, {
-      id: 'location',
-      data: pointFeature(
-        coords && new mapboxgl.LngLat(coords.longitude, coords.latitude)
-      ),
-    })
-  })
 
   return (
     <>

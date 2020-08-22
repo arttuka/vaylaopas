@@ -175,30 +175,6 @@ export const useInterval = (callback: () => void, ms: number): void => {
   }, [ms])
 }
 
-export const useLocation = (callback: (coords?: Coordinates) => void): void => {
-  const callbackRef = useRef(callback)
-
-  useEffect(() => {
-    callbackRef.current = callback
-  }, [callback])
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      const onSuccess = ({ coords }: Position): void =>
-        callbackRef.current(coords)
-      const onError = (err: PositionError): void => {
-        callbackRef.current()
-        console.error('Error getting location', err)
-      }
-      navigator.geolocation.getCurrentPosition(onSuccess, onError)
-      const watchId = navigator.geolocation.watchPosition(onSuccess, onError)
-      return (): void => {
-        navigator.geolocation.clearWatch(watchId)
-      }
-    }
-  }, [])
-}
-
 export const throttle = <T>(
   fn: (t: T) => void,
   ms: number

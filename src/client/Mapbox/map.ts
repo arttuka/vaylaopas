@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { Map } from 'mapbox-gl'
+import { GeolocateControl, Map, NavigationControl } from 'mapbox-gl'
 import { addLayers, makeLayerDraggable } from './layer'
 import { addSources } from './source'
 import {
@@ -49,6 +49,14 @@ export const initializeMap = (
   addSources(map, sources)
   addLayers(map)
   map
+    .addControl(
+      new GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+      })
+    )
+    .addControl(new NavigationControl({ showCompass: false }))
     .on('click', handleClick)
     .on('contextmenu', handleRightClick)
     .on('contextmenu', 'waypoint', handleRightClick)

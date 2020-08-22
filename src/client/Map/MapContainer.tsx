@@ -4,8 +4,7 @@ import MapFeatures from './MapFeatures'
 import { useMap } from '../Mapbox/map'
 
 const Container = styled('div')({
-  width: '100%',
-  height: '100vh',
+  flex: 1,
 })
 
 const MapContainer: FunctionComponent = () => {
