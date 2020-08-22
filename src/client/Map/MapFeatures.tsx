@@ -67,7 +67,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
     setMenu({
       ...menu,
       open: true,
-      top: e.point.y,
+      top: e.point.y + 64,
       left: e.point.x,
       ...(waypoint ? { waypoint } : {}),
     })
@@ -82,7 +82,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
   const handleTouchStart = (e: TouchEvent): void =>
     setTouchMarker({
       direction: 'up',
-      top: e.point.y,
+      top: e.point.y + 56,
       left: e.point.x,
     })
 
@@ -186,6 +186,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
       <ContextMenu
         onAdd={onAddWaypoint}
         onDelete={onDeleteWaypoint}
+        onClose={() => setMenu(closedMenu)}
         {...menu}
       />
       {touchMarker && (
