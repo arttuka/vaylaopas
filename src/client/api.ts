@@ -1,14 +1,9 @@
-import {
-  RouteNotFoundError,
-  Routes,
-  Settings,
-  Waypoints,
-} from '../common/types'
+import { RouteNotFoundError, Route, Settings, Waypoint } from '../common/types'
 
 export const getRoutes = async (
-  waypoints: Waypoints,
+  waypoints: Waypoint[],
   { depth, height }: Settings
-): Promise<Routes> => {
+): Promise<Route[]> => {
   const response = await fetch('/api/route', {
     method: 'POST',
     body: JSON.stringify({

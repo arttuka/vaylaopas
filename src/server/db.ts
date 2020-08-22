@@ -6,7 +6,6 @@ import {
   Route,
   RouteNotFoundError,
   Waypoint,
-  Waypoints,
   WaypointType,
 } from '../common/types'
 import { partition, range } from '../common/util'
@@ -154,8 +153,8 @@ const getRouteBetweenVertices = async (
   const route = result.rows.map(
     ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
   )
-  const length = result.rows.reduce(
-    (sum, { length }): number => sum + length,
+  const length = result.rows.reduce<number>(
+    (sum, { length }) => sum + length,
     0
   )
   const startAndEnd = [
@@ -166,7 +165,7 @@ const getRouteBetweenVertices = async (
 }
 
 export const getRoute = async (
-  points: Waypoints,
+  points: Waypoint[],
   depth?: number,
   height?: number
 ): Promise<Route[]> => {

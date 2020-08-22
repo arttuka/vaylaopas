@@ -1,23 +1,22 @@
 import { Layer, Map } from 'mapbox-gl'
 import indigo from '@material-ui/core/colors/indigo'
-import { DragStartHandler, Event, LayerId, SourceId } from './types'
+import { DragStartHandler, Event, SourceId } from './types'
 import { throttle } from '../../common/util'
 
 const addLayer = (
   map: Map,
-  id: LayerId,
   source: SourceId,
   options: Partial<Layer>
 ): void => {
   map.addLayer({
-    id,
+    id: source,
     source,
     ...options,
   })
 }
 
 export const addLayers = (map: Map): void => {
-  addLayer(map, 'route', 'route', {
+  addLayer(map, 'route', {
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -28,7 +27,7 @@ export const addLayers = (map: Map): void => {
       'line-width': 3,
     },
   })
-  addLayer(map, 'routeStartAndEnd', 'routeStartAndEnd', {
+  addLayer(map, 'routeStartAndEnd', {
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -40,7 +39,7 @@ export const addLayers = (map: Map): void => {
       'line-dasharray': [0.5, 3],
     },
   })
-  addLayer(map, 'dragIndicator', 'dragIndicator', {
+  addLayer(map, 'dragIndicator', {
     type: 'symbol',
     layout: {
       'icon-image': 'circle',
@@ -48,7 +47,7 @@ export const addLayers = (map: Map): void => {
       'icon-ignore-placement': true,
     },
   })
-  addLayer(map, 'location', 'location', {
+  addLayer(map, 'location', {
     type: 'circle',
     paint: {
       'circle-radius': 8,
@@ -57,7 +56,7 @@ export const addLayers = (map: Map): void => {
       'circle-stroke-color': '#ffffff',
     },
   })
-  addLayer(map, 'waypoint', 'waypoint', {
+  addLayer(map, 'waypoint', {
     type: 'symbol',
     layout: {
       'icon-image': ['match', ['get', 'type'], 'destination', 'pin', 'circle'],
@@ -85,7 +84,7 @@ export const addLayers = (map: Map): void => {
 
 export const makeLayerDraggable = (
   map: Map,
-  layer: LayerId,
+  id: SourceId,
   handler: DragStartHandler
 ): void => {
   const canvas = map.getCanvasContainer()
@@ -95,26 +94,28 @@ export const makeLayerDraggable = (
     const [move, end] =
       type === 'mouse' ? ['mousemove', 'mouseup'] : ['touchmove', 'touchend']
     const feature = e.features && e.features[0]
-    const { onMove, onMoveEnd } = handler(e, feature)
-    const throttledOnMove = throttle(onMove, 50)
-    map.on(move, throttledOnMove)
-    map.once(end, (e: Event): void => {
-      map.off(move, throttledOnMove)
-      onMoveEnd(e)
-      canvas.style.cursor = ''
-    })
+    if (feature !== undefined) {
+      const { onMove, onMoveEnd } = handler(e, feature)
+      const throttledOnMove = throttle(onMove, 50)
+      map.on(move, throttledOnMove)
+      map.once(end, (e: Event): void => {
+        map.off(move, throttledOnMove)
+        onMoveEnd(e)
+        canvas.style.cursor = ''
+      })
+    }
   }
   map
-    .on('mouseenter', layer, (): void => {
+    .on('mouseenter', id, (): void => {
       canvas.style.cursor = 'move'
     })
-    .on('mouseleave', layer, (): void => {
+    .on('mouseleave', id, (): void => {
       canvas.style.cursor = ''
     })
-    .on('mousedown', layer, (e): void => {
+    .on('mousedown', id, (e): void => {
       if (e.originalEvent.button === 0) {
         onDragStart(e, 'mouse')
       }
     })
-    .on('touchstart', layer, (e): void => onDragStart(e, 'touch'))
+    .on('touchstart', id, (e): void => onDragStart(e, 'touch'))
 }

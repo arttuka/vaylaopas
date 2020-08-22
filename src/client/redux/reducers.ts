@@ -7,9 +7,9 @@ import {
   NotificationAction,
 } from './action-types'
 import {
-  Waypoints,
+  Waypoint,
   RootState,
-  Routes,
+  Route,
   Settings,
   Notification,
 } from '../../common/types'
@@ -24,7 +24,10 @@ import {
 
 let waypointId = 0
 const getId = (): string => `waypoint-${waypointId++}`
-const getAdjacentWaypointIds = (waypoints: Waypoints, id: string): string[] => {
+const getAdjacentWaypointIds = (
+  waypoints: Waypoint[],
+  id: string
+): string[] => {
   const idx = waypoints.findIndex(hasId(id))
   const result = [id]
   let i = idx + 1
@@ -41,9 +44,9 @@ const getAdjacentWaypointIds = (waypoints: Waypoints, id: string): string[] => {
 }
 
 const waypointReducer = (
-  waypoints: Waypoints,
+  waypoints: Waypoint[],
   action: WaypointAction
-): Waypoints => {
+): Waypoint[] => {
   switch (action.type) {
     case ActionType.WaypointAdd: {
       const { point, index, type } = action.data
@@ -65,7 +68,7 @@ const waypointReducer = (
   }
 }
 
-const routeReducer = (routes: Routes, action: RouteAction): Routes => {
+const routeReducer = (routes: Route[], action: RouteAction): Route[] => {
   switch (action.type) {
     case ActionType.RouteSuccess:
       return action.data.routes

@@ -1,5 +1,5 @@
 import { VariantType } from 'notistack'
-import { Key, LngLat, Routes, Settings, WaypointType } from '../../common/types'
+import { Key, LngLat, Route, Settings, WaypointType } from '../../common/types'
 
 export enum ActionType {
   WaypointAdd = 'WAYPOINT_ADD',
@@ -44,7 +44,7 @@ export type WaypointAction =
   | WaypointMoveAction
 
 export interface RouteUpdateProps {
-  routes: Routes
+  routes: Route[]
 }
 export interface RouteUpdateAction {
   type: ActionType.RouteSuccess

@@ -42,11 +42,6 @@ export const numToLetter = (n: number): string => {
   }
 }
 
-export const removeIndex = <T>(arr: T[], i: number): T[] => [
-  ...arr.slice(0, i),
-  ...arr.slice(i + 1),
-]
-
 const complement = <T>(pred: (t: T) => boolean) => (t: T): boolean => !pred(t)
 
 export const removeWhere = <T>(arr: T[], pred: (t: T) => boolean): T[] => {

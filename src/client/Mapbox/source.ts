@@ -6,7 +6,7 @@ import {
   WaypointFeatureCollection,
   sourceIsGeoJSON,
 } from './types'
-import { Lane, Route, Routes, Waypoints } from '../../common/types'
+import { Lane, Route, Waypoint } from '../../common/types'
 import { numToLetter } from '../../common/util'
 
 export const laneFeatureCollection = (
@@ -17,7 +17,7 @@ export const laneFeatureCollection = (
 })
 
 export const waypointFeatureCollection = (
-  waypoints: Waypoints = []
+  waypoints: Waypoint[] = []
 ): WaypointFeatureCollection => {
   let i = 0
   return {
@@ -46,32 +46,27 @@ export const pointFeature = (point?: LngLat): PointFeature => ({
   properties: {},
 })
 
-export const generateRouteSources = (routes: Routes): [Source, Source] => {
-  let route: Lane[] = []
-  let startAndEnd: Lane[] = []
-  if (routes.length) {
-    /* eslint-disable-next-line @typescript-eslint/no-extra-semi */
-    ;({ route, startAndEnd } = routes.reduce(
-      (acc, route): Route => ({
-        route: acc.route.concat(route.route),
-        startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
-        length: acc.length + route.length,
-      }),
-      { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
-    ))
-  }
+export const generateRouteSources = (routes: Route[]): [Source, Source] => {
+  const { route = [], startAndEnd = [] } = routes.length
+    ? routes.reduce(
+        (acc, route) => ({
+          route: acc.route.concat(route.route),
+          startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
+          length: acc.length + route.length,
+        }),
+        { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
+      )
+    : {}
   return [
     { id: 'route', data: laneFeatureCollection(route) },
     { id: 'routeStartAndEnd', data: laneFeatureCollection(startAndEnd) },
   ]
 }
 
-const addSource = (map: Map, { id, data }: Source): void => {
-  map.addSource(id, { type: 'geojson', data })
-}
-
 export const addSources = (map: Map, sources: Source[]): void => {
-  sources.forEach((source) => addSource(map, source))
+  sources.forEach(({ id, data }) =>
+    map.addSource(id, { type: 'geojson', data })
+  )
 }
 
 export const setSourceData = (map: Map, { id, data }: Source): void => {

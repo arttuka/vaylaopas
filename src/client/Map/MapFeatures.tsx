@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import mapboxgl, { Map, MapboxGeoJSONFeature } from 'mapbox-gl'
+import mapboxgl, { Map } from 'mapbox-gl'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
 import { initializeMap, longTouchDuration } from '../Mapbox/map'
@@ -11,7 +11,7 @@ import {
   waypointFeatureCollection,
 } from '../Mapbox/source'
 import {
-  DragEventHandlers,
+  DragStartHandler,
   Event,
   MouseEvent,
   TouchEvent,
@@ -88,10 +88,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
 
   const handleTouchEnd = (): void => setTouchMarker(undefined)
 
-  const handleDragRoute = (
-    e: Event,
-    feature?: MapboxGeoJSONFeature
-  ): DragEventHandlers => {
+  const handleDragRoute: DragStartHandler = (e, feature) => {
     if (featureIsLane(feature)) {
       const onMove = (e: Event): void =>
         setSourceData(map, {
@@ -114,10 +111,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
     }
   }
 
-  const handleDragWaypoint = (
-    e: Event,
-    feature?: MapboxGeoJSONFeature
-  ): DragEventHandlers => {
+  const handleDragWaypoint: DragStartHandler = (e, feature) => {
     if (featureIsWaypoint(feature)) {
       const offset = calculateOffset(e.lngLat, feature.geometry.coordinates)
       const waypointId = feature.properties.id

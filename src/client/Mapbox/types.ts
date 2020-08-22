@@ -1,8 +1,6 @@
 import {
   Feature,
   FeatureCollection,
-  Geometry,
-  GeoJsonProperties,
   LineString,
   MultiPoint,
   Point,
@@ -23,19 +21,13 @@ export type Event = MouseEvent | TouchEvent
 
 export type MouseEventHandler = (e: MouseEvent) => void
 export type TouchEventHandler = (e: TouchEvent) => void
-export type EventHandler = (e: Event) => void
-export interface DragEventHandlers {
-  onMove: EventHandler
-  onMoveEnd: EventHandler
-}
 export type DragStartHandler = (
   e: Event,
-  feature?: MapboxGeoJSONFeature
-) => DragEventHandlers
-
-export type GeoJSONFeature =
-  | Feature<Geometry, GeoJsonProperties>
-  | FeatureCollection<Geometry, GeoJsonProperties>
+  feature: MapboxGeoJSONFeature
+) => {
+  onMove: (e: Event) => void
+  onMoveEnd: (e: Event) => void
+}
 
 export type LaneFeatureCollection = FeatureCollection<
   LineString,
@@ -80,13 +72,6 @@ export type Source =
   | WaypointSource
 
 export type SourceId = Source['id']
-
-export type LayerId =
-  | 'route'
-  | 'routeStartAndEnd'
-  | 'dragIndicator'
-  | 'location'
-  | 'waypoint'
 
 export const sourceIsGeoJSON = (
   source?: AnySourceImpl

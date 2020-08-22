@@ -1,5 +1,4 @@
-import { Feature, Point, LineString, FeatureCollection } from 'geojson'
-import { Dispatch, SetStateAction } from 'react'
+import { Feature, Point, LineString } from 'geojson'
 import { Store } from 'redux'
 import { Task } from 'redux-saga'
 import { VariantType } from 'notistack'
@@ -27,8 +26,6 @@ export const featureIsLane = (feature?: Feature): feature is Lane =>
   feature.properties !== null &&
   feature.properties.hasOwnProperty('route')
 
-export type LaneCollection = FeatureCollection<LineString, LaneProperties>
-
 export interface WaypointProperties {
   id: string
   letter?: string
@@ -43,8 +40,6 @@ export const featureIsWaypoint = (
   feature !== undefined &&
   feature.properties !== null &&
   feature.properties.hasOwnProperty('id')
-
-export type WaypointCollection = FeatureCollection<Point, WaypointProperties>
 
 export interface Route {
   route: Lane[]
@@ -88,10 +83,6 @@ export interface Config {
   server: ServerConfig
 }
 
-export type Waypoints = Waypoint[]
-
-export type Routes = Route[]
-
 export type Key = string | number
 
 export interface Notification {
@@ -101,17 +92,15 @@ export interface Notification {
 }
 
 export interface RootState {
-  routes: Routes
+  routes: Route[]
   settings: Settings
-  waypoints: Waypoints
+  waypoints: Waypoint[]
   notifications: Notification[]
 }
 
 export type SagaStore = Store<RootState> & {
   runSaga: Task
 }
-
-export type SetState<T> = Dispatch<SetStateAction<T>>
 
 export interface MenuState {
   open: boolean

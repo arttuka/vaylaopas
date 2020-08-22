@@ -16,7 +16,7 @@ import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
-import { Routes } from '../../common/types'
+import { Route } from '../../common/types'
 import {
   add,
   combineSegments,
@@ -128,12 +128,12 @@ interface Totals {
   totalLength: number
 }
 
-const calculateTotals = (routes: Routes): Totals =>
+const calculateTotals = (routes: Route[]): Totals =>
   routes.reduce<Totals>(
     (
       { totalDuration, totalFuel, totalLength },
       { duration, fuel, length }
-    ): Totals => ({
+    ) => ({
       totalDuration: add(duration, totalDuration),
       totalFuel: add(fuel, totalFuel),
       totalLength: totalLength + length,
