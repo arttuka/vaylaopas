@@ -23,8 +23,20 @@ export const addLayers = (map: Map): void => {
       'line-cap': 'round',
     },
     paint: {
-      'line-color': '#ff0000',
+      'line-color': '#ff3333',
       'line-width': 3,
+    },
+  })
+  addLayer(map, 'notFoundRoute', {
+    type: 'line',
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round',
+    },
+    paint: {
+      'line-color': '#ff0000',
+      'line-width': 4,
+      'line-dasharray': [0.5, 2],
     },
   })
   addLayer(map, 'routeStartAndEnd', {

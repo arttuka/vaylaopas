@@ -111,7 +111,8 @@ export const add = (n1?: number, n2?: number): number | undefined =>
 const mergeRoutes = (r1: Route, r2: Route): Route => ({
   route: [...r1.route, ...r2.route],
   startAndEnd: [r1.startAndEnd[0], r2.startAndEnd[1]],
-  length: r1.length + r2.length,
+  found: r1.found && r2.found,
+  length: add(r1.length, r2.length),
   type: r2.type,
   duration: add(r1.duration, r2.duration),
   fuel: add(r1.fuel, r2.fuel),
@@ -132,7 +133,8 @@ export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   const { speed, consumption } = settings
   return routes.map(
     (route): Route => {
-      const duration = speed && calculateDuration(route.length, speed)
+      const { length } = route
+      const duration = speed && length && calculateDuration(length, speed)
       const fuel = duration && consumption && (duration * consumption) / 60
       return {
         ...route,

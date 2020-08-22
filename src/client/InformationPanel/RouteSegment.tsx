@@ -8,6 +8,7 @@ import MuiListItemText from '@material-ui/core/ListItemText'
 import { withStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
+import WarningIcon from '@material-ui/icons/Warning'
 import { formatDuration, toNM, numToLetter, round } from '../../common/util'
 
 const Avatar = withStyles(({ palette }) => ({
@@ -54,19 +55,27 @@ const OffsetListItemText = withStyles({
   },
 })(MuiListItemText)
 
+const NotFoundIcon = withStyles({
+  root: {
+    verticalAlign: 'top',
+  },
+})(WarningIcon)
+
 interface SegmentProps {
   length?: number
   duration?: number
   fuel?: number
   index: number
+  found: boolean
   onDelete: () => void
   kind?: 'segment'
 }
 
 interface TotalsProps {
-  length: number
+  length?: number
   duration?: number
   fuel?: number
+  found?: boolean
   kind: 'totals'
 }
 
@@ -76,13 +85,21 @@ type RouteSegmentProps = (SegmentProps | TotalsProps) & {
 
 class RouteSegment extends PureComponent<RouteSegmentProps> {
   render(): ReactElement {
-    const { length, duration, fuel, onClick } = this.props
+    const { length, duration, fuel, found = true, onClick } = this.props
     const durationStr = duration ? formatDuration(duration) : ''
     const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
-    const listItemTextProps = {
-      primary: length ? `${toNM(length)} mpk` : '\u00a0',
-      secondary: durationStr + fuelStr || '\u00a0',
-    }
+    const listItemTextProps = found
+      ? {
+          primary: length ? `${toNM(length)} mpk` : '\u00a0',
+          secondary: durationStr + fuelStr || '\u00a0',
+        }
+      : {
+          primary: (
+            <>
+              <NotFoundIcon color="error" /> Ei reittiä
+            </>
+          ),
+        }
     if (this.props.kind === 'totals') {
       return (
         <ListItem divider={true} onClick={onClick}>

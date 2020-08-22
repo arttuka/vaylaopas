@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactNode } from 'react'
+import React, { FunctionComponent, ReactElement } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import List from '@material-ui/core/List'
 import { withStyles } from '@material-ui/core/styles'
@@ -11,7 +11,7 @@ import { waypointRemoveAction } from '../redux/actions'
 interface Totals {
   totalDuration?: number
   totalFuel?: number
-  totalLength: number
+  totalLength?: number
 }
 
 const calculateTotals = (routes: Route[]): Totals =>
@@ -22,7 +22,7 @@ const calculateTotals = (routes: Route[]): Totals =>
     ) => ({
       totalDuration: add(duration, totalDuration),
       totalFuel: add(fuel, totalFuel),
-      totalLength: totalLength + length,
+      totalLength: add(length, totalLength),
     }),
     { totalDuration: 0, totalFuel: 0, totalLength: 0 }
   )
@@ -69,10 +69,10 @@ const RouteList: FunctionComponent<RouteListProps> = ({
       />
       <ScrollingList disablePadding={true}>
         {destinations.map(
-          ({ id }, i): ReactNode => {
+          ({ id }, i): ReactElement => {
             const key = `route-segment-${i}`
             if (i > 0 && i <= combinedRoutes.length) {
-              const { length, duration, fuel } = combinedRoutes[i - 1]
+              const { length, duration, fuel, found } = combinedRoutes[i - 1]
               return (
                 <RouteSegment
                   key={key}
@@ -80,6 +80,7 @@ const RouteList: FunctionComponent<RouteListProps> = ({
                   duration={duration}
                   fuel={fuel}
                   index={i}
+                  found={found}
                   onDelete={(): void => onDelete(id)}
                 />
               )
@@ -88,6 +89,7 @@ const RouteList: FunctionComponent<RouteListProps> = ({
                 <RouteSegment
                   key={key}
                   index={i}
+                  found
                   onDelete={(): void => onDelete(id)}
                 />
               )

@@ -9,18 +9,14 @@ import {
   StrictEffect,
 } from 'redux-saga/effects'
 import { notificationEnqueueAction, routeUpdateAction } from './actions'
-import {
-  ActionType,
-  NotificationEnqueueProps,
-  SettingsSetAction,
-} from './action-types'
+import { ActionType, SettingsSetAction } from './action-types'
 import {
   settingsSelector,
   waypointsSelector,
   routesSelector,
 } from './selectors'
 import { getRoutes } from '../api'
-import { RouteNotFoundError } from '../../common/types'
+import { Route } from '../../common/types'
 import { enrichRoutes, storeSetting } from '../../common/util'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -31,20 +27,23 @@ function* getRouteSaga(): SagaGenerator {
   if (waypoints.length > 1) {
     const settings = yield select(settingsSelector)
     try {
-      const routes = yield call(getRoutes, waypoints, settings)
+      const routes: Route[] = yield call(getRoutes, waypoints, settings)
+      if (routes.some((route) => !route.found)) {
+        yield put(
+          notificationEnqueueAction({
+            message: 'No route found',
+            variant: 'warning',
+          })
+        )
+      }
       yield put(routeUpdateAction({ routes: enrichRoutes(routes, settings) }))
     } catch (err) {
-      const notification: NotificationEnqueueProps =
-        err instanceof RouteNotFoundError
-          ? {
-              message: 'No route found',
-              variant: 'warning',
-            }
-          : {
-              message: 'An error happened while looking for a route',
-              variant: 'error',
-            }
-      yield put(notificationEnqueueAction(notification))
+      yield put(
+        notificationEnqueueAction({
+          message: 'An error happened while looking for a route',
+          variant: 'error',
+        })
+      )
       yield put(routeUpdateAction({ routes: [] }))
     }
   } else {

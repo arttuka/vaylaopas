@@ -47,19 +47,36 @@ export const pointFeature = (point?: LngLat): PointFeature => ({
   properties: {},
 })
 
-export const generateRouteSources = (routes: Route[]): [Source, Source] => {
-  const { route = [], startAndEnd = [] } = routes.length
-    ? routes.reduce(
+const collectRoutes = (
+  routes: Route[]
+): { route: Lane[]; notFoundRoute: Lane[]; startAndEnd: Lane[] } => {
+  return routes.length
+    ? routes.reduce<{
+        route: Lane[]
+        notFoundRoute: Lane[]
+        startAndEnd: Lane[]
+      }>(
         (acc, route) => ({
-          route: acc.route.concat(route.route),
+          route: route.found ? acc.route.concat(route.route) : acc.route,
           startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
-          length: acc.length + route.length,
+          notFoundRoute: route.found
+            ? acc.notFoundRoute
+            : acc.notFoundRoute.concat(route.route),
         }),
-        { route: [], startAndEnd: [routes[0].startAndEnd[0]], length: 0 }
+        {
+          route: [],
+          notFoundRoute: [],
+          startAndEnd: [routes[0].startAndEnd[0]],
+        }
       )
-    : {}
+    : { route: [], notFoundRoute: [], startAndEnd: [] }
+}
+
+export const generateRouteSources = (routes: Route[]): Source[] => {
+  const { route, notFoundRoute, startAndEnd } = collectRoutes(routes)
   return [
     { id: 'route', data: laneFeatureCollection(route) },
+    { id: 'notFoundRoute', data: laneFeatureCollection(notFoundRoute) },
     { id: 'routeStartAndEnd', data: laneFeatureCollection(startAndEnd) },
   ]
 }

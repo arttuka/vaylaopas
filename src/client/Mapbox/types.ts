@@ -45,6 +45,11 @@ export interface RouteSource {
   data: LaneFeatureCollection
 }
 
+export interface NotFoundRouteSource {
+  id: 'notFoundRoute'
+  data: LaneFeatureCollection
+}
+
 export interface RouteStartAndEndSource {
   id: 'routeStartAndEnd'
   data: LaneFeatureCollection
@@ -62,6 +67,7 @@ export interface WaypointSource {
 
 export type Source =
   | RouteSource
+  | NotFoundRouteSource
   | RouteStartAndEndSource
   | DragIndicatorSource
   | WaypointSource

@@ -45,7 +45,8 @@ export const featureIsWaypoint = (
 export interface Route {
   route: Lane[]
   startAndEnd: Lane[]
-  length: number
+  found: boolean
+  length?: number
   duration?: number
   fuel?: number
   type?: WaypointType
@@ -116,5 +117,3 @@ export interface TouchMarkerState {
   top: number
   left: number
 }
-
-export class RouteNotFoundError extends Error {}

@@ -1,13 +1,7 @@
 import { Pool, PoolClient } from 'pg'
-import { LineString, Point } from 'geojson'
+import { LineString, Position } from 'geojson'
 import config from './config'
-import {
-  Lane,
-  Route,
-  RouteNotFoundError,
-  Waypoint,
-  WaypointType,
-} from '../common/types'
+import { Lane, Route, Waypoint, WaypointType } from '../common/types'
 import { partition, range } from '../common/util'
 
 const pool = new Pool(config.db)
@@ -21,11 +15,16 @@ const formatLane = (geometry: LineString, routeNumber: number): Lane => ({
   },
 })
 
+const makeLinestring = (p1: Position, p2: Position): LineString => ({
+  type: 'LineString',
+  coordinates: [p1, p2],
+})
+
 interface RouteEndpoint {
   lane: number
   vertex: number | null
   geometry: LineString
-  point: Point
+  point: string
   type: WaypointType
 }
 
@@ -78,7 +77,7 @@ const extraLaneQuery = (
   lId1: number,
   lId2: number,
   vId: number,
-  point: Point,
+  point: string,
   laneId: number
 ): string => `
   SELECT s.id, s.source, s.target, s.length, l.depth, l.height, s.geom
@@ -145,23 +144,32 @@ const getRouteBetweenVertices = async (
     from.vertex || vIdFrom,
     to.vertex || vIdTo,
   ])
-
-  if (result.rows.length === 0) {
-    throw new RouteNotFoundError()
-  }
-
-  const route = result.rows.map(
-    ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
-  )
-  const length = result.rows.reduce<number>(
-    (sum, { length }) => sum + length,
-    0
-  )
   const startAndEnd = [
     formatLane(from.geometry, routeNumber),
     formatLane(to.geometry, routeNumber),
   ]
-  return { route, length, startAndEnd, type: to.type }
+
+  if (result.rows.length === 0) {
+    const route = [
+      formatLane(
+        makeLinestring(
+          startAndEnd[0].geometry.coordinates[1],
+          startAndEnd[1].geometry.coordinates[1]
+        ),
+        routeNumber
+      ),
+    ]
+    return { route, startAndEnd, found: false, type: to.type }
+  } else {
+    const route = result.rows.map(
+      ({ geometry }): Lane => formatLane(JSON.parse(geometry), routeNumber)
+    )
+    const length = result.rows.reduce<number>(
+      (sum, { length }) => sum + length,
+      0
+    )
+    return { route, length, startAndEnd, found: true, type: to.type }
+  }
 }
 
 export const getRoute = async (
