@@ -12,6 +12,8 @@ const wrapAsync = (handler: RequestHandler): RequestHandler => (
   Promise.resolve(handler(req, res, next)).catch(next)
 }
 
+const index = indexHtml(config.client, `/js/${config.server.bundle}`)
+
 const app = express()
 app.use(express.json())
 app.use(
@@ -22,7 +24,7 @@ app.use(
 )
 
 app.get('/', (req, res): void => {
-  res.send(indexHtml(config.client, '/js/bundle.js'))
+  res.send(index)
 })
 
 interface RouteParams {

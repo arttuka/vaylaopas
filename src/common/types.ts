@@ -70,6 +70,7 @@ export interface ServerConfig {
   host: string
   port: number
   devserverPort?: number
+  bundle: string
 }
 
 export interface Config {

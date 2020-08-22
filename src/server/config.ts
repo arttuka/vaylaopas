@@ -4,9 +4,15 @@ import { Config } from '../common/types'
 
 let config: Config
 
+const manifest = path.resolve('./dist/server/manifest.json')
+const bundle =
+  process.env.NODE_ENV === 'production' && fs.existsSync(manifest)
+    ? JSON.parse(fs.readFileSync(manifest, 'utf8'))['bundle.js']
+    : 'bundle.js'
 const configFile = path.resolve('config.json')
 if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
   config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
+  config.server.bundle = bundle
 } else {
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
   config = {
@@ -23,6 +29,7 @@ if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
     server: {
       host: process.env.HOST!,
       port: parseInt(process.env.PORT!, 10),
+      bundle,
     },
   }
   /* eslint-enable */
