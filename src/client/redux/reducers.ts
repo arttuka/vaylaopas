@@ -29,6 +29,9 @@ const getAdjacentWaypointIds = (
   id: string
 ): string[] => {
   const idx = waypoints.findIndex(hasId(id))
+  if (waypoints[idx].type === 'waypoint') {
+    return [id]
+  }
   const result = [id]
   let i = idx + 1
   while (i < waypoints.length && waypoints[i].type === 'waypoint') {
