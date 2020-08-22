@@ -31,7 +31,7 @@ function* getRouteSaga(): SagaGenerator {
       if (routes.some((route) => !route.found)) {
         yield put(
           notificationEnqueueAction({
-            message: 'No route found',
+            message: 'Reittiä ei löytynyt',
             variant: 'warning',
           })
         )
@@ -40,7 +40,7 @@ function* getRouteSaga(): SagaGenerator {
     } catch (err) {
       yield put(
         notificationEnqueueAction({
-          message: 'An error happened while looking for a route',
+          message: 'Reitinhaussa tapahtui odottamaton virhe',
           variant: 'error',
         })
       )
