@@ -35,26 +35,25 @@ LANGUAGE SQL
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION split_linestring(id1 int, id2 int, vertex_id int, geom GEOMETRY(LINESTRING), source int, target int, length float, point GEOMETRY(POINT))
+CREATE SEQUENCE extra_lane_id_seq INCREMENT -1 MINVALUE -2147483648 MAXVALUE -1 START -1 CYCLE;
+
+CREATE OR REPLACE FUNCTION split_linestring(vertex_ids INT[], points GEOMETRY(POINT)[], geom GEOMETRY(LINESTRING), source INT, target INT, length FLOAT)
 RETURNS SETOF RECORD
 AS $$
   SELECT
-    case t.id
-      WHEN source THEN id1
-      WHEN target THEN id2
-    END AS id,
-    vertex_id AS source,
-    t.id AS target,
-    CASE t.id
-      WHEN source THEN length * distance
-      WHEN target THEN length * (1 - distance)
-    END AS length,
-    CASE t.id
-      WHEN source THEN ST_Reverse(ST_LineSubstring(geom, 0, distance))
-      WHEN target THEN ST_LineSubstring(geom, distance, 1)
-    END AS geom
-  FROM (VALUES (source), (target)) t(id),
-  (SELECT ST_LineLocatePoint(geom, point) AS distance) p(distance)
+    nextval('extra_lane_id_seq')::INTEGER AS id,
+    LAG(vertex_id, 1, source) OVER (ORDER BY distance ASC) AS source,
+    vertex_id AS target,
+    length * (distance - LAG(distance, 1, 0.0::double precision) OVER (ORDER BY distance ASC)) AS length,
+    ST_LineSubstring(geom, LAG(distance, 1, 0.0::double precision) OVER (ORDER BY distance ASC), distance) AS geom
+  FROM
+    (
+      SELECT v.vertex_id, ST_LineLocatePoint(geom, v.point) AS distance
+      FROM UNNEST(vertex_ids, points) v(vertex_id, point)
+      UNION
+      (VALUES (target, 1.0))
+    ) v(vertex_id, distance)
+  ORDER BY distance ASC
 $$
 LANGUAGE SQL
 IMMUTABLE;

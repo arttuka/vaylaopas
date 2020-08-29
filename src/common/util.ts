@@ -2,15 +2,7 @@ import { useEffect, useRef } from 'react'
 import geojson from 'geojson'
 import { Index, LngLat, Route, RouteProps, Settings } from './types'
 
-export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
-  const result = []
-  let i = 0
-  while (i + n <= arr.length) {
-    result.push(arr.slice(i, i + n))
-    i += step
-  }
-  return result
-}
+type Pred<T> = (t: T) => boolean
 
 export const takeUntil = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
   const result = []
@@ -36,19 +28,13 @@ export const toNM = (meters: number): number => round(meters / 1852, 1)
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
-export const numToLetter = (n: number): string => {
-  if (n < 26) {
-    return letters[n]
-  } else {
-    return numToLetter(Math.floor(n / 26) - 1) + letters[n % 26]
-  }
-}
+export const numToLetter = (n: number): string =>
+  n < 26 ? letters[n] : numToLetter(Math.floor(n / 26) - 1) + letters[n % 26]
 
-const complement = <T>(pred: (t: T) => boolean) => (t: T): boolean => !pred(t)
+const complement = <T>(pred: Pred<T>) => (t: T): boolean => !pred(t)
 
-export const removeWhere = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
-  return arr.filter(complement(pred))
-}
+export const removeWhere = <T>(arr: T[], pred: Pred<T>): T[] =>
+  arr.filter(complement(pred))
 
 export const updateIndex = <T>(arr: T[], i: number, t: Partial<T>): T[] => [
   ...arr.slice(0, i),
@@ -56,11 +42,7 @@ export const updateIndex = <T>(arr: T[], i: number, t: Partial<T>): T[] => [
   ...arr.slice(i + 1),
 ]
 
-export const updateWhere = <T>(
-  arr: T[],
-  pred: (t: T) => boolean,
-  t: Partial<T>
-): T[] => {
+export const updateWhere = <T>(arr: T[], pred: Pred<T>, t: Partial<T>): T[] => {
   const index = arr.findIndex(pred)
   if (index >= 0) {
     return updateIndex(arr, index, t)
@@ -84,13 +66,11 @@ export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
 ]
 
 export const addMany = <T>(set: Set<T>, ...ts: T[]): Set<T> => {
-  ts.forEach((t): void => {
+  for (const t of ts) {
     set.add(t)
-  })
+  }
   return set
 }
-
-export const identity = <T>(t: T): T => t
 
 export function mapBy<T, S>(
   arr: T[],
@@ -104,15 +84,18 @@ export function mapBy<T, S>(
   valfn?: (t: T) => S
 ): Index<T> | Index<S> {
   if (valfn === undefined) {
-    return mapBy(arr, keyfn, identity)
+    return mapBy(arr, keyfn, (t) => t)
   } else {
     const ret: Index<S> = {}
-    arr.forEach((t): void => {
+    for (const t of arr) {
       ret[keyfn(t)] = valfn(t)
-    })
+    }
     return ret
   }
 }
+
+export const pick = <T, K extends keyof T>(arr: T[], key: K): Array<T[K]> =>
+  arr.map((t) => t[key])
 
 export const calculateDuration = (meters: number, knots: number): number =>
   Math.floor((toNM(meters) / knots) * 60)
@@ -148,18 +131,16 @@ export const combineSegments = (routes: Route[]): RouteProps[] => {
 
 export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   const { speed, consumption } = settings
-  return routes.map(
-    (route): Route => {
-      const { length } = route
-      const duration = speed && length && calculateDuration(length, speed)
-      const fuel = duration && consumption && (duration * consumption) / 60
-      return {
-        ...route,
-        duration,
-        fuel,
-      }
+  return routes.map((route) => {
+    const { length } = route
+    const duration = speed && length && calculateDuration(length, speed)
+    const fuel = duration && consumption && (duration * consumption) / 60
+    return {
+      ...route,
+      duration,
+      fuel,
     }
-  )
+  })
 }
 
 export const getStoredSetting = (key: keyof Settings): number | undefined => {

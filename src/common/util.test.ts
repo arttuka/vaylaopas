@@ -1,5 +1,4 @@
 import {
-  partition,
   takeUntil,
   range,
   numToLetter,
@@ -10,6 +9,7 @@ import {
   hasId,
   addMany,
   mapBy,
+  pick,
   calculateDuration,
   formatDuration,
   throttle,
@@ -21,29 +21,6 @@ const timeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
-
-test('partition', (): void => {
-  const arr = [0, 1, 2, 3, 4, 5, 6, 7]
-  expect(partition(arr, 2)).toEqual([
-    [0, 1],
-    [2, 3],
-    [4, 5],
-    [6, 7],
-  ])
-  expect(partition(arr, 3)).toEqual([
-    [0, 1, 2],
-    [3, 4, 5],
-  ])
-  expect(partition(arr, 2, 1)).toEqual([
-    [0, 1],
-    [1, 2],
-    [2, 3],
-    [3, 4],
-    [4, 5],
-    [5, 6],
-    [6, 7],
-  ])
-})
 
 test('takeUntil', (): void => {
   const pred = (i: number): boolean => i === 4
@@ -126,6 +103,14 @@ test('mapBy', (): void => {
     1: '2',
     2: '3',
   })
+})
+
+test('pick', (): void => {
+  const arr: TestObj[] = [
+    { id: '0', n: 0 },
+    { id: '1', n: 1 },
+  ]
+  expect(pick(arr, 'n')).toEqual([0, 1])
 })
 
 test('calculateDuration', (): void => {
