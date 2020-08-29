@@ -1,6 +1,7 @@
 import {
   partition,
   takeUntil,
+  range,
   numToLetter,
   removeWhere,
   updateIndex,
@@ -15,7 +16,6 @@ import {
   calculateOffset,
   applyOffset,
 } from './util'
-import { Index } from './types'
 
 const timeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -50,6 +50,11 @@ test('takeUntil', (): void => {
   expect(takeUntil([0, 1, 2, 3, 4, 5, 6, 7], pred)).toEqual([0, 1, 2, 3, 4])
   expect(takeUntil([5, 6, 7, 8, 9], pred)).toEqual([5, 6, 7, 8, 9])
   expect(takeUntil([], pred)).toEqual([])
+})
+
+test('range', (): void => {
+  expect(range(0)).toEqual([])
+  expect(range(5)).toEqual([0, 1, 2, 3, 4])
 })
 
 test('numToLetter', (): void => {
@@ -110,17 +115,17 @@ test('addMany', (): void => {
 
 test('mapBy', (): void => {
   const arr = ['1', '2', '3']
-  const expected: Index<string> = {
+  const keyfn = (s: string) => parseInt(s, 10) - 1
+  expect(mapBy(arr, keyfn, (s) => `x${s}`)).toEqual({
     0: 'x1',
     1: 'x2',
     2: 'x3',
-  }
-  const result = mapBy(
-    arr,
-    (s): number => parseInt(s, 10) - 1,
-    (s): string => `x${s}`
-  )
-  expect(result).toEqual(expected)
+  })
+  expect(mapBy(arr, keyfn)).toEqual({
+    0: '1',
+    1: '2',
+    2: '3',
+  })
 })
 
 test('calculateDuration', (): void => {

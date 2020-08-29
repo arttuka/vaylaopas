@@ -1,15 +1,13 @@
 import { Client, QueryResult } from 'pg'
 import config from '../server/config'
 import { Index } from '../common/types'
-import { addMany, mapBy } from '../common/util'
+import { addMany, mapBy, range } from '../common/util'
 import manualLanes from './manualLanes.json'
 import obstructions from './obstructions.json'
 
 const client = new Client(config.db)
 const tableFrom = 'lane_tmp'
 const tableTmp = 'lane_single'
-const intersectionsTmp = 'intersections_tmp'
-const nearbyFn = 'find_nearby_intersections'
 const verticesTmp = `${tableTmp}_vertices_pgr`
 const tableTo = 'lane'
 const verticesTo = `${tableTo}_vertices_pgr`
@@ -26,6 +24,20 @@ interface SavedIntersection extends Intersection {
 }
 
 const isSaved = (i: Intersection): i is SavedIntersection => i.id !== undefined
+
+const toIntersection = ({
+  id,
+  laneids,
+  point,
+}: {
+  id?: number | null
+  laneids?: number[]
+  point: string
+}): Intersection => ({
+  id: id != null ? id : undefined,
+  laneIds: new Set(laneids || []),
+  point,
+})
 
 type IntersectionIndex = Index<SavedIntersection>
 
@@ -86,11 +98,7 @@ const createTables = async (): Promise<void> => {
     await createTable(tableTo)
     await client.query(`
       CREATE TABLE ${verticesTo} (
-        id serial8 PRIMARY KEY,
-        cnt int,
-        chk int,
-        ein int,
-        eout int
+        id serial PRIMARY KEY
       )
     `)
     await client.query(`
@@ -137,147 +145,65 @@ const getEndpoints = async (): Promise<IntersectionIndex> => {
     FROM ${verticesTmp} v
   `)
   return mapBy(
-    result.rows,
-    ({ id }): number => id,
-    ({ id, point }): SavedIntersection => ({
-      id,
-      point,
-      laneIds: new Set(),
-    })
+    result.rows.map(toIntersection).filter(isSaved),
+    ({ id }): number => id
   )
 }
 
-const findGaps = async (vertexId: number): Promise<number[]> => {
+const findGaps = async (): Promise<Intersection[]> => {
   try {
     const result = await client.query(
       `
-      SELECT l.id
-      FROM ${tableTmp} l, ${verticesTmp} v
-      WHERE v.id = $1
-      AND l.source != $1
-      AND l.target != $1
-      AND ST_DWithin(l.geom, v.the_geom, ${tolerance})`,
-      [vertexId]
+      WITH gaps AS (
+        SELECT CASE WHEN ST_Contains(l.geom, v.the_geom) THEN v.id ELSE null END id,
+                l.id l_id,
+                ST_ClosestPoint(l.geom, v.the_geom) point
+        FROM ${tableTmp} l
+        JOIN ${verticesTmp} v
+        ON l.source <> v.id
+        AND l.target <> v.id
+        AND ST_DWithin(l.geom, v.the_geom, ${tolerance})
+      )
+      SELECT id, array_agg(l_id) laneids, point
+      FROM gaps
+      GROUP BY id, point
+      ORDER BY id, point`
     )
-    return result.rows.map(({ id }): number => id)
+    return result.rows.map(toIntersection)
   } catch (err) {
-    console.error(`Error finding gaps near vertex ${vertexId}`)
+    console.error(`Error finding gaps`)
     throw err
   }
 }
 
-const findIntersections = async (
-  index: IntersectionIndex
-): Promise<Intersection[]> => {
-  try {
-    console.log('Finding intersections')
-    await client.query(
-      `
-      CREATE TEMPORARY TABLE ${intersectionsTmp} AS (
-        WITH intersections AS (
-          SELECT a.id AS a_id, a.source AS a_source, a.target AS a_target,
-            b.id AS b_id, b.source AS b_source, b.target AS b_target,
-            (ST_Dump(Endpoints(ST_Intersection(a.geom, b.geom)))).geom AS point
-          FROM ${tableTmp} a
-          JOIN ${tableTmp} b
-          ON a.id <> b.id
-          AND ST_Intersects(a.geom, b.geom)
-        ),
-        good_intersections AS (
-          SELECT ARRAY_AGG(DISTINCT a_id) AS laneids, point, v.id
-          FROM intersections i
-          JOIN ${verticesTmp} sa ON a_source = sa.id
-          JOIN ${verticesTmp} ta ON a_target = ta.id
-          JOIN ${verticesTmp} sb ON b_source = sb.id
-          JOIN ${verticesTmp} tb ON b_target = tb.id
-          LEFT JOIN ${verticesTo} v ON (
-            ST_DWithin(point, v.the_geom, ${tolerance})
-            AND v.id NOT IN (a_source, a_target, b_source, b_target)
-          )
-          WHERE NOT ST_DWithin(point, sa.the_geom, ${tolerance})
-          AND NOT ST_DWithin(point, ta.the_geom, ${tolerance})
-          AND NOT ST_DWithin(point, sb.the_geom, ${tolerance})
-          AND NOT ST_DWithin(point, tb.the_geom, ${tolerance})
-          GROUP BY point, v.id
-          ORDER BY point ASC
-        )
-        SELECT row_number() OVER (ORDER BY point, laneids) tmpid, laneids, point, id
-        FROM good_intersections
-        ORDER BY point, laneids
-      )
-      `
-    )
-    await client.query(
-      `
-      CREATE INDEX ${intersectionsTmp}_point_idx ON ${intersectionsTmp} USING GIST(point)`
-    )
-    await client.query(
-      `
-      CREATE OR REPLACE FUNCTION ${nearbyFn}(bigint)
-      RETURNS TABLE(tmpids bigint[], laneids integer[], point geometry, id bigint) AS
-      $$
-      WITH RECURSIVE intersections_r AS (
-        SELECT ARRAY[tmpid] idlist, point, tmpid, laneids, id
-        FROM ${intersectionsTmp}
-        WHERE tmpid = $1
-        UNION ALL
-        SELECT array_append(r.idlist, tmp.tmpid) idlist,
-               r.point,
-               tmp.tmpid,
-               tmp.laneids,
-               COALESCE(r.id, tmp.id) id
-        FROM ${intersectionsTmp} tmp, intersections_r r
-        WHERE ST_DWithin(tmp.point, r.point, ${tolerance})
-        AND NOT r.idlist @> ARRAY[tmp.tmpid]
-      )
-      SELECT array_agg(distinct tmpid) tmpids, array_agg(distinct laneid) laneids, point, id
-      FROM intersections_r, unnest(laneids) as laneid
-      GROUP BY point, id
-      $$
-      LANGUAGE 'sql'
-      `
-    )
-    console.log('Grouping intersections')
-    const result = await client.query(
-      `
-      WITH RECURSIVE groups AS (
-        (SELECT n.tmpids idlist, n.tmpids grouplist, tmpid, n.laneids, n.point, n.id
-          FROM ${intersectionsTmp}, ${nearbyFn}(tmpid) n
-          WHERE tmpid = 1)
-         UNION ALL
-         (SELECT array_cat(g.idlist, n.tmpids) idlist,
-                 n.tmpids grouplist,
-                 tmp.tmpid,
-                 n.laneids,
-                 n.point,
-                 n.id
-          FROM ${intersectionsTmp} tmp, groups g, ${nearbyFn}(tmp.tmpid) n
-          WHERE NOT idlist @> ARRAY[tmp.tmpid]
-          LIMIT 1)
-      )
-      SELECT laneids, point, id
-      FROM groups
-      ORDER BY tmpid
-      `
-    )
-    await client.query(`DROP FUNCTION ${nearbyFn}`)
-    return result.rows.map(
-      ({ laneids, point, id }): Intersection => {
-        if (id) {
-          const intersection = index[id]
-          addMany(intersection.laneIds, ...laneids)
-          return intersection
-        }
-        return {
-          point,
-          laneIds: new Set(laneids),
-        }
-      }
-    )
-  } catch (err) {
-    console.log(`Error intersecting`)
-    throw err
-  }
+const findIntersections = async (): Promise<Intersection[]> => {
+  const result = await client.query(`
+    SELECT array_agg(distinct l.id) laneids, point.geom AS point
+    FROM ${tableTmp} a
+    JOIN ${tableTmp} b ON a.id < b.id AND ST_Intersects(a.geom, b.geom),
+    LATERAL ST_Dump(Endpoints(ST_Intersection(a.geom, b.geom))) point,
+    LATERAL (VALUES (a.id), (b.id)) l(id)
+    WHERE NOT EXISTS (SELECT 1 FROM ${verticesTo} WHERE ST_DWithin(the_geom, point.geom, ${tolerance}))
+    GROUP BY point.geom
+    ORDER BY point.geom
+  `)
+  return result.rows.map(toIntersection)
+}
+
+const groupIntersections = async (): Promise<void> => {
+  await client.query(`
+    INSERT INTO ${tableTo} (jnro, name, length, source, target, geom)
+    SELECT
+      -2 AS jnro,
+      'connect_' || v1.id || '_' || v2.id AS name,
+      ST_Distance(v1.the_geom, v2.the_geom) AS length,
+      v1.id AS source,
+      v2.id AS target,
+      ST_MakeLine(v1.the_geom, v2.the_geom) AS geom
+    FROM ${verticesTo} v1
+    JOIN ${verticesTo} v2 ON v1.id < v2.id AND ST_DWithin(v1.the_geom, v2.the_geom, ${tolerance})
+    ORDER BY v1.id, v2.id
+  `)
 }
 
 const saveIntersection = async (
@@ -288,8 +214,7 @@ const saveIntersection = async (
       `INSERT INTO ${verticesTo} (the_geom) VALUES ($1) RETURNING id`,
       [i.point]
     )
-    i.id = result.rows[0].id
-    return i as SavedIntersection
+    return { ...i, id: result.rows[0].id }
   } catch (err) {
     console.error(
       `Error saving intersection ${i.id} between ${i.laneIds} with geom ${i.point}`
@@ -299,36 +224,45 @@ const saveIntersection = async (
 }
 
 const saveLane = async (l: Lane): Promise<void> => {
-  const placeholders = ['l.source', 'l.target']
-  for (let i = 0; i < l.intersections.size; i += 1) {
-    placeholders.push(`$${i + 2}`)
-  }
+  const placeholders = [
+    'l.target',
+    ...range(l.intersections.size).map((i) => `$${i + 2}`),
+  ]
   const query = `
-    WITH distances AS (
-      SELECT id, ROW_NUMBER() OVER (ORDER BY distance ASC) AS num, distance
+    INSERT INTO ${tableTo} (segment, source, target, length, geom, jnro, jnropart, name, depth, height)
+    SELECT
+      ROW_NUMBER() OVER (ORDER BY distance ASC) AS segment,
+      LAG(d.id, 1, l.source) OVER (ORDER BY distance ASC) AS source,
+      d.id AS target,
+      ST_Length(ST_LineSubstring(l.geom, LAG(d.distance, 1, 0.0::double precision) OVER (ORDER BY distance ASC), distance)) AS length,
+      ST_LineSubstring(l.geom, LAG(d.distance, 1, 0.0::double precision) OVER (ORDER BY distance ASC), distance) AS geom,
+      l.jnro, l.jnropart, l.name, l.depth, l.height
+    FROM ${tableTmp} l,
+    LATERAL (
+      SELECT split.id,
+      split.id <> LAG(split.id, 1, l.source) OVER (ORDER BY distance asc)
+        OR ST_Length(l.geom) * (distance - LAG(distance, 1, 0.0::double precision) OVER (ORDER BY distance asc)) > ${tolerance} AS include,
+      distance
       FROM (
         SELECT v.id, ST_LineLocatePoint(l.geom, v.the_geom) AS distance
-        FROM ${tableTmp} l, ${verticesTo} v
-        WHERE l.id = $1 AND v.id IN (${placeholders.join(',')})
+        FROM ${verticesTo} v
+        WHERE v.id IN (${placeholders.join(',')})
         UNION
-        SELECT l.target AS id, 1.0 AS distance
-        FROM ${tableTmp} l
-        WHERE l.id = $1
-      ) AS d
-      ORDER BY distance ASC
-    )
-    INSERT INTO ${tableTo} (segment, source, target, length, geom, jnro, jnropart, name, depth, height)
-    SELECT 
-      "from".num AS segment, "from".id AS source, "to".id AS target, ST_Length(ST_LineSubstring(l.geom, "from".distance, "to".distance)) AS length, ST_LineSubstring(l.geom, "from".distance, "to".distance) AS geom,
-      l.jnro, l.jnropart, l.name, l.depth, l.height
-    FROM distances AS "from"
-    JOIN distances AS "to" ON "from".num + 1 = "to".num
-    JOIN ${tableTmp} l ON l.id = $1
-`
+        (VALUES (l.target, 1.0))
+        UNION
+        SELECT l.source AS id, 1.0 - ST_LineLocatePoint(ST_Reverse(l.geom), v.the_geom) AS distance
+        FROM ${verticesTo} v
+        WHERE v.id = l.source
+      ) AS split
+    ) AS d
+    WHERE l.id = $1 AND include
+    ORDER BY distance ASC
+  `
   try {
     await client.query(query, [l.id, ...Array.from(l.intersections)])
   } catch (err) {
     console.error(`Error saving lane ${l.id}`)
+    console.error(query)
     throw err
   }
 }
@@ -390,15 +324,14 @@ const saveManualLanes = async (): Promise<void> => {
 const saveObstructions = async (): Promise<void> => {
   for (const o of obstructions) {
     const { height, points } = o
-    const line = `ST_MakeLine(Array[${points.map(point).join(',')}])`
     const query = `
       UPDATE ${tableTo}
       SET height = $1
-      WHERE ST_Intersects(geom, ${line})`
+      WHERE ST_Intersects(geom, ST_MakeLine(${points.map(point).join(',')}))`
     try {
       const result = await client.query(query, [height])
       if (result.rowCount === 0) {
-        console.error(`Error inserting obstruction ${JSON.stringify(o)}`)
+        console.error(`No lane found at obstruction ${JSON.stringify(o)}`)
       }
     } catch (err) {
       console.error(`Error saving obstruction ${JSON.stringify(o)}`)
@@ -408,45 +341,47 @@ const saveObstructions = async (): Promise<void> => {
 }
 
 const splitLanesAtObstructions = async (): Promise<Intersection[]> => {
-  const result: Intersection[] = []
-  for (const { points } of obstructions) {
-    const query = `
-      WITH obstruction AS (
-        SELECT ST_MakeLine(Array[${points.map(point).join(',')}]) AS geom
-      ),
-      intersections AS (
-        SELECT
-          lane.id,
-          lane.geom,
-          ${tolerance} / ST_Length(lane.geom) AS distance_diff,
-          ST_LineLocatePoint(lane.geom, ST_Intersection(lane.geom, obstruction.geom)) AS distance
-        FROM ${tableTmp} AS lane, obstruction
-        WHERE ST_Intersects(lane.geom, obstruction.geom)
-      )
-      SELECT
-        id,
-        ST_LineInterpolatePoint(geom, distance - distance_diff) AS p1,
-        ST_LineInterpolatePoint(geom, distance + distance_diff) AS p2
-      FROM intersections`
-    try {
-      for (const { id, p1, p2 } of (await client.query(query)).rows) {
-        result.push({
-          point: p1,
-          laneIds: new Set([id]),
-        })
-        result.push({
-          point: p2,
-          laneIds: new Set([id]),
-        })
-      }
-    } catch (err) {
-      console.error(
-        `Error splitting lanes at obstruction ${JSON.stringify(points)}`
-      )
-      throw err
-    }
-  }
-  return result
+  return (
+    await Promise.all(
+      obstructions.map(async ({ points }) => {
+        const query = `
+          WITH intersections AS (
+            SELECT
+              lane.id,
+              lane.geom,
+              ${tolerance} / ST_Length(lane.geom) AS distance_diff,
+              ST_Intersection(lane.geom, obstruction.geom) AS point,
+              ST_LineLocatePoint(lane.geom, ST_Intersection(lane.geom, obstruction.geom)) AS distance
+            FROM ${tableTmp} AS lane,
+            (VALUES (ST_MakeLine(${points
+              .map(point)
+              .join(',')}))) AS obstruction(geom)
+            WHERE ST_Intersects(lane.geom, obstruction.geom)
+          )
+          SELECT ARRAY[id] AS laneids, ST_LineInterpolatePoint(geom, distance - diff) AS point
+          FROM intersections,
+          LATERAL UNNEST(ARRAY[distance_diff, -distance_diff]) AS diff`
+        try {
+          return (await client.query(query)).rows.map(toIntersection)
+        } catch (err) {
+          console.error(
+            `Error splitting lanes at obstruction ${JSON.stringify(points)}`
+          )
+          throw err
+        }
+      })
+    )
+  ).flat()
+}
+
+const removeUnnecessaryVertices = async (): Promise<void> => {
+  await client.query(`
+    DELETE FROM ${verticesTo} v
+    WHERE NOT EXISTS (
+      SELECT 1 FROM ${tableTo}
+      WHERE source = v.id OR target = v.id
+    )
+  `)
 }
 
 const convert = async (): Promise<void> => {
@@ -457,63 +392,56 @@ const convert = async (): Promise<void> => {
     const intersections: IntersectionIndex = await getEndpoints()
     const lanes: LaneIndex = await getLanes()
 
-    let count = 0
-    const progress = (): void => {
-      count -= 1
-      if (count % 100 === 0) {
-        console.log(count)
+    const saveIntersections = async (is: Intersection[]): Promise<void> => {
+      for (const intersection of is) {
+        try {
+          let intersectionId: number
+          if (isSaved(intersection)) {
+            addMany(
+              intersections[intersection.id].laneIds,
+              ...intersection.laneIds
+            )
+            intersectionId = intersection.id
+          } else {
+            const saved = await saveIntersection(intersection)
+            intersections[saved.id] = saved
+            intersectionId = saved.id
+          }
+          intersection.laneIds.forEach((id): void => {
+            lanes[id].intersections.add(intersectionId)
+          })
+        } catch (err) {
+          console.error(
+            `Error saving intersection ${JSON.stringify(intersection)}`
+          )
+          throw err
+        }
       }
     }
 
-    count = Object.values(intersections).length
-    console.log(`Processing ${count} vertices`)
-    for (const { id, laneIds } of Object.values(intersections)) {
-      progress()
-      ;(await findGaps(id)).forEach((laneId): void => {
-        lanes[laneId].intersections.add(id)
-        laneIds.add(laneId)
-      })
-    }
+    const gaps = await findGaps()
+    console.log(`Processing ${Object.values(gaps).length} gaps`)
+    await saveIntersections(gaps)
 
-    count = obstructions.length
-    console.log(`Processing ${count} obstructions`)
-    for (const intersection of await splitLanesAtObstructions()) {
-      progress()
-      const saved = await saveIntersection(intersection)
-      intersections[saved.id] = saved
-      intersection.laneIds.forEach((id): void => {
-        lanes[id].intersections.add(saved.id)
-      })
-    }
+    const splits = await splitLanesAtObstructions()
+    console.log(`Processing ${splits.length} splits at obstructions`)
+    await saveIntersections(splits)
 
-    const allIntersections = await findIntersections(intersections)
-    count = allIntersections.length
-    console.log(`Processing ${count} intersections`)
-    for (const intersection of allIntersections) {
-      progress()
-      let intersectionId: number
-      if (isSaved(intersection)) {
-        intersectionId = intersection.id
-      } else {
-        const saved = await saveIntersection(intersection)
-        intersections[saved.id] = saved
-        intersectionId = saved.id
-      }
-      intersection.laneIds.forEach((id): void => {
-        lanes[id].intersections.add(intersectionId)
-      })
-    }
+    const newIntersections = await findIntersections()
+    console.log(`Processing ${newIntersections.length} intersections`)
+    await saveIntersections(newIntersections)
 
-    count = Object.values(lanes).length
-    console.log(`Saving ${count} lanes`)
+    console.log(`Saving ${Object.values(lanes).length} lanes`)
     for (const lane of Object.values(lanes).sort(
       (l1, l2): number => l1.id - l2.id
     )) {
-      progress()
       await saveLane(lane)
     }
     await saveManualLanes()
     await saveObstructions()
+    console.log('Grouping intersections')
+    await groupIntersections()
+    await removeUnnecessaryVertices()
     await dropTable(tableTmp)
     await dropTable(verticesTmp)
     console.log('All done!')

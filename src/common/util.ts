@@ -25,6 +25,8 @@ export const takeUntil = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
   return result
 }
 
+export const range = (count: number): number[] => [...Array(count).keys()]
+
 export const round = (n: number, decimals = 0): number => {
   const m = Math.pow(10, decimals)
   return Math.round(n * m) / m
@@ -88,16 +90,28 @@ export const addMany = <T>(set: Set<T>, ...ts: T[]): Set<T> => {
   return set
 }
 
-export const mapBy = <T, S>(
+export const identity = <T>(t: T): T => t
+
+export function mapBy<T, S>(
   arr: T[],
   keyfn: (t: T) => number,
   valfn: (t: T) => S
-): Index<S> => {
-  const ret: Index<S> = {}
-  arr.forEach((t): void => {
-    ret[keyfn(t)] = valfn(t)
-  })
-  return ret
+): Index<S>
+export function mapBy<T>(arr: T[], keyfn: (t: T) => number): Index<T>
+export function mapBy<T, S>(
+  arr: T[],
+  keyfn: (t: T) => number,
+  valfn?: (t: T) => S
+): Index<T> | Index<S> {
+  if (valfn === undefined) {
+    return mapBy(arr, keyfn, identity)
+  } else {
+    const ret: Index<S> = {}
+    arr.forEach((t): void => {
+      ret[keyfn(t)] = valfn(t)
+    })
+    return ret
+  }
 }
 
 export const calculateDuration = (meters: number, knots: number): number =>
