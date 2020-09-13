@@ -7,6 +7,7 @@ const common = require('./webpack.common.js')
 
 const config = merge(common, {
   mode: 'production',
+  devtool: 'source-map',
   output: {
     path: path.join(__dirname, 'dist/js'),
     filename: '[name].[contenthash:8].js',
@@ -26,11 +27,12 @@ const config = merge(common, {
     ],
   },
   optimization: {
+    minimize: true,
     minimizer: [
       new TerserWebpackPlugin({
-        test: /\.m?js$/i,
+        sourceMap: true,
         terserOptions: {
-          ecma: 6,
+          ecma: 2015,
         },
       }),
     ],
