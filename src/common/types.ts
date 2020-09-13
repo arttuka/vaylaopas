@@ -3,6 +3,12 @@ import { Store } from 'redux'
 import { Task } from 'redux-saga'
 import { VariantType } from 'notistack'
 
+export type Pred<T> = (t: T) => boolean
+
+export interface Id {
+  id: string
+}
+
 export interface LngLat {
   lng: number
   lat: number
@@ -10,8 +16,7 @@ export interface LngLat {
 
 export type WaypointType = 'destination' | 'waypoint'
 
-export interface Waypoint extends LngLat {
-  id: string
+export interface Waypoint extends LngLat, Id {
   type: WaypointType
 }
 
@@ -26,8 +31,7 @@ export const featureIsLane = (feature?: Feature): feature is Lane =>
   feature.properties !== null &&
   feature.properties.hasOwnProperty('route')
 
-export interface WaypointProperties {
-  id: string
+export interface WaypointProperties extends Id {
   letter?: string
   type: WaypointType
   dragged: boolean

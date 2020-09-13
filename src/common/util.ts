@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import geojson from 'geojson'
-import { Index, LngLat, Route, RouteProps, Settings } from './types'
-
-type Pred<T> = (t: T) => boolean
+import { Id, Index, LngLat, Pred, Route, RouteProps, Settings } from './types'
 
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   const result = []
@@ -14,7 +12,7 @@ export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   return result
 }
 
-export const takeUntil = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
+export const takeUntil = <T>(arr: T[], pred: Pred<T>): T[] => {
   const result = []
   let i = 0
   while (i < arr.length) {
@@ -35,14 +33,14 @@ export const round = (n: number, decimals = 0): number => {
   return Math.round(n * m) / m
 }
 
-export const toNM = (meters: number): number => round(meters / 1852, 1)
+export const toNM = (meters: number): number => meters / 1852
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 export const numToLetter = (n: number): string =>
   n < 26 ? letters[n] : numToLetter(Math.floor(n / 26) - 1) + letters[n % 26]
 
-const complement = <T>(pred: Pred<T>) => (t: T): boolean => !pred(t)
+const complement = <T>(pred: Pred<T>): Pred<T> => (t: T) => !pred(t)
 
 export const removeWhere = <T>(arr: T[], pred: Pred<T>): T[] =>
   arr.filter(complement(pred))
@@ -62,13 +60,11 @@ export const updateWhere = <T>(arr: T[], pred: Pred<T>, t: Partial<T>): T[] => {
   }
 }
 
-export const hasId = <T extends { id: string }>(id: string) => (
-  t: T
-): boolean => id === t.id
+export const hasId = <T extends Id>(id: string): Pred<T> => (t: T) =>
+  id === t.id
 
-export const hasAnyId = <T extends { id: string }>(ids: string[]) => (
-  t: T
-): boolean => ids.includes(t.id)
+export const hasAnyId = <T extends Id>(ids: string[]): Pred<T> => (t: T) =>
+  ids.includes(t.id)
 
 export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
   ...arr.slice(0, i),
@@ -109,7 +105,7 @@ export const pick = <T, K extends keyof T>(arr: T[], key: K): Array<T[K]> =>
   arr.map((t) => t[key])
 
 export const calculateDuration = (meters: number, knots: number): number =>
-  Math.floor((toNM(meters) / knots) * 60)
+  (toNM(meters) / knots) * 60
 
 export const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60)
@@ -211,3 +207,8 @@ export const applyOffset = (
   lng: lngLat.lng - offset[0],
   lat: lngLat.lat - offset[1],
 })
+
+export const makeIdGenerator = (prefix: string): (() => string) => {
+  let i = 0
+  return () => `${prefix}-${i++}`
+}

@@ -90,7 +90,7 @@ class RouteSegment extends PureComponent<RouteSegmentProps> {
     const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
     const listItemTextProps = found
       ? {
-          primary: length ? `${toNM(length)} mpk` : '\u00a0',
+          primary: length ? `${round(toNM(length), 1)} mpk` : '\u00a0',
           secondary: durationStr + fuelStr || '\u00a0',
         }
       : {

@@ -20,10 +20,9 @@ import {
   updateWhere,
   hasId,
   hasAnyId,
+  makeIdGenerator,
 } from '../../common/util'
 
-let waypointId = 0
-const getId = (): string => `waypoint-${waypointId++}`
 const getAdjacentWaypointIds = (
   waypoints: Waypoint[],
   id: string
@@ -46,6 +45,7 @@ const getAdjacentWaypointIds = (
   return result
 }
 
+const generateWaypointId = makeIdGenerator('waypoint')
 export const waypointReducer = (
   waypoints: Waypoint[],
   action: WaypointAction
@@ -56,7 +56,7 @@ export const waypointReducer = (
       return insertIndex(
         waypoints,
         index !== undefined ? index : waypoints.length,
-        { ...point, id: getId(), type }
+        { ...point, id: generateWaypointId(), type }
       )
     }
     case ActionType.WaypointRemove:
@@ -96,11 +96,7 @@ const settingsReducer = (
   }
 }
 
-const generateKey = ((): (() => string) => {
-  let i = 0
-  return (): string => `notification_${i++}`
-})()
-
+const generateKey = makeIdGenerator('notification')
 const notificationReducer = (
   notifications: Notification[],
   action: NotificationAction
