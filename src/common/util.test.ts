@@ -1,12 +1,14 @@
 import {
   partition,
-  takeUntil,
+  splitAt,
   range,
+  spreadIf,
   numToLetter,
   removeWhere,
   updateIndex,
   insertIndex,
   updateWhere,
+  hasProperty,
   hasId,
   addMany,
   mapBy,
@@ -17,7 +19,9 @@ import {
   calculateOffset,
   applyOffset,
   makeIdGenerator,
+  combineSegments,
 } from './util'
+import { Route } from './types'
 
 const timeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -47,11 +51,12 @@ test('partition', (): void => {
   ])
 })
 
-test('takeUntil', (): void => {
-  const pred = (i: number): boolean => i === 4
-  expect(takeUntil([0, 1, 2, 3, 4, 5, 6, 7], pred)).toEqual([0, 1, 2, 3, 4])
-  expect(takeUntil([5, 6, 7, 8, 9], pred)).toEqual([5, 6, 7, 8, 9])
-  expect(takeUntil([], pred)).toEqual([])
+test('splitAt', (): void => {
+  const pred = (i: number, j: number): boolean => i > j
+  expect(splitAt([], pred)).toEqual([])
+  expect(splitAt([0], pred)).toEqual([[0]])
+  expect(splitAt([0, 2, 1, 3, 5, 4], pred)).toEqual([[0, 2], [1, 3, 5], [4]])
+  expect(splitAt([5, 4, 3, 2, 1], pred)).toEqual([[5], [4], [3], [2], [1]])
 })
 
 test('range', (): void => {
@@ -59,6 +64,13 @@ test('range', (): void => {
   expect(range(5)).toEqual([0, 1, 2, 3, 4])
   expect(range(5, 3)).toEqual([3, 4, 5, 6, 7])
   expect(range(5, 3, 2)).toEqual([3, 5, 7, 9, 11])
+})
+
+test('spreadIf', (): void => {
+  expect(spreadIf('foo')).toEqual(['foo'])
+  expect(spreadIf('foo', 'bar')).toEqual(['bar'])
+  expect(spreadIf(undefined)).toEqual([])
+  expect(spreadIf(undefined, 'bar')).toEqual([])
 })
 
 test('numToLetter', (): void => {
@@ -77,6 +89,14 @@ interface TestObj {
   id: string
   n: number
 }
+
+test('hasProperty', (): void => {
+  const obj: TestObj = { id: '0', n: 1 }
+  expect(hasProperty('id', '0')(obj)).toBe(true)
+  expect(hasProperty('id', '1')(obj)).toBe(false)
+  expect(hasProperty('n', 0)(obj)).toBe(false)
+  expect(hasProperty('n', 1)(obj)).toBe(true)
+})
 
 test('updateIndex', (): void => {
   const arr: TestObj[] = [
@@ -184,4 +204,58 @@ test('makeIdGenerator', (): void => {
   expect(gen2()).toEqual('gen2-1')
   expect(gen1()).toEqual('gen1-2')
   expect(gen2()).toEqual('gen2-2')
+})
+
+test('combineSegments', (): void => {
+  const routes = [
+    {
+      type: 'destination',
+      found: true,
+      length: 3,
+      duration: 1,
+      fuel: 1,
+    },
+    {
+      type: 'waypoint',
+      found: true,
+      length: 4,
+      duration: 2,
+      fuel: 2,
+    },
+    {
+      type: 'destination',
+      found: true,
+      length: 5,
+      duration: 3,
+      fuel: 3,
+    },
+    {
+      type: 'destination',
+      found: true,
+      length: 6,
+      duration: 4,
+      fuel: 4,
+    },
+  ] as Route[]
+  const segments = combineSegments(routes)
+  expect(segments).toEqual([
+    {
+      found: true,
+      length: 3,
+      duration: 1,
+      fuel: 1,
+    },
+    {
+      found: true,
+      length: 9,
+      duration: 5,
+      fuel: 5,
+    },
+    {
+      found: true,
+      length: 6,
+      duration: 4,
+      fuel: 4,
+    },
+  ])
 })

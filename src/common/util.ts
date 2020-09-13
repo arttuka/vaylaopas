@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import geojson from 'geojson'
 import { Id, Index, LngLat, Pred, Route, RouteProps, Settings } from './types'
 
+const identity = <T>(t: T): T => t
+
 export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   const result = []
   let i = 0
@@ -12,21 +14,30 @@ export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
   return result
 }
 
-export const takeUntil = <T>(arr: T[], pred: Pred<T>): T[] => {
-  const result = []
-  let i = 0
-  while (i < arr.length) {
+export const splitAt = <T>(
+  arr: T[],
+  pred: (t1: T, t2: T) => boolean
+): T[][] => {
+  if (arr.length === 0) {
+    return []
+  }
+  let i = 1
+  const result = [arr[0]]
+  while (i < arr.length && !pred(arr[i - 1], arr[i])) {
     result.push(arr[i])
-    if (pred(arr[i])) {
-      break
-    }
     ++i
   }
-  return result
+  return [result, ...splitAt(arr.slice(i), pred)]
 }
 
 export const range = (count: number, start = 0, step = 1): number[] =>
   [...Array(count).keys()].map((i) => start + i * step)
+
+export function spreadIf<T>(t: T): [] | [T]
+export function spreadIf<T, S>(t: T, s: S): [] | [S]
+export function spreadIf<T, S>(t: T, s?: S): [] | [T | S] {
+  return t ? [s ?? t] : []
+}
 
 export const round = (n: number, decimals = 0): number => {
   const m = Math.pow(10, decimals)
@@ -60,8 +71,13 @@ export const updateWhere = <T>(arr: T[], pred: Pred<T>, t: Partial<T>): T[] => {
   }
 }
 
-export const hasId = <T extends Id>(id: string): Pred<T> => (t: T) =>
-  id === t.id
+export const hasProperty = <K extends string, V, T extends { [k in K]: V }>(
+  k: K,
+  v: V
+): Pred<T> => (t: T) => t[k] === v
+
+export const hasId = <T extends Id>(id: string): Pred<T> =>
+  hasProperty('id', id)
 
 export const hasAnyId = <T extends Id>(ids: string[]): Pred<T> => (t: T) =>
   ids.includes(t.id)
@@ -91,7 +107,7 @@ export function mapBy<T, S>(
   valfn?: (t: T) => S
 ): Index<T> | Index<S> {
   if (valfn === undefined) {
-    return mapBy(arr, keyfn, (t) => t)
+    return mapBy(arr, keyfn, identity)
   } else {
     const ret: Index<S> = {}
     for (const t of arr) {
@@ -101,7 +117,7 @@ export function mapBy<T, S>(
   }
 }
 
-export const pick = <T, K extends keyof T>(arr: T[], key: K): Array<T[K]> =>
+export const pick = <T, K extends keyof T>(arr: T[], key: K): T[K][] =>
   arr.map((t) => t[key])
 
 export const calculateDuration = (meters: number, knots: number): number =>
@@ -115,26 +131,23 @@ export const formatDuration = (minutes: number): string => {
 export const add = (n1?: number, n2?: number): number | undefined =>
   n1 !== undefined && n2 !== undefined ? n1 + n2 : undefined
 
-export const mergeRoutes = (r1: RouteProps, r2: RouteProps): RouteProps => ({
+const mergeRouteprops = (r1: RouteProps, r2: RouteProps): RouteProps => ({
   found: r1.found && r2.found,
   length: add(r1.length, r2.length),
   duration: add(r1.duration, r2.duration),
   fuel: add(r1.fuel, r2.fuel),
 })
 
-export const combineSegments = (routes: Route[]): RouteProps[] => {
-  const result: RouteProps[] = []
-  let remainingRoutes = routes
-  while (remainingRoutes.length > 0) {
-    const rs: RouteProps[] = takeUntil(
-      remainingRoutes,
-      (r) => r.type === 'destination'
-    )
-    result.push(rs.reduce(mergeRoutes))
-    remainingRoutes = remainingRoutes.slice(rs.length)
-  }
-  return result
-}
+export const mergeRoutes = (routes: RouteProps[]): RouteProps =>
+  routes.reduce(mergeRouteprops, {
+    found: true,
+    length: 0,
+    duration: 0,
+    fuel: 0,
+  })
+
+export const combineSegments = (routes: Route[]): RouteProps[] =>
+  splitAt(routes, (r) => r.type === 'destination').map(mergeRoutes)
 
 export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   const { speed, consumption } = settings

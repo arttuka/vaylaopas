@@ -4,7 +4,7 @@ import List from '@material-ui/core/List'
 import { withStyles } from '@material-ui/core/styles'
 import RouteSegment from './RouteSegment'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
-import { combineSegments, mergeRoutes } from '../../common/util'
+import { combineSegments, hasProperty, mergeRoutes } from '../../common/util'
 import { waypointRemoveAction } from '../redux/actions'
 
 const OuterList = withStyles({
@@ -30,14 +30,9 @@ const RouteList: FunctionComponent<RouteListProps> = ({
   const dispatch = useDispatch()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
-  const destinations = waypoints.filter(({ type }) => type === 'destination')
+  const destinations = waypoints.filter(hasProperty('type', 'destination'))
   const combinedRoutes = combineSegments(routes)
-  const totals = combinedRoutes.reduce(mergeRoutes, {
-    length: 0,
-    duration: 0,
-    fuel: 0,
-    found: true,
-  })
+  const totals = mergeRoutes(combinedRoutes)
 
   const onDelete = (id: string): void => {
     dispatch(waypointRemoveAction({ id }))
@@ -45,41 +40,19 @@ const RouteList: FunctionComponent<RouteListProps> = ({
 
   return (
     <OuterList disablePadding={true}>
-      <RouteSegment
-        length={totals.length}
-        duration={totals.duration}
-        fuel={totals.fuel}
-        found={totals.found}
-        kind="totals"
-        onClick={onClick}
-      />
+      <RouteSegment {...totals} kind="totals" onClick={onClick} />
       <ScrollingList disablePadding={true}>
         {destinations.map(
           ({ id }, i): ReactElement => {
-            const key = `route-segment-${i}`
-            if (i > 0 && i <= combinedRoutes.length) {
-              const { length, duration, fuel, found } = combinedRoutes[i - 1]
-              return (
-                <RouteSegment
-                  key={key}
-                  length={length}
-                  duration={duration}
-                  fuel={fuel}
-                  index={i}
-                  found={found}
-                  onDelete={(): void => onDelete(id)}
-                />
-              )
-            } else {
-              return (
-                <RouteSegment
-                  key={key}
-                  index={i}
-                  found
-                  onDelete={(): void => onDelete(id)}
-                />
-              )
-            }
+            const props = i > 0 ? combinedRoutes[i - 1] : { found: true }
+            return (
+              <RouteSegment
+                key={`route-segment-${i}`}
+                index={i}
+                onDelete={(): void => onDelete(id)}
+                {...props}
+              />
+            )
           }
         )}
       </ScrollingList>

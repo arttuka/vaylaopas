@@ -2,7 +2,7 @@ import { Pool, PoolClient } from 'pg'
 import { LineString, Position } from 'geojson'
 import config from './config'
 import { Lane, Route, Waypoint, WaypointType } from '../common/types'
-import { partition, pick, range } from '../common/util'
+import { spreadIf, partition, pick, range } from '../common/util'
 
 const pool = new Pool(config.db)
 
@@ -65,7 +65,7 @@ const getClosestPoints = async (
     pick(points, 'lat'),
     pick(points, 'type'),
     range(points.length),
-    ...(depth ? [depth] : []),
+    ...spreadIf(depth),
   ])
 
   return result.rows.map(({ geometry, ...endpoint }) => ({
@@ -108,12 +108,10 @@ const getRouteBetweenVertices = async (
   depth?: number,
   height?: number
 ): Promise<Route[]> => {
-  const settingsWhere =
-    depth || height
-      ? `${depth ? `depth IS NULL OR depth >= ${depth}` : ''}
-         ${depth && height ? 'AND' : ''}
-         ${height ? `height IS NULL OR height >= ${height}` : ''}`
-      : ''
+  const settingsWhere = [
+    ...spreadIf(depth, `depth IS NULL OR depth >= ${depth}`),
+    ...spreadIf(height, `height IS NULL OR height >= ${height}`),
+  ].join(' AND ')
 
   const laneQuery = `
     SELECT id, source, target, length AS cost

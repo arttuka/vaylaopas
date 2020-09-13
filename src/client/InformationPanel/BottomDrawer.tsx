@@ -8,6 +8,7 @@ import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp'
 import RouteList from './RouteList'
 import { waypointsSelector } from '../redux/selectors'
+import { hasProperty } from '../../common/util'
 
 const openHeight = ({ items }: { items: number }): number => 62 + items * 60
 
@@ -66,7 +67,7 @@ const DrawerButton = withStyles(({ palette, shape, spacing }) => ({
 const BottomDrawer: FunctionComponent = () => {
   const waypoints = useSelector(waypointsSelector)
   const items = Math.min(
-    waypoints.filter(({ type }) => type === 'destination').length,
+    waypoints.filter(hasProperty('type', 'destination')).length,
     4
   )
   const classes = useStyles({ items })
