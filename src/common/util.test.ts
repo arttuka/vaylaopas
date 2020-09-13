@@ -1,4 +1,5 @@
 import {
+  partition,
   takeUntil,
   range,
   numToLetter,
@@ -22,6 +23,29 @@ const timeout = (ms: number): Promise<void> =>
     setTimeout(resolve, ms)
   })
 
+test('partition', (): void => {
+  const arr = [0, 1, 2, 3, 4, 5, 6, 7]
+  expect(partition(arr, 2)).toEqual([
+    [0, 1],
+    [2, 3],
+    [4, 5],
+    [6, 7],
+  ])
+  expect(partition(arr, 3)).toEqual([
+    [0, 1, 2],
+    [3, 4, 5],
+  ])
+  expect(partition(arr, 2, 1)).toEqual([
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 4],
+    [4, 5],
+    [5, 6],
+    [6, 7],
+  ])
+})
+
 test('takeUntil', (): void => {
   const pred = (i: number): boolean => i === 4
   expect(takeUntil([0, 1, 2, 3, 4, 5, 6, 7], pred)).toEqual([0, 1, 2, 3, 4])
@@ -32,6 +56,8 @@ test('takeUntil', (): void => {
 test('range', (): void => {
   expect(range(0)).toEqual([])
   expect(range(5)).toEqual([0, 1, 2, 3, 4])
+  expect(range(5, 3)).toEqual([3, 4, 5, 6, 7])
+  expect(range(5, 3, 2)).toEqual([3, 5, 7, 9, 11])
 })
 
 test('numToLetter', (): void => {

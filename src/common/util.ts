@@ -4,6 +4,16 @@ import { Index, LngLat, Route, RouteProps, Settings } from './types'
 
 type Pred<T> = (t: T) => boolean
 
+export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
+  const result = []
+  let i = 0
+  while (i + n <= arr.length) {
+    result.push(arr.slice(i, i + n))
+    i += step
+  }
+  return result
+}
+
 export const takeUntil = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
   const result = []
   let i = 0
@@ -17,7 +27,8 @@ export const takeUntil = <T>(arr: T[], pred: (t: T) => boolean): T[] => {
   return result
 }
 
-export const range = (count: number): number[] => [...Array(count).keys()]
+export const range = (count: number, start = 0, step = 1): number[] =>
+  [...Array(count).keys()].map((i) => start + i * step)
 
 export const round = (n: number, decimals = 0): number => {
   const m = Math.pow(10, decimals)
