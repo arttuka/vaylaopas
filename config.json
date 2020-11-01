@@ -1,6 +1,6 @@
 {
   "client": {
-    "mapserver": "http://localhost:8000/styles/vaylaopas/style.json"
+    "mapserver": "https://mapserver.vaylaopas.fi/styles/vaylaopas/style.json"
   },
   "db": {
     "host": "localhost",

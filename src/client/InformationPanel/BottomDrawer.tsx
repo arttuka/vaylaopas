@@ -36,9 +36,10 @@ const useStyles = makeStyles(({ transitions }) => ({
   },
 }))
 
-const DrawerButton = withStyles(({ palette, shape, spacing }) => ({
+const DrawerButton = withStyles(({ palette, spacing }) => ({
   root: {
     backgroundColor: '#ffffff',
+    color: palette.text.primary,
     padding: spacing(0, 1),
     width: 48,
     alignSelf: 'center',
@@ -50,9 +51,7 @@ const DrawerButton = withStyles(({ palette, shape, spacing }) => ({
     borderColor: palette.divider,
     borderWidth: '1px 1px 0 1px',
     borderStyle: 'solid',
-    borderRadius: shape.borderRadius * 2,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    borderRadius: '8px 8px 0 0',
     '&:active': {
       backgroundColor: '#ffffff',
       boxShadow: 'none',

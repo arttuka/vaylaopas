@@ -18,7 +18,7 @@ const App: FunctionComponent = () => (
   <Container>
     <Notifier />
     <AppBar />
-    <Hidden xsDown>
+    <Hidden smDown>
       <InformationPanel />
     </Hidden>
     <MapContainer />
