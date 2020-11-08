@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactElement } from 'react'
+import React, { FunctionComponent } from 'react'
 import MuiAvatar from '@material-ui/core/Avatar'
 import IconButton from '@material-ui/core/IconButton'
 import ListItem from '@material-ui/core/ListItem'
@@ -19,27 +19,19 @@ const Avatar = withStyles(({ palette }) => ({
   },
 }))(MuiAvatar)
 
-class Point extends PureComponent<{ text: string }> {
-  render(): ReactElement {
-    return (
-      <ListItemAvatar>
-        <Avatar>{this.props.text}</Avatar>
-      </ListItemAvatar>
-    )
-  }
-}
+const Point: FunctionComponent<{ text: string }> = ({ text }) => (
+  <ListItemAvatar>
+    <Avatar>{text}</Avatar>
+  </ListItemAvatar>
+)
 
-class Delete extends PureComponent<{ onClick: () => void }> {
-  render(): ReactElement {
-    return (
-      <ListItemSecondaryAction>
-        <IconButton onClick={this.props.onClick}>
-          <DeleteIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
-    )
-  }
-}
+const Delete: FunctionComponent<{ onClick: () => void }> = ({ onClick }) => (
+  <ListItemSecondaryAction>
+    <IconButton onClick={onClick}>
+      <DeleteIcon />
+    </IconButton>
+  </ListItemSecondaryAction>
+)
 
 const ListItemText = withStyles({
   root: {
@@ -83,44 +75,42 @@ type RouteSegmentProps = (SegmentProps | TotalsProps) & {
   onClick?: () => void
 }
 
-class RouteSegment extends PureComponent<RouteSegmentProps> {
-  render(): ReactElement {
-    const { length, duration, fuel, found, onClick } = this.props
-    const durationStr = duration ? formatDuration(duration) : ''
-    const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
-    const listItemTextProps = found
-      ? {
-          primary: length ? `${round(toNM(length), 1)} mpk` : '\u00a0',
-          secondary: durationStr + fuelStr || '\u00a0',
-        }
-      : {
-          primary: (
-            <>
-              <NotFoundIcon color="error" /> Ei reittiä
-            </>
-          ),
-        }
-    if (this.props.kind === 'totals') {
-      return (
-        <ListItem divider={true} onClick={onClick}>
-          <ListItemAvatar>
-            <Avatar>
-              <DirectionsBoatIcon />
-            </Avatar>
-          </ListItemAvatar>
-          <ListItemText {...listItemTextProps} />
-        </ListItem>
-      )
-    } else {
-      const { index, onDelete } = this.props
-      return (
-        <ListItem>
-          <Point text={numToLetter(index)} />
-          <OffsetListItemText {...listItemTextProps} />
-          <Delete onClick={onDelete} />
-        </ListItem>
-      )
-    }
+const RouteSegment: FunctionComponent<RouteSegmentProps> = (props) => {
+  const { length, duration, fuel, found, onClick } = props
+  const durationStr = duration ? formatDuration(duration) : ''
+  const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
+  const listItemTextProps = found
+    ? {
+        primary: length ? `${round(toNM(length), 1)} mpk` : '\u00a0',
+        secondary: durationStr + fuelStr || '\u00a0',
+      }
+    : {
+        primary: (
+          <>
+            <NotFoundIcon color="error" /> Ei reittiä
+          </>
+        ),
+      }
+  if (props.kind === 'totals') {
+    return (
+      <ListItem divider={true} onClick={onClick}>
+        <ListItemAvatar>
+          <Avatar>
+            <DirectionsBoatIcon />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText {...listItemTextProps} />
+      </ListItem>
+    )
+  } else {
+    const { index, onDelete } = props
+    return (
+      <ListItem>
+        <Point text={numToLetter(index)} />
+        <OffsetListItemText {...listItemTextProps} />
+        <Delete onClick={onDelete} />
+      </ListItem>
+    )
   }
 }
 

@@ -20,7 +20,7 @@ const ContextMenu: FunctionComponent<ContextMenuProps> = ({
   onClose,
   onDelete,
   onChange,
-}: ContextMenuProps) => (
+}) => (
   <Menu
     keepMounted
     open={open}

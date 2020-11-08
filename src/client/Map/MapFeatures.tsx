@@ -48,9 +48,7 @@ interface MapFeaturesProps {
   map: Map
 }
 
-const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
-  map,
-}: MapFeaturesProps) => {
+const MapFeatures: FunctionComponent<MapFeaturesProps> = ({ map }) => {
   const dispatch = useDispatch()
   const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState(closedMenu)

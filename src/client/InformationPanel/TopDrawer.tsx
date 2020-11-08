@@ -22,10 +22,7 @@ interface TopDrawerProps {
   onClose: () => void
 }
 
-const TopDrawer: FunctionComponent<TopDrawerProps> = ({
-  open,
-  onClose,
-}: TopDrawerProps) => (
+const TopDrawer: FunctionComponent<TopDrawerProps> = ({ open, onClose }) => (
   <Drawer anchor="top" open={open} onClose={onClose}>
     <SettingsContainer />
     <CloseButton onClick={onClose} size="small">

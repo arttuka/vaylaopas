@@ -1,14 +1,9 @@
-import React, { ChangeEvent, PureComponent, ReactElement } from 'react'
+import React, { ChangeEvent, FunctionComponent } from 'react'
 import CancelIcon from '@material-ui/icons/Cancel'
 import MuiIconButton from '@material-ui/core/IconButton'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { withStyles } from '@material-ui/core/styles'
 import MuiTextField from '@material-ui/core/TextField'
-
-interface ClearButtonProps {
-  disabled: boolean
-  onClick: () => void
-}
 
 const IconButton = withStyles({
   root: {
@@ -16,18 +11,21 @@ const IconButton = withStyles({
   },
 })(MuiIconButton)
 
-class ClearButton extends PureComponent<ClearButtonProps> {
-  render(): ReactElement {
-    const { disabled, onClick } = this.props
-    return (
-      <InputAdornment position="start">
-        <IconButton disabled={disabled} onClick={onClick}>
-          <CancelIcon />
-        </IconButton>
-      </InputAdornment>
-    )
-  }
+interface ClearButtonProps {
+  disabled: boolean
+  onClick: () => void
 }
+
+const ClearButton: FunctionComponent<ClearButtonProps> = ({
+  disabled,
+  onClick,
+}) => (
+  <InputAdornment position="start">
+    <IconButton disabled={disabled} onClick={onClick}>
+      <CancelIcon />
+    </IconButton>
+  </InputAdornment>
+)
 
 const TextField = withStyles({
   root: {
@@ -42,44 +40,33 @@ interface SettingFieldProps {
   onChange: (value?: number) => void
 }
 
-export default class SettingField extends PureComponent<SettingFieldProps> {
-  constructor(props: SettingFieldProps) {
-    super(props)
-    this.onChange = this.onChange.bind(this)
-    this.onClear = this.onClear.bind(this)
-  }
-
-  onChange(e: ChangeEvent<HTMLInputElement>): void {
+const SettingField: FunctionComponent<SettingFieldProps> = (props) => {
+  const onChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const value = parseFloat(e.currentTarget.value)
-    this.props.onChange(isNaN(value) ? undefined : value)
+    props.onChange(isNaN(value) ? undefined : value)
   }
-
-  onClear(): void {
-    this.props.onChange(undefined)
+  const onClear = (): void => {
+    props.onChange(undefined)
   }
-
-  render(): ReactElement {
-    const { id, label, value } = this.props
-    return (
-      <TextField
-        id={id}
-        label={label}
-        value={value !== undefined ? value : ''}
-        onChange={this.onChange}
-        type="number"
-        fullWidth
-        InputProps={{
-          startAdornment: (
-            <ClearButton
-              disabled={value === undefined}
-              onClick={this.onClear}
-            />
-          ),
-        }}
-        inputProps={{
-          step: 0.1,
-        }}
-      />
-    )
-  }
+  const { id, label, value } = props
+  return (
+    <TextField
+      id={id}
+      label={label}
+      value={value !== undefined ? value : ''}
+      onChange={onChange}
+      type="number"
+      fullWidth
+      InputProps={{
+        startAdornment: (
+          <ClearButton disabled={value === undefined} onClick={onClear} />
+        ),
+      }}
+      inputProps={{
+        step: 0.1,
+      }}
+    />
+  )
 }
+
+export default SettingField

@@ -26,7 +26,7 @@ const TouchMarker: FunctionComponent<TouchMarkerProps> = ({
   duration,
   top,
   left,
-}: TouchMarkerProps) => {
+}) => {
   const [progress, setProgress] = useState(0)
 
   useInterval(() => {

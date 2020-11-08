@@ -24,9 +24,7 @@ interface RouteListProps {
   onClick?: () => void
 }
 
-const RouteList: FunctionComponent<RouteListProps> = ({
-  onClick,
-}: RouteListProps) => {
+const RouteList: FunctionComponent<RouteListProps> = ({ onClick }) => {
   const dispatch = useDispatch()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
