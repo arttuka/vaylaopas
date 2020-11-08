@@ -1,4 +1,5 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
+import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
 import { merge } from 'webpack-merge'
 import config from './config.json'
 import indexHtml from './src/server/indexHtml'
@@ -33,6 +34,7 @@ module.exports = merge(common, {
           loader: 'babel-loader',
           options: {
             envName: 'browser',
+            plugins: [['react-refresh/babel', { skipEnvCheck: true }]],
           },
         },
       },
@@ -47,5 +49,6 @@ module.exports = merge(common, {
       /* eslint-disable-next-line @typescript-eslint/explicit-function-return-type */
       templateContent: () => indexHtml(clientConfig),
     }),
+    new ReactRefreshWebpackPlugin(),
   ],
 })

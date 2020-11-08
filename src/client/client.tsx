@@ -1,4 +1,3 @@
-import { hot } from 'react-hot-loader/root'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
@@ -16,6 +15,4 @@ const WrappedApp = () => (
   </Provider>
 )
 
-const HotApp = hot(WrappedApp)
-
-ReactDOM.render(<HotApp />, document.getElementById('root'))
+ReactDOM.render(<WrappedApp />, document.getElementById('root'))
