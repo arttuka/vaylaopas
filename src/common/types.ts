@@ -117,6 +117,7 @@ export interface MenuState {
   top: number
   left: number
   waypoint?: string
+  isDestination?: boolean
 }
 
 export interface TouchMarkerState {

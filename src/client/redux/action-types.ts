@@ -3,6 +3,7 @@ import { Key, LngLat, Route, Settings, WaypointType } from '../../common/types'
 
 export enum ActionType {
   WaypointAdd = 'WAYPOINT_ADD',
+  WaypointChange = 'WAYPOINT_CHANGE',
   WaypointRemove = 'WAYPOINT_REMOVE',
   WaypointMove = 'WAYPOINT_MOVE',
   RouteSuccess = 'ROUTE_SUCCESS',
@@ -19,6 +20,16 @@ export interface WaypointAddProps {
 export interface WaypointAddAction {
   type: ActionType.WaypointAdd
   data: WaypointAddProps
+}
+
+export interface WaypointChangeProps {
+  id: string
+  type: WaypointType
+}
+
+export interface WaypointChangeAction {
+  type: ActionType.WaypointChange
+  data: WaypointChangeProps
 }
 
 export interface WaypointRemoveProps {
@@ -40,6 +51,7 @@ export interface WaypointMoveAction {
 
 export type WaypointAction =
   | WaypointAddAction
+  | WaypointChangeAction
   | WaypointRemoveAction
   | WaypointMoveAction
 

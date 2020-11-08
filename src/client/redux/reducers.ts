@@ -59,6 +59,9 @@ export const waypointReducer = (
         { ...point, id: generateWaypointId(), type }
       )
     }
+    case ActionType.WaypointChange:
+      const { id, type } = action.data
+      return updateWhere(waypoints, hasId(id), { type })
     case ActionType.WaypointRemove:
       const ids = getAdjacentWaypointIds(waypoints, action.data.id)
       return removeWhere(waypoints, hasAnyId(ids))

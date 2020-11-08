@@ -18,6 +18,7 @@ import {
 } from '../Mapbox/types'
 import {
   waypointAddAction,
+  waypointChangeAction,
   waypointMoveAction,
   waypointRemoveAction,
 } from '../redux/actions'
@@ -28,6 +29,7 @@ import {
   LngLat,
   MenuState,
   TouchMarkerState,
+  WaypointType,
 } from '../../common/types'
 import { calculateOffset, applyOffset } from '../../common/util'
 
@@ -61,7 +63,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
 
   const handleRightClick = (e: MouseEvent): void => {
     const feature = e.features && e.features[0]
-    const waypoint = featureIsWaypoint(feature) && feature.properties.id
+    const waypoint = featureIsWaypoint(feature) && feature.properties
     e.preventDefault()
     setLastClick(toLngLat(e))
     setMenu({
@@ -69,7 +71,12 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
       open: true,
       top: e.point.y + 64,
       left: e.point.x,
-      ...(waypoint ? { waypoint } : {}),
+      ...(waypoint
+        ? {
+            waypoint: waypoint.id,
+            isDestination: waypoint.type === 'destination',
+          }
+        : {}),
     })
   }
 
@@ -152,6 +159,11 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
     setMenu(closedMenu)
   }
 
+  const onChangeWaypoint = (id: string, type: WaypointType): void => {
+    dispatch(waypointChangeAction({ id, type }))
+    setMenu(closedMenu)
+  }
+
   useEffect(() => {
     initializeMap(
       map,
@@ -185,6 +197,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
     <>
       <ContextMenu
         onAdd={onAddWaypoint}
+        onChange={onChangeWaypoint}
         onDelete={onDeleteWaypoint}
         onClose={() => setMenu(closedMenu)}
         {...menu}

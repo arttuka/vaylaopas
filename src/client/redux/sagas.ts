@@ -55,6 +55,7 @@ function* watchChanges(): SagaGenerator {
   yield takeLatest(
     [
       ActionType.WaypointAdd,
+      ActionType.WaypointChange,
       ActionType.WaypointRemove,
       ActionType.WaypointMove,
     ],

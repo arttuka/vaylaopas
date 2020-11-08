@@ -2,6 +2,8 @@ import {
   ActionType,
   WaypointAddAction,
   WaypointAddProps,
+  WaypointChangeAction,
+  WaypointChangeProps,
   WaypointRemoveAction,
   WaypointRemoveProps,
   WaypointMoveAction,
@@ -20,6 +22,13 @@ export const waypointAddAction = (
   data: WaypointAddProps
 ): WaypointAddAction => ({
   type: ActionType.WaypointAdd,
+  data,
+})
+
+export const waypointChangeAction = (
+  data: WaypointChangeProps
+): WaypointChangeAction => ({
+  type: ActionType.WaypointChange,
   data,
 })
 
