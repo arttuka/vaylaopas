@@ -9,7 +9,11 @@ import {
   StrictEffect,
 } from 'redux-saga/effects'
 import { notificationEnqueueAction, routeUpdateAction } from './actions'
-import { ActionType, SettingsSetAction } from './action-types'
+import {
+  WaypointActionType,
+  SettingsActionType,
+  SettingsSetAction,
+} from './action-types'
 import {
   settingsSelector,
   waypointsSelector,
@@ -54,10 +58,10 @@ function* getRouteSaga(): SagaGenerator {
 function* watchChanges(): SagaGenerator {
   yield takeLatest(
     [
-      ActionType.WaypointAdd,
-      ActionType.WaypointChange,
-      ActionType.WaypointRemove,
-      ActionType.WaypointMove,
+      WaypointActionType.WaypointAdd,
+      WaypointActionType.WaypointChange,
+      WaypointActionType.WaypointRemove,
+      WaypointActionType.WaypointMove,
     ],
     getRouteSaga
   )
@@ -78,7 +82,7 @@ function* updateSettingSaga(action: SettingsSetAction): SagaGenerator {
 }
 
 function* watchUpdateSettings(): SagaGenerator {
-  yield takeEvery([ActionType.SettingsSet], updateSettingSaga)
+  yield takeEvery([SettingsActionType.SettingsSet], updateSettingSaga)
 }
 
 export function* rootSaga(): SagaGenerator {

@@ -1,6 +1,4 @@
 import { Feature, Point, LineString } from 'geojson'
-import { Store } from 'redux'
-import { Task } from 'redux-saga'
 import { VariantType } from 'notistack'
 
 export type Pred<T> = (t: T) => boolean
@@ -106,10 +104,6 @@ export interface RootState {
   settings: Settings
   waypoints: Waypoint[]
   notifications: Notification[]
-}
-
-export type SagaStore = Store<RootState> & {
-  runSaga: Task
 }
 
 export interface MenuState {

@@ -1,15 +1,58 @@
 import { VariantType } from 'notistack'
-import { Key, LngLat, Route, Settings, WaypointType } from '../../common/types'
+import { Action as ReduxAction, Reducer as ReduxReducer } from 'redux'
+import {
+  Key,
+  LngLat,
+  RootState,
+  Route,
+  Settings,
+  WaypointType,
+} from '../../common/types'
 
-export enum ActionType {
+export enum WaypointActionType {
   WaypointAdd = 'WAYPOINT_ADD',
   WaypointChange = 'WAYPOINT_CHANGE',
   WaypointRemove = 'WAYPOINT_REMOVE',
   WaypointMove = 'WAYPOINT_MOVE',
+}
+
+export enum RouteActionType {
   RouteSuccess = 'ROUTE_SUCCESS',
+}
+
+export enum SettingsActionType {
   SettingsSet = 'SETTINGS_SET',
+}
+
+export enum NotificationActionType {
   NotificationEnqueue = 'NOTIFICATION_ENQUEUE',
   NotificationRemove = 'NOTIFICATION_REMOVE',
+}
+
+export type ActionType =
+  | WaypointActionType
+  | RouteActionType
+  | SettingsActionType
+  | NotificationActionType
+
+export type ActionMap = {
+  waypoints: WaypointAction
+  routes: RouteAction
+  settings: SettingsAction
+  notifications: NotificationAction
+}
+
+export type KeyFromActionType<T extends ActionType> = {
+  [K in keyof ActionMap]: T extends ActionMap[K]['type'] ? K : never
+}[keyof ActionMap]
+
+export type StateFromActionType<
+  T extends ActionType
+> = RootState[KeyFromActionType<T>]
+
+export interface BaseAction<T extends ActionType, D> extends ReduxAction<T> {
+  type: T
+  data: D
 }
 
 export interface WaypointAddProps {
@@ -17,37 +60,36 @@ export interface WaypointAddProps {
   index?: number
   type: WaypointType
 }
-export interface WaypointAddAction {
-  type: ActionType.WaypointAdd
-  data: WaypointAddProps
-}
+export type WaypointAddAction = BaseAction<
+  WaypointActionType.WaypointAdd,
+  WaypointAddProps
+>
 
 export interface WaypointChangeProps {
   id: string
   type: WaypointType
 }
-
-export interface WaypointChangeAction {
-  type: ActionType.WaypointChange
-  data: WaypointChangeProps
-}
+export type WaypointChangeAction = BaseAction<
+  WaypointActionType.WaypointChange,
+  WaypointChangeProps
+>
 
 export interface WaypointRemoveProps {
   id: string
 }
-export interface WaypointRemoveAction {
-  type: ActionType.WaypointRemove
-  data: WaypointRemoveProps
-}
+export type WaypointRemoveAction = BaseAction<
+  WaypointActionType.WaypointRemove,
+  WaypointRemoveProps
+>
 
 export interface WaypointMoveProps {
   point: LngLat
   id: string
 }
-export interface WaypointMoveAction {
-  type: ActionType.WaypointMove
-  data: WaypointMoveProps
-}
+export type WaypointMoveAction = BaseAction<
+  WaypointActionType.WaypointMove,
+  WaypointMoveProps
+>
 
 export type WaypointAction =
   | WaypointAddAction
@@ -58,10 +100,10 @@ export type WaypointAction =
 export interface RouteUpdateProps {
   routes: Route[]
 }
-export interface RouteUpdateAction {
-  type: ActionType.RouteSuccess
-  data: RouteUpdateProps
-}
+export type RouteUpdateAction = BaseAction<
+  RouteActionType.RouteSuccess,
+  RouteUpdateProps
+>
 
 export type RouteAction = RouteUpdateAction
 
@@ -69,30 +111,30 @@ export interface SettingsSetProps {
   key: keyof Settings
   value?: number
 }
-export interface SettingsSetAction {
-  type: ActionType.SettingsSet
-  data: SettingsSetProps
-}
+export type SettingsSetAction = BaseAction<
+  SettingsActionType.SettingsSet,
+  SettingsSetProps
+>
+
+export type SettingsAction = SettingsSetAction
 
 export interface NotificationEnqueueProps {
   key?: Key
   message: string
   variant: VariantType
 }
-
-export interface NotificationEnqueueAction {
-  type: ActionType.NotificationEnqueue
-  data: NotificationEnqueueProps
-}
+export type NotificationEnqueueAction = BaseAction<
+  NotificationActionType.NotificationEnqueue,
+  NotificationEnqueueProps
+>
 
 export interface NotificationRemoveProps {
   key: Key
 }
-
-export interface NotificationRemoveAction {
-  type: ActionType.NotificationRemove
-  data: NotificationRemoveProps
-}
+export type NotificationRemoveAction = BaseAction<
+  NotificationActionType.NotificationRemove,
+  NotificationRemoveProps
+>
 
 export type NotificationAction =
   | NotificationEnqueueAction
@@ -101,5 +143,12 @@ export type NotificationAction =
 export type Action =
   | WaypointAction
   | RouteAction
-  | SettingsSetAction
+  | SettingsAction
   | NotificationAction
+
+export type ActionCreator<A extends Action> = (data: A['data']) => A
+
+export type Reducer<A extends Action> = ReduxReducer<
+  StateFromActionType<A['type']>,
+  A
+>

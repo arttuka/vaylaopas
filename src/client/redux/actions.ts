@@ -1,75 +1,65 @@
 import {
-  ActionType,
+  ActionCreator,
+  WaypointActionType,
+  RouteActionType,
+  SettingsActionType,
+  NotificationActionType,
   WaypointAddAction,
-  WaypointAddProps,
   WaypointChangeAction,
-  WaypointChangeProps,
   WaypointRemoveAction,
-  WaypointRemoveProps,
   WaypointMoveAction,
-  WaypointMoveProps,
   RouteUpdateAction,
-  RouteUpdateProps,
   SettingsSetAction,
-  SettingsSetProps,
   NotificationEnqueueAction,
-  NotificationEnqueueProps,
   NotificationRemoveAction,
-  NotificationRemoveProps,
 } from './action-types'
 
-export const waypointAddAction = (
-  data: WaypointAddProps
-): WaypointAddAction => ({
-  type: ActionType.WaypointAdd,
+export const waypointAddAction: ActionCreator<WaypointAddAction> = (data) => ({
+  type: WaypointActionType.WaypointAdd,
   data,
 })
 
-export const waypointChangeAction = (
-  data: WaypointChangeProps
-): WaypointChangeAction => ({
-  type: ActionType.WaypointChange,
+export const waypointChangeAction: ActionCreator<WaypointChangeAction> = (
+  data
+) => ({
+  type: WaypointActionType.WaypointChange,
   data,
 })
 
-export const waypointRemoveAction = (
-  data: WaypointRemoveProps
-): WaypointRemoveAction => ({
-  type: ActionType.WaypointRemove,
+export const waypointRemoveAction: ActionCreator<WaypointRemoveAction> = (
+  data
+) => ({
+  type: WaypointActionType.WaypointRemove,
   data,
 })
 
-export const waypointMoveAction = (
-  data: WaypointMoveProps
-): WaypointMoveAction => ({
-  type: ActionType.WaypointMove,
+export const waypointMoveAction: ActionCreator<WaypointMoveAction> = (
+  data
+) => ({
+  type: WaypointActionType.WaypointMove,
   data,
 })
 
-export const routeUpdateAction = (
-  data: RouteUpdateProps
-): RouteUpdateAction => ({
-  type: ActionType.RouteSuccess,
+export const routeUpdateAction: ActionCreator<RouteUpdateAction> = (data) => ({
+  type: RouteActionType.RouteSuccess,
   data,
 })
 
-export const settingsSetAction = (
-  data: SettingsSetProps
-): SettingsSetAction => ({
-  type: ActionType.SettingsSet,
+export const settingsSetAction: ActionCreator<SettingsSetAction> = (data) => ({
+  type: SettingsActionType.SettingsSet,
   data,
 })
 
-export const notificationEnqueueAction = (
-  data: NotificationEnqueueProps
-): NotificationEnqueueAction => ({
-  type: ActionType.NotificationEnqueue,
+export const notificationEnqueueAction: ActionCreator<NotificationEnqueueAction> = (
+  data
+) => ({
+  type: NotificationActionType.NotificationEnqueue,
   data,
 })
 
-export const notificationRemoveAction = (
-  data: NotificationRemoveProps
-): NotificationRemoveAction => ({
-  type: ActionType.NotificationRemove,
+export const notificationRemoveAction: ActionCreator<NotificationRemoveAction> = (
+  data
+) => ({
+  type: NotificationActionType.NotificationRemove,
   data,
 })

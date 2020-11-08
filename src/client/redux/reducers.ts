@@ -1,18 +1,17 @@
-import { combineReducers, Reducer } from 'redux'
+import { combineReducers, Reducer as ReduxReducer } from 'redux'
 import {
-  ActionType,
+  Reducer,
+  WaypointActionType,
+  RouteActionType,
+  SettingsActionType,
+  NotificationActionType,
   WaypointAction,
   RouteAction,
-  SettingsSetAction,
   NotificationAction,
+  SettingsAction,
+  Action,
 } from './action-types'
-import {
-  Waypoint,
-  RootState,
-  Route,
-  Settings,
-  Notification,
-} from '../../common/types'
+import { Waypoint, RootState } from '../../common/types'
 import {
   getStoredSetting,
   insertIndex,
@@ -22,6 +21,18 @@ import {
   hasAnyId,
   makeIdGenerator,
 } from '../../common/util'
+
+const initialState: RootState = {
+  routes: [],
+  settings: {
+    height: getStoredSetting('height'),
+    depth: getStoredSetting('depth'),
+    speed: getStoredSetting('speed'),
+    consumption: getStoredSetting('consumption'),
+  },
+  waypoints: [],
+  notifications: [],
+}
 
 const getAdjacentWaypointIds = (
   waypoints: Waypoint[],
@@ -46,12 +57,12 @@ const getAdjacentWaypointIds = (
 }
 
 const generateWaypointId = makeIdGenerator('waypoint')
-export const waypointReducer = (
-  waypoints: Waypoint[],
-  action: WaypointAction
-): Waypoint[] => {
+export const waypointReducer: Reducer<WaypointAction> = (
+  waypoints = initialState.waypoints,
+  action
+) => {
   switch (action.type) {
-    case ActionType.WaypointAdd: {
+    case WaypointActionType.WaypointAdd: {
       const { point, index, type } = action.data
       return insertIndex(
         waypoints,
@@ -59,13 +70,13 @@ export const waypointReducer = (
         { ...point, id: generateWaypointId(), type }
       )
     }
-    case ActionType.WaypointChange:
+    case WaypointActionType.WaypointChange:
       const { id, type } = action.data
       return updateWhere(waypoints, hasId(id), { type })
-    case ActionType.WaypointRemove:
+    case WaypointActionType.WaypointRemove:
       const ids = getAdjacentWaypointIds(waypoints, action.data.id)
       return removeWhere(waypoints, hasAnyId(ids))
-    case ActionType.WaypointMove: {
+    case WaypointActionType.WaypointMove: {
       const { point, id } = action.data
       return updateWhere(waypoints, hasId(id), point)
     }
@@ -74,21 +85,24 @@ export const waypointReducer = (
   }
 }
 
-const routeReducer = (routes: Route[], action: RouteAction): Route[] => {
+const routeReducer: Reducer<RouteAction> = (
+  routes = initialState.routes,
+  action
+) => {
   switch (action.type) {
-    case ActionType.RouteSuccess:
+    case RouteActionType.RouteSuccess:
       return action.data.routes
     default:
       return routes
   }
 }
 
-const settingsReducer = (
-  settings: Settings,
-  action: SettingsSetAction
-): Settings => {
+const settingsReducer: Reducer<SettingsAction> = (
+  settings = initialState.settings,
+  action
+) => {
   switch (action.type) {
-    case ActionType.SettingsSet:
+    case SettingsActionType.SettingsSet:
       const { key, value } = action.data
       return {
         ...settings,
@@ -100,12 +114,12 @@ const settingsReducer = (
 }
 
 const generateKey = makeIdGenerator('notification')
-const notificationReducer = (
-  notifications: Notification[],
-  action: NotificationAction
-): Notification[] => {
+const notificationReducer: Reducer<NotificationAction> = (
+  notifications = initialState.notifications,
+  action
+) => {
   switch (action.type) {
-    case ActionType.NotificationEnqueue:
+    case NotificationActionType.NotificationEnqueue:
       const { key, message, variant } = action.data
       return [
         ...notifications,
@@ -115,33 +129,16 @@ const notificationReducer = (
           variant,
         },
       ]
-    case ActionType.NotificationRemove:
+    case NotificationActionType.NotificationRemove:
       return notifications.filter((n) => n.key !== action.data.key)
     default:
       return notifications
   }
 }
 
-const defaultInitialState: RootState = {
-  routes: [],
-  settings: {
-    height: getStoredSetting('height'),
-    depth: getStoredSetting('depth'),
-    speed: getStoredSetting('speed'),
-    consumption: getStoredSetting('consumption'),
-  },
-  waypoints: [],
-  notifications: [],
-}
-
-export const rootReducer = (initialState = defaultInitialState): Reducer =>
-  combineReducers({
-    waypoints: (state = initialState.waypoints, action) =>
-      waypointReducer(state, action),
-    routes: (state = initialState.routes, action) =>
-      routeReducer(state, action),
-    settings: (state = initialState.settings, action) =>
-      settingsReducer(state, action),
-    notifications: (state = initialState.notifications, action) =>
-      notificationReducer(state, action),
-  })
+export const rootReducer: ReduxReducer<RootState, Action> = combineReducers({
+  waypoints: waypointReducer,
+  routes: routeReducer,
+  settings: settingsReducer,
+  notifications: notificationReducer,
+})
