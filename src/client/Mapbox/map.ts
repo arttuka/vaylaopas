@@ -1,9 +1,14 @@
 import { useCallback, useRef, useState } from 'react'
-import { GeolocateControl, Map, NavigationControl } from 'mapbox-gl'
+import {
+  GeolocateControl,
+  Map as MapboxMap,
+  NavigationControl,
+} from 'mapbox-gl'
 import { addLayers, makeLayerDraggable } from './layer'
 import { addSources } from './source'
 import {
   DragStartHandler,
+  Map,
   MouseEventHandler,
   Source,
   TouchEvent,
@@ -89,14 +94,15 @@ export const useMap = (): [
       }
       setInitialized(false)
     } else {
-      const map = new Map({
+      const map = new MapboxMap({
         container,
         style: clientConfig.mapserver,
         hash: true,
         zoom: 11,
         center: [24.94, 60.17],
         dragRotate: false,
-      })
+      }) as Map
+      map.initialized = false
       map.on('load', (): void => setInitialized(true))
       mapRef.current = map
     }

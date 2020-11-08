@@ -12,6 +12,7 @@ import {
   MapboxGeoJSONFeature,
   MapMouseEvent,
   MapTouchEvent,
+  Map as MapboxMap,
 } from 'mapbox-gl'
 import { LaneProperties, WaypointProperties } from '../../common/types'
 
@@ -77,3 +78,7 @@ export type SourceId = Source['id']
 export const sourceIsGeoJSON = (
   source?: AnySourceImpl
 ): source is GeoJSONSource => source !== undefined && source.type === 'geojson'
+
+export interface Map extends MapboxMap {
+  initialized: boolean
+}

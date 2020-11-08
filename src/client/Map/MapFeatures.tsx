@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Map } from 'mapbox-gl'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
 import { initializeMap, longTouchDuration } from '../Mapbox/map'
@@ -13,6 +12,7 @@ import {
 import {
   DragStartHandler,
   Event,
+  Map,
   MouseEvent,
   TouchEvent,
 } from '../Mapbox/types'
@@ -165,23 +165,26 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
   }
 
   useEffect(() => {
-    initializeMap(
-      map,
-      {
-        handleClick,
-        handleRightClick,
-        handleLongTouch,
-        handleDragRoute,
-        handleTouchStart,
-        handleTouchEnd,
-        handleDragWaypoint,
-      },
-      [
-        ...generateRouteSources(routes),
-        { id: 'dragIndicator', data: pointFeature() },
-        { id: 'waypoint', data: waypointsRef.current },
-      ]
-    )
+    if (!map.initialized) {
+      initializeMap(
+        map,
+        {
+          handleClick,
+          handleRightClick,
+          handleLongTouch,
+          handleDragRoute,
+          handleTouchStart,
+          handleTouchEnd,
+          handleDragWaypoint,
+        },
+        [
+          ...generateRouteSources(routes),
+          { id: 'dragIndicator', data: pointFeature() },
+          { id: 'waypoint', data: waypointsRef.current },
+        ]
+      )
+      map.initialized = true
+    }
   }, [])
 
   useEffect(() => {
