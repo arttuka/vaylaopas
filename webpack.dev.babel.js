@@ -16,7 +16,7 @@ module.exports = {
     extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
   },
   devtool: 'eval-source-map',
-  stats: 'minimal',
+  stats: 'errors-warnings',
   devServer: {
     hot: true,
     compress: true,

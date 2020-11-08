@@ -25,8 +25,9 @@
   },
   "scripts": {
     "watch:server": "BABEL_ENV=server NODE_ENV=development nodemon -e js,ts -w src/server -w src/common --exec 'babel-node -x \".js\",\".ts\"' src/server/server.ts",
-    "watch:client": "BABEL_ENV=server NODE_ENV=development webpack serve --color --progress --config webpack.dev.babel.js",
-    "watch": "concurrently -k -n server,client 'npm run watch:server' 'npm run watch:client'",
+    "watch:client": "BABEL_ENV=server NODE_ENV=development webpack serve --color --config webpack.dev.babel.js",
+    "watch:typecheck": "tsc --noEmit --watch --preserveWatchOutput --pretty",
+    "watch": "concurrently -k -n server,client,typecheck 'npm run watch:server' 'npm run watch:client' 'npm run watch:typecheck'",
     "lint": "tsc --noEmit && eslint \"src/**/*.{js,ts,tsx}\" --max-warnings=0 && prettier --check \"src/**/*.{js,ts,tsx}\"",
     "test": "BABEL_ENV=server jest",
     "test:watch": "BABEL_ENV=server jest --watch",
