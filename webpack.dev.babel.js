@@ -1,16 +1,21 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
-import { merge } from 'webpack-merge'
 import config from './config.json'
 import indexHtml from './src/server/indexHtml'
-import common from './webpack.common'
 
 const { server: serverConfig, client: clientConfig } = config
 const { host, port, devserverPort } = serverConfig
 
-module.exports = merge(common, {
+module.exports = {
   mode: 'development',
-  devtool: 'inline-source-map',
+  entry: {
+    bundle: ['./src/client/client.tsx'],
+  },
+  resolve: {
+    modules: ['./node_modules'],
+    extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
+  },
+  devtool: 'eval-source-map',
   stats: 'minimal',
   devServer: {
     hot: true,
@@ -51,4 +56,4 @@ module.exports = merge(common, {
     }),
     new ReactRefreshWebpackPlugin(),
   ],
-})
+}

@@ -187,7 +187,7 @@ export const getRoute = async (
     )
     const endpoints = await getClosestPoints(client, points, depth)
     await insertExtraLanes(client, endpoints)
-    return getRouteBetweenVertices(client, endpoints, depth, height)
+    return await getRouteBetweenVertices(client, endpoints, depth, height)
   } finally {
     await client.query('COMMIT')
     client.release()

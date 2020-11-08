@@ -124,3 +124,9 @@ export interface TouchMarkerState {
   top: number
   left: number
 }
+
+export interface Stats {
+  assetsByChunkName: {
+    [key: string]: string[]
+  }
+}

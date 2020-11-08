@@ -1,47 +1,79 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const TerserWebpackPlugin = require('terser-webpack-plugin')
-const ManifestPlugin = require('webpack-manifest-plugin')
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 const { merge } = require('webpack-merge')
 const path = require('path')
-const common = require('./webpack.common.js')
+const nodeExternals = require('webpack-node-externals')
+require('@babel/register')
 
-const config = merge(common, {
-  mode: 'production',
-  devtool: 'source-map',
-  output: {
-    path: path.join(__dirname, 'dist/js'),
-    filename: '[name].[contenthash:8].js',
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            envName: 'browser',
-          },
-        },
+const makeConfig = (envName, config) =>
+  merge(
+    {
+      resolve: {
+        modules: ['./node_modules'],
+        extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
       },
-    ],
-  },
-  optimization: {
-    minimize: true,
-    minimizer: [
-      new TerserWebpackPlugin({
-        sourceMap: true,
-        terserOptions: {
-          ecma: 2015,
+      mode: 'production',
+      devtool: 'source-map',
+      module: {
+        rules: [
+          {
+            test: /\.tsx?$/,
+            exclude: /node_modules/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                envName,
+              },
+            },
+          },
+        ],
+      },
+      optimization: {
+        minimize: true,
+        minimizer: [
+          new TerserWebpackPlugin({
+            terserOptions: {
+              ecma: 2015,
+            },
+          }),
+        ],
+      },
+      stats: 'minimal',
+    },
+    config
+  )
+
+module.exports = [
+  makeConfig('browser', {
+    entry: {
+      bundle: ['./src/client/client.tsx'],
+    },
+    output: {
+      filename: '[name].[contenthash:8].js',
+      path: path.join(__dirname, 'dist/client'),
+    },
+    plugins: [
+      new BundleAnalyzerPlugin({
+        analyzerMode: 'disabled',
+        generateStatsFile: true,
+        statsFilename: '../stats.json',
+        statsOptions: {
+          all: false,
+          assets: true,
         },
       }),
     ],
-  },
-  plugins: [
-    new ManifestPlugin({
-      fileName: path.join(__dirname, 'dist/server/manifest.json'),
-    }),
-  ],
-})
-
-module.exports = [config]
+  }),
+  makeConfig('server', {
+    entry: {
+      server: ['./src/server/server.ts'],
+    },
+    output: {
+      filename: '[name].js',
+      path: path.join(__dirname, 'dist/server'),
+    },
+    target: 'node14.15',
+    externals: [nodeExternals()],
+  }),
+]

@@ -1,16 +1,17 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { Config } from '../common/types'
+import { Config, Stats } from '../common/types'
 
 let config: Config
 
-const manifest = path.resolve('./dist/server/manifest.json')
-const bundle =
-  process.env.NODE_ENV === 'production' && fs.existsSync(manifest)
-    ? JSON.parse(fs.readFileSync(manifest, 'utf8'))['bundle.js']
-    : 'bundle.js'
-const configFile = path.resolve('config.json')
-if (process.env.NODE_ENV === 'development' && fs.existsSync(configFile)) {
+const statsFile = path.resolve('./dist/stats.json')
+let bundle = 'bundle.js'
+if (process.env.NODE_ENV === 'production' && fs.existsSync(statsFile)) {
+  const stats: Stats = JSON.parse(fs.readFileSync(statsFile, 'utf8'))
+  bundle = stats.assetsByChunkName.bundle[0]
+}
+const configFile = path.resolve('./config.json')
+if (fs.existsSync(configFile)) {
   config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
   config.server.bundle = bundle
 } else {
