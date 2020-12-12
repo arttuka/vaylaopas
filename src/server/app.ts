@@ -1,6 +1,6 @@
 import express from 'express'
 import config from './config'
-import { getRoute } from './db'
+import { getRoute, addMapLoad } from './db'
 import { Waypoint } from '../common/types'
 import indexHtml from './indexHtml'
 
@@ -31,6 +31,18 @@ app.post(
     const { points, depth, height }: RouteParams = req.body
     try {
       res.send(await getRoute(points, depth, height))
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+app.post(
+  '/api/map-load',
+  async (req, res, next): Promise<void> => {
+    try {
+      await addMapLoad()
+      res.send()
     } catch (error) {
       next(error)
     }

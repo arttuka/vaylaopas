@@ -14,6 +14,7 @@ import {
   TouchEvent,
   TouchEventHandler,
 } from './types'
+import { addMapLoad } from '../api'
 import { ClientConfig } from '../../common/types'
 
 declare const clientConfig: ClientConfig
@@ -103,7 +104,10 @@ export const useMap = (): [
         dragRotate: false,
       }) as Map
       map.initialized = false
-      map.on('load', (): void => setInitialized(true))
+      map.on('load', (): void => {
+        setInitialized(true)
+        addMapLoad()
+      })
       mapRef.current = map
     }
   }, [])

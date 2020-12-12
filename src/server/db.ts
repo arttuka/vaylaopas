@@ -193,3 +193,12 @@ export const getRoute = async (
     client.release()
   }
 }
+
+export const addMapLoad = async (): Promise<void> => {
+  const client = await pool.connect()
+  try {
+    await client.query('INSERT INTO map_load DEFAULT VALUES')
+  } finally {
+    client.release()
+  }
+}

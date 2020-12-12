@@ -21,3 +21,7 @@ export const getRoutes = async (
   }
   return response.json()
 }
+
+export const addMapLoad = async (): Promise<void> => {
+  await fetch('/api/map-load', { method: 'POST' })
+}
