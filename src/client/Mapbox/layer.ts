@@ -1,22 +1,12 @@
-import { Layer, Map } from 'mapbox-gl'
+import { Map } from 'mapbox-gl'
 import indigo from '@material-ui/core/colors/indigo'
 import { DragStartHandler, Event, SourceId } from './types'
 import { throttle } from '../../common/util'
 
-const addLayer = (
-  map: Map,
-  source: SourceId,
-  options: Partial<Layer>
-): void => {
-  map.addLayer({
-    id: source,
-    source,
-    ...options,
-  })
-}
-
 export const addLayers = (map: Map): void => {
-  addLayer(map, 'route', {
+  map.addLayer({
+    id: 'route',
+    source: 'route',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -27,7 +17,9 @@ export const addLayers = (map: Map): void => {
       'line-width': 3,
     },
   })
-  addLayer(map, 'notFoundRoute', {
+  map.addLayer({
+    id: 'notFoundRoute',
+    source: 'notFoundRoute',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -39,7 +31,9 @@ export const addLayers = (map: Map): void => {
       'line-dasharray': [0.5, 2],
     },
   })
-  addLayer(map, 'routeStartAndEnd', {
+  map.addLayer({
+    id: 'routeStartAndEnd',
+    source: 'routeStartAndEnd',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -51,7 +45,9 @@ export const addLayers = (map: Map): void => {
       'line-dasharray': [0.5, 3],
     },
   })
-  addLayer(map, 'dragIndicator', {
+  map.addLayer({
+    id: 'dragIndicator',
+    source: 'dragIndicator',
     type: 'symbol',
     layout: {
       'icon-image': 'circle',
@@ -59,7 +55,9 @@ export const addLayers = (map: Map): void => {
       'icon-ignore-placement': true,
     },
   })
-  addLayer(map, 'waypoint', {
+  map.addLayer({
+    id: 'waypoint',
+    source: 'waypoint',
     type: 'symbol',
     layout: {
       'icon-image': ['match', ['get', 'type'], 'destination', 'pin', 'circle'],

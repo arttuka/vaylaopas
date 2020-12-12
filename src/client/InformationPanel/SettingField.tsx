@@ -56,6 +56,7 @@ const SettingField: FunctionComponent<SettingFieldProps> = (props) => {
       value={value !== undefined ? value : ''}
       onChange={onChange}
       type="number"
+      variant="standard"
       fullWidth
       InputProps={{
         startAdornment: (

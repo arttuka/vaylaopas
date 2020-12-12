@@ -31,20 +31,26 @@ const ContextMenu: FunctionComponent<ContextMenuProps> = ({
     {waypoint === undefined ? (
       <MenuItem onClick={onAdd}>Lisää reitille</MenuItem>
     ) : (
-      <>
-        {isDestination ? (
-          <MenuItem onClick={() => onChange(waypoint, 'waypoint')}>
+      [
+        isDestination ? (
+          <MenuItem
+            key="change-to-waypoint"
+            onClick={() => onChange(waypoint, 'waypoint')}
+          >
             Muuta välipisteeksi
           </MenuItem>
         ) : (
-          <MenuItem onClick={() => onChange(waypoint, 'destination')}>
+          <MenuItem
+            key="change-to-destination"
+            onClick={() => onChange(waypoint, 'destination')}
+          >
             Muuta määränpääksi
           </MenuItem>
-        )}
-        <MenuItem onClick={() => onDelete(waypoint)}>
+        ),
+        <MenuItem key="delete-waypoint" onClick={() => onDelete(waypoint)}>
           Poista reittipiste
-        </MenuItem>
-      </>
+        </MenuItem>,
+      ]
     )}
   </Menu>
 )
