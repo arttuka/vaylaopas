@@ -171,7 +171,7 @@ test('formatDuration', (): void => {
   expect(formatDuration(61)).toEqual('1 h 1 min')
 })
 
-test('throttle', async (done): Promise<void> => {
+test('throttle', async (): Promise<void> => {
   const fn = jest.fn()
   const throttledFn = throttle(fn, 50)
   throttledFn(1)
@@ -183,7 +183,6 @@ test('throttle', async (done): Promise<void> => {
   throttledFn(6)
   expect(fn).toHaveBeenCalledTimes(2)
   expect(fn.mock.calls).toEqual([[1], [4]])
-  done()
 })
 
 test('positionOffset', (): void => {
