@@ -181,15 +181,24 @@ export const storeSetting = (key: keyof Settings, value?: number): void => {
   }
 }
 
-export const useInterval = (callback: () => void, ms: number): void => {
+export const useInterval = (
+  callback: (ms: number) => void,
+  ms: number
+): void => {
   const callbackRef = useRef(callback)
+  const prevTime = useRef(Date.now())
 
   useEffect(() => {
     callbackRef.current = callback
   }, [callback])
 
   useEffect(() => {
-    const tick = (): void => callbackRef.current()
+    prevTime.current = Date.now()
+    const tick = (): void => {
+      const now = Date.now()
+      callbackRef.current(now - prevTime.current)
+      prevTime.current = now
+    }
     const id = setInterval(tick, ms)
     return (): void => {
       clearInterval(id)

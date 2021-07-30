@@ -109,6 +109,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({ map }) => {
     setTouchMarker(undefined)
     const waypoint = eventToWaypoint(e)
     if (shortTouch && waypoint) {
+      e.originalEvent.preventDefault()
       openMenu(e.point, waypoint)
     }
   }

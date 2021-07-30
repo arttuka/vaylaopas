@@ -29,8 +29,8 @@ const TouchMarker: FunctionComponent<TouchMarkerProps> = ({
 }) => {
   const [progress, setProgress] = useState(0)
 
-  useInterval(() => {
-    const next = progress + (interval / duration) * 100
+  useInterval((ms) => {
+    const next = progress + (ms / duration) * 100
     setProgress(Math.min(next, 100))
   }, interval)
 
