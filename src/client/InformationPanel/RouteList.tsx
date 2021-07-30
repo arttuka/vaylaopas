@@ -40,19 +40,17 @@ const RouteList: FunctionComponent<RouteListProps> = ({ onClick }) => {
     <OuterList disablePadding={true}>
       <RouteSegment {...totals} kind="totals" onClick={onClick} />
       <ScrollingList disablePadding={true}>
-        {destinations.map(
-          ({ id }, i): ReactElement => {
-            const props = i > 0 ? combinedRoutes[i - 1] : { found: true }
-            return (
-              <RouteSegment
-                key={`route-segment-${i}`}
-                index={i}
-                onDelete={(): void => onDelete(id)}
-                {...props}
-              />
-            )
-          }
-        )}
+        {destinations.map(({ id }, i): ReactElement => {
+          const props = i > 0 ? combinedRoutes[i - 1] : { found: true }
+          return (
+            <RouteSegment
+              key={`route-segment-${i}`}
+              index={i}
+              onDelete={(): void => onDelete(id)}
+              {...props}
+            />
+          )
+        })}
       </ScrollingList>
     </OuterList>
   )

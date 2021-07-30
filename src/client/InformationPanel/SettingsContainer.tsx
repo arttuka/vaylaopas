@@ -15,10 +15,12 @@ const Container = styled('div')({
 const SettingsContainer: FunctionComponent = () => {
   const dispatch = useDispatch()
   const { depth, height, speed, consumption } = useSelector(settingsSelector)
-  const updateSetting = (key: keyof Settings) => (value?: number): void => {
-    const posValue = value && Math.max(0, value)
-    dispatch(settingsSetAction({ key, value: posValue }))
-  }
+  const updateSetting =
+    (key: keyof Settings) =>
+    (value?: number): void => {
+      const posValue = value && Math.max(0, value)
+      dispatch(settingsSetAction({ key, value: posValue }))
+    }
   return (
     <Container>
       <SettingField

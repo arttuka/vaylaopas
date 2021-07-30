@@ -46,9 +46,8 @@ export type KeyFromActionType<T extends ActionType> = {
   [K in keyof ActionMap]: T extends ActionMap[K]['type'] ? K : never
 }[keyof ActionMap]
 
-export type StateFromActionType<
-  T extends ActionType
-> = RootState[KeyFromActionType<T>]
+export type StateFromActionType<T extends ActionType> =
+  RootState[KeyFromActionType<T>]
 
 export interface BaseAction<T extends ActionType, D> extends ReduxAction<T> {
   type: T

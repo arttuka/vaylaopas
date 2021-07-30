@@ -25,28 +25,22 @@ interface RouteParams {
   height?: number
 }
 
-app.post(
-  '/api/route',
-  async (req, res, next): Promise<void> => {
-    const { points, depth, height }: RouteParams = req.body
-    try {
-      res.send(await getRoute(points, depth, height))
-    } catch (error) {
-      next(error)
-    }
+app.post('/api/route', async (req, res, next): Promise<void> => {
+  const { points, depth, height }: RouteParams = req.body
+  try {
+    res.send(await getRoute(points, depth, height))
+  } catch (error) {
+    next(error)
   }
-)
+})
 
-app.post(
-  '/api/map-load',
-  async (req, res, next): Promise<void> => {
-    try {
-      await addMapLoad()
-      res.send()
-    } catch (error) {
-      next(error)
-    }
+app.post('/api/map-load', async (req, res, next): Promise<void> => {
+  try {
+    await addMapLoad()
+    res.send()
+  } catch (error) {
+    next(error)
   }
-)
+})
 
 export default app

@@ -51,7 +51,10 @@ const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 export const numToLetter = (n: number): string =>
   n < 26 ? letters[n] : numToLetter(Math.floor(n / 26) - 1) + letters[n % 26]
 
-const complement = <T>(pred: Pred<T>): Pred<T> => (t: T) => !pred(t)
+const complement =
+  <T>(pred: Pred<T>): Pred<T> =>
+  (t: T) =>
+    !pred(t)
 
 export const removeWhere = <T>(arr: T[], pred: Pred<T>): T[] =>
   arr.filter(complement(pred))
@@ -71,16 +74,18 @@ export const updateWhere = <T>(arr: T[], pred: Pred<T>, t: Partial<T>): T[] => {
   }
 }
 
-export const hasProperty = <K extends string, V, T extends { [k in K]: V }>(
-  k: K,
-  v: V
-): Pred<T> => (t: T) => t[k] === v
+export const hasProperty =
+  <K extends string, V, T extends { [k in K]: V }>(k: K, v: V): Pred<T> =>
+  (t: T) =>
+    t[k] === v
 
 export const hasId = <T extends Id>(id: string): Pred<T> =>
   hasProperty('id', id)
 
-export const hasAnyId = <T extends Id>(ids: string[]): Pred<T> => (t: T) =>
-  ids.includes(t.id)
+export const hasAnyId =
+  <T extends Id>(ids: string[]): Pred<T> =>
+  (t: T) =>
+    ids.includes(t.id)
 
 export const insertIndex = <T>(arr: T[], i: number, t: T): T[] => [
   ...arr.slice(0, i),
