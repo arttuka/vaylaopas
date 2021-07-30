@@ -7,7 +7,7 @@ import {
   MapLayerMouseEvent,
   MapLayerTouchEvent,
   Map as MapboxMap,
-} from 'mapbox-gl'
+} from 'maplibre-gl'
 import {
   Collection,
   FeatureType,

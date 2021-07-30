@@ -3,7 +3,7 @@ import {
   GeolocateControl,
   Map as MapboxMap,
   NavigationControl,
-} from 'mapbox-gl'
+} from 'maplibre-gl'
 import { addLayers, makeLayerDraggable } from './layer'
 import { addSources } from './source'
 import {

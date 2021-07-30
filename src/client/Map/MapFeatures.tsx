@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Point } from 'mapbox-gl'
+import { Point } from 'maplibre-gl'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
 import { initializeMap, longTouchDuration } from '../Mapbox/map'

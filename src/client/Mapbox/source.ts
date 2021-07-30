@@ -1,4 +1,4 @@
-import { LngLat, Map } from 'mapbox-gl'
+import { LngLat, Map } from 'maplibre-gl'
 import { SourceId, Source, Sources, sourceIsGeoJSON } from './types'
 import {
   Collection,

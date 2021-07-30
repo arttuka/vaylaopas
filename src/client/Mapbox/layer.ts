@@ -1,4 +1,4 @@
-import { Map } from 'mapbox-gl'
+import { Map } from 'maplibre-gl'
 import indigo from '@material-ui/core/colors/indigo'
 import {
   DragStartHandler,
