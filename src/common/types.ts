@@ -1,4 +1,10 @@
-import { Feature, Point, LineString } from 'geojson'
+import {
+  Feature,
+  FeatureCollection,
+  MultiPoint,
+  Point,
+  LineString,
+} from 'geojson'
 import { VariantType } from 'notistack'
 
 export type Pred<T> = (t: T) => boolean
@@ -21,28 +27,34 @@ export interface Waypoint extends LngLat, Id {
 export interface LaneProperties {
   route: number
 }
-
 export type Lane = Feature<LineString, LaneProperties>
-
-export const featureIsLane = (feature?: Feature): feature is Lane =>
-  feature !== undefined &&
-  feature.properties !== null &&
-  feature.properties.hasOwnProperty('route')
-
+export type Collection<F extends FeatureType> = FeatureCollection<
+  F['geometry'],
+  F['properties']
+>
 export interface WaypointProperties extends Id {
   letter?: string
   type: WaypointType
   dragged: boolean
 }
-
 export type WaypointFeature = Feature<Point, WaypointProperties>
+export type PointFeature = Feature<MultiPoint>
+export type FeatureType = Lane | PointFeature | WaypointFeature
+export type IsFeature<T extends FeatureType> = (
+  feature?: Feature
+) => feature is T
+
+const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
+  feature !== undefined &&
+  feature.properties !== null &&
+  feature.properties.hasOwnProperty(p)
 
 export const featureIsWaypoint = (
   feature?: Feature
-): feature is WaypointFeature =>
-  feature !== undefined &&
-  feature.properties !== null &&
-  feature.properties.hasOwnProperty('id')
+): feature is WaypointFeature => featureHasProperty(feature, 'id')
+
+export const featureIsLane = (feature?: Feature): feature is Lane =>
+  featureHasProperty(feature, 'route')
 
 export interface RouteProps {
   found: boolean
@@ -125,3 +137,9 @@ export interface Stats {
     [key: string]: string[]
   }
 }
+
+export type MapBy<
+  T extends { [key in K]: unknown },
+  K extends string,
+  V extends T[K]
+> = Extract<T, { [key in K]: V }>

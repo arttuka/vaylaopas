@@ -1,84 +1,83 @@
+import { Geometry, LineString, MultiPoint, Point } from 'geojson'
 import {
-  Feature,
-  FeatureCollection,
-  LineString,
-  MultiPoint,
-  Point,
-} from 'geojson'
-import {
+  AnyLayer,
   AnySourceImpl,
   EventData,
   GeoJSONSource,
-  MapboxGeoJSONFeature,
-  MapMouseEvent,
-  MapTouchEvent,
+  MapLayerMouseEvent,
+  MapLayerTouchEvent,
   Map as MapboxMap,
 } from 'mapbox-gl'
-import { LaneProperties, WaypointProperties } from '../../common/types'
+import {
+  Collection,
+  FeatureType,
+  Lane,
+  MapBy,
+  PointFeature,
+  WaypointFeature,
+} from '../../common/types'
 
-export type MouseEvent = MapMouseEvent & EventData
-export type TouchEvent = MapTouchEvent & EventData
-export type Event = MouseEvent | TouchEvent
+export type MouseEvent = MapLayerMouseEvent & EventData
+export type TouchEvent = MapLayerTouchEvent & EventData
 
 export type MouseEventHandler = (e: MouseEvent) => void
-export type TouchEventHandler = (e: TouchEvent) => void
-export type DragStartHandler = (
-  e: Event,
-  feature: MapboxGeoJSONFeature,
-  type: 'mouse' | 'touch'
+export type TouchEventHandler = (e: TouchEvent, shortTouch?: boolean) => void
+export type EventHandler<T extends EventType> = (e: EventTypes[T]) => void
+export type DragStartHandler<F extends FeatureType> = <T extends EventType>(
+  e: EventTypes[T],
+  feature: F,
+  type: T
 ) => {
-  onMove: (e: Event) => void
-  onMoveEnd: (e: Event) => void
+  onMove: EventHandler<T>
+  onMoveEnd: EventHandler<T>
 }
 
-export type LaneFeatureCollection = FeatureCollection<
-  LineString,
-  LaneProperties
+export type EventTypes = {
+  mouse: MouseEvent
+  touch: TouchEvent
+}
+export type EventType = keyof EventTypes
+export type Event = EventTypes[EventType]
+
+type GetFeatureType<F extends FeatureType | Collection<FeatureType>> =
+  F extends Collection<infer F2> ? F2 : F
+
+export type SourceType<
+  I extends string,
+  F extends FeatureType | Collection<FeatureType>
+> = {
+  id: I
+  data: F
+}
+
+export type Sources =
+  | SourceType<'route', Collection<Lane>>
+  | SourceType<'notFoundRoute', Collection<Lane>>
+  | SourceType<'routeStartAndEnd', Collection<Lane>>
+  | SourceType<'dragIndicator', PointFeature>
+  | SourceType<'waypoint', Collection<WaypointFeature>>
+export type SourceId = Sources['id']
+export type Source<S extends SourceId> = MapBy<Sources, 'id', S>
+export type SourceFeature<S extends SourceId> = GetFeatureType<
+  Source<S>['data']
 >
-export type WaypointFeatureCollection = FeatureCollection<
-  Point,
-  WaypointProperties
->
-export type PointFeature = Feature<MultiPoint>
-
-export interface RouteSource {
-  id: 'route'
-  data: LaneFeatureCollection
-}
-
-export interface NotFoundRouteSource {
-  id: 'notFoundRoute'
-  data: LaneFeatureCollection
-}
-
-export interface RouteStartAndEndSource {
-  id: 'routeStartAndEnd'
-  data: LaneFeatureCollection
-}
-
-export interface DragIndicatorSource {
-  id: 'dragIndicator'
-  data: PointFeature
-}
-
-export interface WaypointSource {
-  id: 'waypoint'
-  data: WaypointFeatureCollection
-}
-
-export type Source =
-  | RouteSource
-  | NotFoundRouteSource
-  | RouteStartAndEndSource
-  | DragIndicatorSource
-  | WaypointSource
-
-export type SourceId = Source['id']
 
 export const sourceIsGeoJSON = (
   source?: AnySourceImpl
 ): source is GeoJSONSource => source !== undefined && source.type === 'geojson'
 
+type LayerType<G extends Geometry> = G extends LineString
+  ? 'line'
+  : G extends Point
+  ? 'symbol'
+  : G extends MultiPoint
+  ? 'symbol'
+  : never
+export type Layer<S extends SourceId> = MapBy<
+  AnyLayer,
+  'type',
+  LayerType<SourceFeature<S>['geometry']>
+> & { id: S; source: S }
 export interface Map extends MapboxMap {
   initialized: boolean
 }

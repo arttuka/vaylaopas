@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { Point } from 'mapbox-gl'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
 import { initializeMap, longTouchDuration } from '../Mapbox/map'
@@ -13,8 +14,8 @@ import {
   DragStartHandler,
   Event,
   Map,
-  MouseEvent,
-  TouchEvent,
+  MouseEventHandler,
+  TouchEventHandler,
 } from '../Mapbox/types'
 import {
   waypointAddAction,
@@ -24,11 +25,13 @@ import {
 } from '../redux/actions'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
 import {
-  featureIsLane,
   featureIsWaypoint,
+  Lane,
   LngLat,
   MenuState,
   TouchMarkerState,
+  WaypointFeature,
+  WaypointProperties,
   WaypointType,
 } from '../../common/types'
 import { calculateOffset, applyOffset } from '../../common/util'
@@ -57,18 +60,22 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({ map }) => {
   const waypoints = useSelector(waypointsSelector)
   const waypointsRef = useRef(waypointFeatureCollection(waypoints))
 
-  const handleClick = (): void => setMenu(closedMenu)
-
-  const handleRightClick = (e: MouseEvent): void => {
-    const feature = e.features && e.features[0]
-    const waypoint = featureIsWaypoint(feature) && feature.properties
+  const handleClick: MouseEventHandler = (e) => {
+    setMenu(closedMenu)
     e.preventDefault()
-    setLastClick(toLngLat(e))
+  }
+
+  const eventToWaypoint = (e: Event): WaypointProperties | undefined => {
+    const feature = e.features && e.features[0]
+    return featureIsWaypoint(feature) ? feature.properties : undefined
+  }
+
+  const openMenu = (p: Point, waypoint?: WaypointProperties) => {
     setMenu({
       ...menu,
       open: true,
-      top: e.point.y + 64,
-      left: e.point.x,
+      top: p.y + 64,
+      left: p.x,
       ...(waypoint
         ? {
             waypoint: waypoint.id,
@@ -78,72 +85,81 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({ map }) => {
     })
   }
 
-  const handleLongTouch = (e: TouchEvent): void => {
+  const handleRightClick: MouseEventHandler = (e) => {
+    e.preventDefault()
+    setLastClick(toLngLat(e))
+    openMenu(e.point, eventToWaypoint(e))
+  }
+
+  const handleLongTouch: TouchEventHandler = (e) => {
     e.preventDefault()
     dispatch(waypointAddAction({ point: toLngLat(e), type: 'destination' }))
     setTouchMarker(undefined)
   }
 
-  const handleTouchStart = (e: TouchEvent): void =>
+  const handleTouchStart: TouchEventHandler = (e) =>
     setTouchMarker({
       direction: 'up',
       top: e.point.y + 56,
       left: e.point.x,
     })
 
-  const handleTouchEnd = (): void => setTouchMarker(undefined)
-
-  const handleDragRoute: DragStartHandler = (e, feature) => {
-    if (featureIsLane(feature)) {
-      const onMove = (e: Event): void =>
-        setSourceData(map, {
-          id: 'dragIndicator',
-          data: pointFeature(e.lngLat),
-        })
-      const onMoveEnd = (e: Event): void => {
-        setSourceData(map, { id: 'dragIndicator', data: pointFeature() })
-        dispatch(
-          waypointAddAction({
-            point: toLngLat(e),
-            index: feature.properties.route + 1,
-            type: 'waypoint',
-          })
-        )
-      }
-      return { onMove, onMoveEnd }
-    } else {
-      throw new Error('dragIndicator feature had unexpected type')
+  const handleTouchEnd: TouchEventHandler = (e, shortTouch) => {
+    e.preventDefault()
+    setTouchMarker(undefined)
+    const waypoint = eventToWaypoint(e)
+    if (shortTouch && waypoint) {
+      openMenu(e.point, waypoint)
     }
   }
 
-  const handleDragWaypoint: DragStartHandler = (e, feature, type) => {
-    if (featureIsWaypoint(feature)) {
-      const offset = calculateOffset(e.lngLat, feature.geometry.coordinates)
-      const waypointId = feature.properties.id
-      const waypointCollection = waypointsRef.current
-      const index = waypointCollection.features.findIndex(
-        ({ properties }) => properties.id === waypointId
+  const handleDragRoute: DragStartHandler<Lane> = (e, feature) => ({
+    onMove: (e) =>
+      setSourceData(map, {
+        id: 'dragIndicator',
+        data: pointFeature(e.lngLat),
+      }),
+    onMoveEnd: (e) => {
+      setSourceData(map, { id: 'dragIndicator', data: pointFeature() })
+      dispatch(
+        waypointAddAction({
+          point: toLngLat(e),
+          index: feature.properties.route + 1,
+          type: 'waypoint',
+        })
       )
-      const waypoint = waypointCollection.features[index]
-      if (type === 'touch') {
-        waypoint.properties.dragged = true
-      }
-      const onMove = (e: Event): void => {
+    },
+  })
+
+  const handleDragWaypoint: DragStartHandler<WaypointFeature> = (
+    e,
+    feature,
+    type
+  ) => {
+    const offset = calculateOffset(e.lngLat, feature.geometry.coordinates)
+    const waypointId = feature.properties.id
+    const waypointCollection = waypointsRef.current
+    /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+    const waypoint = waypointCollection.features.find(
+      ({ properties }) => properties.id === waypointId
+    )!
+    if (type === 'touch') {
+      waypoint.properties.dragged = true
+    }
+    return {
+      onMove: (e) => {
         const { lng, lat } = applyOffset(e.lngLat, offset)
         waypoint.geometry.coordinates = [lng, lat]
         setSourceData(map, { id: 'waypoint', data: waypointCollection })
-      }
-      const onMoveEnd = (e: Event): void => {
+      },
+      onMoveEnd: (e) => {
         dispatch(
           waypointMoveAction({
             point: applyOffset(e.lngLat, offset),
             id: waypointId,
           })
         )
-      }
-      return { onMove, onMoveEnd }
-    } else {
-      throw new Error('waypoint feature had unexpected type')
+      },
     }
   }
 
@@ -200,7 +216,9 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({ map }) => {
         onAdd={onAddWaypoint}
         onChange={onChangeWaypoint}
         onDelete={onDeleteWaypoint}
-        onClose={() => setMenu(closedMenu)}
+        onClose={() => {
+          setMenu(closedMenu)
+        }}
         {...menu}
       />
       {touchMarker && (

@@ -10,12 +10,18 @@ import {
   DragStartHandler,
   Map,
   MouseEventHandler,
-  Source,
+  Sources,
   TouchEvent,
   TouchEventHandler,
 } from './types'
 import { addMapLoad } from '../api'
-import { ClientConfig } from '../../common/types'
+import {
+  ClientConfig,
+  Lane,
+  WaypointFeature,
+  featureIsLane,
+  featureIsWaypoint,
+} from '../../common/types'
 
 declare const clientConfig: ClientConfig
 export const longTouchDuration = 750
@@ -26,14 +32,14 @@ interface EventHandlers {
   handleLongTouch: TouchEventHandler
   handleTouchStart: TouchEventHandler
   handleTouchEnd: TouchEventHandler
-  handleDragRoute: DragStartHandler
-  handleDragWaypoint: DragStartHandler
+  handleDragRoute: DragStartHandler<Lane>
+  handleDragWaypoint: DragStartHandler<WaypointFeature>
 }
 
 export const initializeMap = (
   map: Map,
   eventHandlers: EventHandlers,
-  sources: Source[]
+  sources: Sources[]
 ): void => {
   const {
     handleClick,
@@ -46,9 +52,15 @@ export const initializeMap = (
   } = eventHandlers
 
   let longTouchTimer = 0
+  let shortTouch = false
   const onTouchEnd = (e: TouchEvent): void => {
     window.clearTimeout(longTouchTimer)
-    handleTouchEnd(e)
+    handleTouchEnd(e, shortTouch)
+  }
+  const onTouchCancel = (e: TouchEvent): void => {
+    window.clearTimeout(longTouchTimer)
+    shortTouch = false
+    handleTouchEnd(e, false)
   }
 
   map.touchZoomRotate.disableRotation()
@@ -69,16 +81,18 @@ export const initializeMap = (
     .on('touchstart', (e): void => {
       window.clearTimeout(longTouchTimer)
       handleTouchStart(e)
+      shortTouch = true
       longTouchTimer = window.setTimeout((): void => {
         handleLongTouch(e)
       }, longTouchDuration)
     })
     .on('touchend', onTouchEnd)
-    .on('touchcancel', onTouchEnd)
-    .on('touchmove', onTouchEnd)
+    .on('touchend', 'waypoint', onTouchEnd)
+    .on('touchcancel', onTouchCancel)
+    .on('touchmove', onTouchCancel)
 
-  makeLayerDraggable(map, 'route', handleDragRoute)
-  makeLayerDraggable(map, 'waypoint', handleDragWaypoint)
+  makeLayerDraggable(map, 'route', handleDragRoute, featureIsLane)
+  makeLayerDraggable(map, 'waypoint', handleDragWaypoint, featureIsWaypoint)
 }
 
 export const useMap = (): [

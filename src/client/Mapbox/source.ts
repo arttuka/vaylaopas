@@ -1,24 +1,25 @@
 import { LngLat, Map } from 'mapbox-gl'
+import { SourceId, Source, Sources, sourceIsGeoJSON } from './types'
 import {
-  LaneFeatureCollection,
+  Collection,
+  Lane,
   PointFeature,
-  Source,
-  WaypointFeatureCollection,
-  sourceIsGeoJSON,
-} from './types'
-import { Lane, Route, Waypoint } from '../../common/types'
+  Route,
+  Waypoint,
+  WaypointFeature,
+} from '../../common/types'
 import { numToLetter } from '../../common/util'
 
 export const laneFeatureCollection = (
   lanes: Lane[] = []
-): LaneFeatureCollection => ({
+): Collection<Lane> => ({
   type: 'FeatureCollection',
   features: lanes,
 })
 
 export const waypointFeatureCollection = (
   waypoints: Waypoint[] = []
-): WaypointFeatureCollection => {
+): Collection<WaypointFeature> => {
   let i = 0
   return {
     type: 'FeatureCollection',
@@ -72,7 +73,7 @@ const collectRoutes = (
     : { route: [], notFoundRoute: [], startAndEnd: [] }
 }
 
-export const generateRouteSources = (routes: Route[]): Source[] => {
+export const generateRouteSources = (routes: Route[]): Sources[] => {
   const { route, notFoundRoute, startAndEnd } = collectRoutes(routes)
   return [
     { id: 'route', data: laneFeatureCollection(route) },
@@ -81,13 +82,16 @@ export const generateRouteSources = (routes: Route[]): Source[] => {
   ]
 }
 
-export const addSources = (map: Map, sources: Source[]): void => {
+export const addSources = (map: Map, sources: Sources[]): void => {
   sources.forEach(({ id, data }) =>
     map.addSource(id, { type: 'geojson', data })
   )
 }
 
-export const setSourceData = (map: Map, { id, data }: Source): void => {
+export const setSourceData = <S extends SourceId>(
+  map: Map,
+  { id, data }: Source<S>
+): void => {
   const source = map.getSource(id)
   if (sourceIsGeoJSON(source)) {
     source.setData(data)
