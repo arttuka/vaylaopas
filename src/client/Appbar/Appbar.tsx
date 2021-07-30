@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useState } from 'react'
 import MuiAppBar from '@material-ui/core/AppBar'
-import Hidden from '@material-ui/core/Hidden'
 import IconButton from '@material-ui/core/IconButton'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
@@ -12,16 +11,15 @@ const AppBar: FunctionComponent = () => {
   return (
     <MuiAppBar position="static">
       <Toolbar>
-        <Hidden smUp>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={() => setOpen(true)}
-          >
-            <SettingsIcon />
-          </IconButton>
-          <TopDrawer open={open} onClose={() => setOpen(false)} />
-        </Hidden>
+        <IconButton
+          color="inherit"
+          edge="start"
+          onClick={() => setOpen(true)}
+          sx={{ display: { xs: 'block', sm: 'none' } }}
+        >
+          <SettingsIcon />
+        </IconButton>
+        <TopDrawer open={open} onClose={() => setOpen(false)} />
         <Typography variant="h4">Väyläopas</Typography>
       </Toolbar>
     </MuiAppBar>

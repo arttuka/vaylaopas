@@ -23,7 +23,12 @@ interface TopDrawerProps {
 }
 
 const TopDrawer: FunctionComponent<TopDrawerProps> = ({ open, onClose }) => (
-  <Drawer anchor="top" open={open} onClose={onClose}>
+  <Drawer
+    anchor="top"
+    open={open}
+    onClose={onClose}
+    sx={{ display: { xs: 'block', sm: 'none' } }}
+  >
     <SettingsContainer />
     <CloseButton onClick={onClose} size="small">
       <KeyboardArrowUpIcon />

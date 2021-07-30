@@ -1,6 +1,5 @@
 import React, { FunctionComponent } from 'react'
-import Hidden from '@material-ui/core/Hidden'
-import { styled } from '@material-ui/core/styles'
+import { styled } from '@material-ui/styles'
 import AppBar from './Appbar/Appbar'
 import MapContainer from './Map/MapContainer'
 import Notifier from './Notifier/Notifier'
@@ -18,13 +17,9 @@ const App: FunctionComponent = () => (
   <Container>
     <Notifier />
     <AppBar />
-    <Hidden smDown>
-      <InformationPanel />
-    </Hidden>
+    <InformationPanel />
     <MapContainer />
-    <Hidden smUp>
-      <BottomDrawer />
-    </Hidden>
+    <BottomDrawer />
   </Container>
 )
 

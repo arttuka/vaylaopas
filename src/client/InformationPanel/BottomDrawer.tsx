@@ -93,6 +93,7 @@ const BottomDrawer: FunctionComponent = () => {
           [classes.drawerClose]: !open,
         }),
       }}
+      sx={{ display: { xs: 'block', sm: 'none' } }}
     >
       {items > 0 && (
         <DrawerButton onClick={onClick} variant="contained" size="small">

@@ -15,7 +15,7 @@ const Paper = withStyles(({ spacing }) => ({
 }))(MuiPaper)
 
 const InformationPanel: FunctionComponent = () => (
-  <Paper elevation={3}>
+  <Paper elevation={3} sx={{ display: { xs: 'none', md: 'block' } }}>
     <RouteList />
     <SettingsAccordion />
   </Paper>

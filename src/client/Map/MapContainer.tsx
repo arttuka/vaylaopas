@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react'
-import { styled } from '@material-ui/core/styles'
+import { styled } from '@material-ui/styles'
 import MapFeatures from './MapFeatures'
 import { useMap } from '../Mapbox/map'
 
