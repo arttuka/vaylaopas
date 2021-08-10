@@ -9,6 +9,7 @@ import {
   WaypointFeature,
 } from '../../common/types'
 import { numToLetter } from '../../common/util'
+import { useEffect, MutableRefObject } from 'react'
 
 export const laneFeatureCollection = (
   lanes: Lane[] = []
@@ -78,19 +79,27 @@ const collectRoutes = (
     : { route: [], notFoundRoute: [], startAndEnd: [] }
 }
 
-export const generateRouteSources = (routes: Route[]): Sources[] => {
+export const generateRouteSources = (
+  routes: Route[]
+): Pick<Sources, 'route' | 'notFoundRoute' | 'routeStartAndEnd'> => {
   const { route, notFoundRoute, startAndEnd } = collectRoutes(routes)
-  return [
-    { id: 'route', data: laneFeatureCollection(route) },
-    { id: 'notFoundRoute', data: laneFeatureCollection(notFoundRoute) },
-    { id: 'routeStartAndEnd', data: laneFeatureCollection(startAndEnd) },
-  ]
+  return {
+    route: { id: 'route', data: laneFeatureCollection(route) },
+    notFoundRoute: {
+      id: 'notFoundRoute',
+      data: laneFeatureCollection(notFoundRoute),
+    },
+    routeStartAndEnd: {
+      id: 'routeStartAndEnd',
+      data: laneFeatureCollection(startAndEnd),
+    },
+  }
 }
 
-export const addSources = (map: Map, sources: Sources[]): void => {
-  sources.forEach(({ id, data }) =>
+export const addSources = (map: Map, sources: Sources): void => {
+  for (const { id, data } of Object.values(sources)) {
     map.addSource(id, { type: 'geojson', data })
-  )
+  }
 }
 
 export const setSourceData = <S extends SourceId>(
@@ -101,4 +110,15 @@ export const setSourceData = <S extends SourceId>(
   if (sourceIsGeoJSON(source)) {
     source.setData(data)
   }
+}
+
+export const useSource = <S extends SourceId>(
+  mapRef: MutableRefObject<Map | undefined>,
+  source: Source<S>
+): void => {
+  useEffect(() => {
+    if (mapRef.current) {
+      setSourceData(mapRef.current, source)
+    }
+  }, [source])
 }

@@ -6,7 +6,6 @@ import {
   GeoJSONSource,
   MapLayerMouseEvent,
   MapLayerTouchEvent,
-  Map as MapboxMap,
 } from 'maplibre-gl'
 import {
   Collection,
@@ -50,17 +49,20 @@ export type SourceType<
   data: F
 }
 
-export type Sources =
+export type AnySource =
   | SourceType<'route', Collection<Lane>>
   | SourceType<'notFoundRoute', Collection<Lane>>
   | SourceType<'routeStartAndEnd', Collection<Lane>>
   | SourceType<'dragIndicator', PointFeature>
   | SourceType<'waypoint', Collection<WaypointFeature>>
-export type SourceId = Sources['id']
-export type Source<S extends SourceId> = MapBy<Sources, 'id', S>
+export type SourceId = AnySource['id']
+export type Source<S extends SourceId> = MapBy<AnySource, 'id', S>
 export type SourceFeature<S extends SourceId> = GetFeatureType<
   Source<S>['data']
 >
+export type Sources = {
+  [key in SourceId]: Source<key>
+}
 
 export const sourceIsGeoJSON = (
   source?: AnySourceImpl
@@ -78,6 +80,3 @@ export type Layer<S extends SourceId> = MapBy<
   'type',
   LayerType<SourceFeature<S>['geometry']>
 > & { id: S; source: S }
-export interface Map extends MapboxMap {
-  initialized: boolean
-}
