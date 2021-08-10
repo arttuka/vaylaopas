@@ -99,6 +99,7 @@ const MapContainer: FunctionComponent = () => {
           positionOptions: {
             enableHighAccuracy: true,
           },
+          trackUserLocation: true,
         })
       )
       .addControl(new NavigationControl({ showCompass: false }))
