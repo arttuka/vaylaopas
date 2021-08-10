@@ -30,7 +30,13 @@ import {
   WaypointFeature,
   WaypointProperties,
 } from '../../common/types'
-import { calculateOffset, applyOffset } from '../../common/util'
+import {
+  calculateOffset,
+  applyOffset,
+  getStoredSetting,
+  storeSetting,
+  throttle,
+} from '../../common/util'
 
 const closedMenu: MenuState = {
   open: false,
@@ -92,6 +98,13 @@ const MapContainer: FunctionComponent = () => {
       handleTouchEnd(e, false)
     }
 
+    const onRender = throttle(() => {
+      storeSetting('zoom', map.getZoom())
+      const { lng, lat } = map.getCenter()
+      storeSetting('centerLng', lng)
+      storeSetting('centerLat', lat)
+    }, 50)
+
     map.touchZoomRotate.disableRotation()
     map
       .addControl(
@@ -118,14 +131,18 @@ const MapContainer: FunctionComponent = () => {
       .on('touchend', 'waypoint', onTouchEnd)
       .on('touchcancel', onTouchCancel)
       .on('touchmove', onTouchCancel)
+      .on('render', onRender)
 
     makeLayerDraggable(map, 'route', handleDragRoute, featureIsLane)
     makeLayerDraggable(map, 'waypoint', handleDragWaypoint, featureIsWaypoint)
   }
 
   const setContainerRef = useMap({
-    zoom: 11,
-    center: [24.94, 60.17],
+    zoom: getStoredSetting('zoom') || 11,
+    center: [
+      getStoredSetting('centerLng') || 24.94,
+      getStoredSetting('centerLat') || 60.17,
+    ],
     sources,
     onInit,
   })

@@ -83,6 +83,12 @@ export interface Settings {
   consumption?: number
 }
 
+export type MapSettings = {
+  zoom: number
+  centerLng: number
+  centerLat: number
+}
+
 export interface ClientConfig {
   mapserver: string
 }

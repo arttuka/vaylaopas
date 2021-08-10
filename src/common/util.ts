@@ -1,6 +1,15 @@
 import { useEffect, useRef } from 'react'
 import geojson from 'geojson'
-import { Id, Index, LngLat, Pred, Route, RouteProps, Settings } from './types'
+import {
+  Id,
+  Index,
+  LngLat,
+  MapSettings,
+  Pred,
+  Route,
+  RouteProps,
+  Settings,
+} from './types'
 
 const identity = <T>(t: T): T => t
 
@@ -168,12 +177,17 @@ export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   })
 }
 
-export const getStoredSetting = (key: keyof Settings): number | undefined => {
+export const getStoredSetting = (
+  key: keyof (Settings & MapSettings)
+): number | undefined => {
   const value = localStorage.getItem(key)
   return value ? parseFloat(value) : undefined
 }
 
-export const storeSetting = (key: keyof Settings, value?: number): void => {
+export const storeSetting = (
+  key: keyof (Settings & MapSettings),
+  value?: number
+): void => {
   if (value !== undefined) {
     localStorage.setItem(key, value.toString())
   } else {
