@@ -65,6 +65,7 @@ export const addLayers = (map: Map): void => {
       'icon-image': 'circle',
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
+      'icon-size': ['case', ['get', 'dragged'], 1.5, 1],
     },
   })
   addLayer(map, {

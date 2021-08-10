@@ -46,6 +46,14 @@ const toLngLat = (e: Event): LngLat => ({
   lng: e.lngLat.lng,
   lat: e.lngLat.lat,
 })
+const sqDistance = (
+  { x: x1, y: y1 }: Point,
+  { x: x2, y: y2 }: Point
+): number => {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  return dx * dx + dy * dy
+}
 
 interface MapFeaturesProps {
   map: Map
@@ -114,23 +122,35 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({ map }) => {
     }
   }
 
-  const handleDragRoute: DragStartHandler<Lane> = (e, feature) => ({
-    onMove: (e) =>
-      setSourceData(map, {
-        id: 'dragIndicator',
-        data: pointFeature(e.lngLat),
-      }),
-    onMoveEnd: (e) => {
-      setSourceData(map, { id: 'dragIndicator', data: pointFeature() })
-      dispatch(
-        waypointAddAction({
-          point: toLngLat(e),
-          index: feature.properties.route + 1,
-          type: 'waypoint',
-        })
-      )
-    },
-  })
+  const handleDragRoute: DragStartHandler<Lane> = (e, feature, type) => {
+    const origin = e.point
+    let dragStarted = false
+    return {
+      onMove: (e) => {
+        if (!dragStarted && sqDistance(origin, e.point) > 1000) {
+          dragStarted = true
+        }
+        if (dragStarted) {
+          setSourceData(map, {
+            id: 'dragIndicator',
+            data: pointFeature(e.lngLat, type === 'touch'),
+          })
+        }
+      },
+      onMoveEnd: (e) => {
+        setSourceData(map, { id: 'dragIndicator', data: pointFeature() })
+        if (sqDistance(origin, e.point) > 1000) {
+          dispatch(
+            waypointAddAction({
+              point: toLngLat(e),
+              index: feature.properties.route + 1,
+              type: 'waypoint',
+            })
+          )
+        }
+      },
+    }
+  }
 
   const handleDragWaypoint: DragStartHandler<WaypointFeature> = (
     e,

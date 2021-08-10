@@ -39,13 +39,18 @@ export const waypointFeatureCollection = (
   }
 }
 
-export const pointFeature = (point?: LngLat): PointFeature => ({
+export const pointFeature = (
+  point?: LngLat,
+  dragged = false
+): PointFeature => ({
   type: 'Feature',
   geometry: {
     type: 'MultiPoint',
     coordinates: point ? [[point.lng, point.lat]] : [],
   },
-  properties: {},
+  properties: {
+    dragged,
+  },
 })
 
 const collectRoutes = (

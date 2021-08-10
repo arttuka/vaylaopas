@@ -37,8 +37,11 @@ export interface WaypointProperties extends Id {
   type: WaypointType
   dragged: boolean
 }
+export type DragIndicatorFeatureProperties = {
+  dragged: boolean
+}
 export type WaypointFeature = Feature<Point, WaypointProperties>
-export type PointFeature = Feature<MultiPoint>
+export type PointFeature = Feature<MultiPoint, DragIndicatorFeatureProperties>
 export type FeatureType = Lane | PointFeature | WaypointFeature
 export type IsFeature<T extends FeatureType> = (
   feature?: Feature
