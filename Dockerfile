@@ -1,4 +1,4 @@
-FROM node:14.15.0-alpine3.12 AS base
+FROM node:16.14.0-alpine3.14 AS base
 RUN apk --no-cache add alpine-sdk python3 postgresql-dev findutils
 WORKDIR /app
 COPY package.json package-lock.json ./

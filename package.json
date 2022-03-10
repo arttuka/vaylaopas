@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "AGPL-3.0-only",
   "engines": {
-    "node": "14.15.0"
+    "node": "16"
   },
   "private": true,
   "dependencies": {
@@ -50,7 +50,7 @@
     "@types/geojson": "^7946.0.8",
     "@types/jest": "^27.0.2",
     "@types/mapbox__point-geometry": "^0.1.2",
-    "@types/node": "^14.17.18",
+    "@types/node": "^16.11.7",
     "@types/pg": "^8.6.1",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
