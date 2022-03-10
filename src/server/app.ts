@@ -25,6 +25,10 @@ interface RouteParams {
   height?: number
 }
 
+app.get('/api/config', (req, res): void => {
+  res.json(config.client)
+})
+
 app.post('/api/route', async (req, res, next): Promise<void> => {
   const { points, depth, height }: RouteParams = req.body
   try {

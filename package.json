@@ -6,6 +6,9 @@
     "node": "16"
   },
   "private": true,
+  "browserslist": [
+    "last 1 Chrome version"
+  ],
   "dependencies": {
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
@@ -24,8 +27,8 @@
     "redux-saga": "^1.1.3"
   },
   "scripts": {
-    "watch:server": "BABEL_ENV=server NODE_ENV=development nodemon -e js,ts -w src/server -w src/common --exec 'babel-node -x \".js\",\".ts\"' src/server/server.ts",
-    "watch:client": "BABEL_ENV=server NODE_ENV=development webpack serve --color --config webpack.dev.babel.js",
+    "watch:server": "ts-node-dev --watch src/server,src/common src/server/server.ts",
+    "watch:client": "parcel ./src/client/index.html --port 8081",
     "watch:typecheck": "tsc --noEmit --watch --preserveWatchOutput --pretty",
     "watch": "concurrently -k -n server,client,typecheck 'npm run watch:server' 'npm run watch:client' 'npm run watch:typecheck'",
     "lint": "tsc --noEmit && eslint \"src/**/*.{js,ts,tsx}\" --max-warnings=0 && prettier --check \"src/**/*.{js,ts,tsx}\"",
@@ -35,52 +38,34 @@
     "convert": "NODE_ENV=development ts-node ./src/convert/convert.ts",
     "build": "webpack --config webpack.prod.js",
     "start": "NODE_ENV=production node --enable-source-maps dist/server/server.js",
-    "clean": "rimraf dist/*"
+    "clean": "rimraf dist/* .parcel-cache"
   },
   "devDependencies": {
-    "@babel/cli": "^7.15.7",
-    "@babel/core": "^7.15.5",
-    "@babel/node": "^7.15.4",
-    "@babel/preset-env": "^7.15.6",
-    "@babel/preset-react": "^7.14.5",
-    "@babel/preset-typescript": "^7.14.5",
-    "@babel/register": "^7.15.3",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.1",
     "@types/express": "^4.17.13",
     "@types/geojson": "^7946.0.8",
     "@types/jest": "^27.0.2",
     "@types/mapbox__point-geometry": "^0.1.2",
     "@types/node": "^16.11.7",
+    "@types/parcel-bundler": "^1.12.4",
     "@types/pg": "^8.6.1",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "@types/react-redux": "^7.1.18",
-    "@types/webpack": "^5.28.0",
-    "@types/webpack-env": "^1.16.2",
     "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/parser": "^5.14.0",
-    "babel-loader": "^8.2.2",
     "concurrently": "^7.0.0",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.26.0",
-    "html-webpack-plugin": "^5.3.2",
     "jest": "^27.2.1",
     "nodemon": "^2.0.12",
+    "parcel": "^2.3.2",
     "prettier": "^2.4.1",
-    "react-refresh": "^0.11.0",
     "rimraf": "^3.0.2",
-    "source-map-loader": "^3.0.0",
-    "terser-webpack-plugin": "^5.2.4",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
-    "typescript": "^4.4.3",
-    "webpack": "^5.53.0",
-    "webpack-bundle-analyzer": "^4.4.2",
-    "webpack-cli": "^4.7.2",
-    "webpack-dev-server": "^3.11.2",
-    "webpack-merge": "^5.8.0",
-    "webpack-node-externals": "^3.0.0"
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.4.3"
   }
 }

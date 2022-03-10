@@ -4,9 +4,7 @@ import { addLayers } from './layer'
 import { addSources, useSource } from './source'
 import { Sources } from './types'
 import { addMapLoad } from '../api'
-import { ClientConfig } from '../../common/types'
 
-declare const clientConfig: ClientConfig
 export const longTouchDuration = 750
 
 type useMapProps = {
@@ -14,6 +12,7 @@ type useMapProps = {
   center: [number, number]
   zoom: number
   sources: Sources
+  mapserverUrl: string
 }
 
 export const useMap = ({
@@ -21,6 +20,7 @@ export const useMap = ({
   center,
   zoom,
   sources,
+  mapserverUrl,
 }: useMapProps): ((container: HTMLDivElement) => void) => {
   const mapRef = useRef<Map>()
   const setContainerRef = useCallback((container: HTMLDivElement | null) => {
@@ -32,7 +32,7 @@ export const useMap = ({
     } else if (mapRef.current === undefined) {
       const map = new Map({
         container,
-        style: clientConfig.mapserver,
+        style: mapserverUrl,
         hash: true,
         zoom,
         center,

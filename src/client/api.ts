@@ -1,4 +1,4 @@
-import { Route, Settings, Waypoint } from '../common/types'
+import { ClientConfig, Route, Settings, Waypoint } from '../common/types'
 
 export const getRoutes = async (
   waypoints: Waypoint[],
@@ -24,4 +24,15 @@ export const getRoutes = async (
 
 export const addMapLoad = async (): Promise<void> => {
   await fetch('/api/map-load', { method: 'POST' })
+}
+
+export const getConfig = async (): Promise<ClientConfig> => {
+  const response = await fetch('/api/config', {
+    method: 'GET',
+  })
+
+  if (response.status >= 400) {
+    throw new Error(`Call to /api/config failed with code ${response.status}`)
+  }
+  return response.json()
 }

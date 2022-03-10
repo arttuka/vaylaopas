@@ -70,7 +70,13 @@ const Container = styled('div')({
   flex: 1,
 })
 
-const MapContainer: FunctionComponent = () => {
+type MapContainerProps = {
+  mapserverUrl: string
+}
+
+const MapContainer: FunctionComponent<MapContainerProps> = ({
+  mapserverUrl,
+}) => {
   const dispatch = useDispatch()
   const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState(closedMenu)
@@ -150,6 +156,7 @@ const MapContainer: FunctionComponent = () => {
     ],
     sources,
     onInit,
+    mapserverUrl,
   })
 
   const openMenu = (p: Point, waypoint?: WaypointProperties) => {
