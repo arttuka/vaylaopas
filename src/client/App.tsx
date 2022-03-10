@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react'
-import { styled } from '@material-ui/styles'
+import { styled } from '@mui/material/styles'
 import AppBar from './Appbar/Appbar'
 import MapContainer from './Map/MapContainer'
 import Notifier from './Notifier/Notifier'
@@ -8,7 +8,7 @@ import InformationPanel from './InformationPanel/InformationPanel'
 
 const Container = styled('div')({
   display: 'flex',
-  'flex-direction': 'column',
+  flexDirection: 'column',
   position: 'relative',
   height: '100vh',
 })

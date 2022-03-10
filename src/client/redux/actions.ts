@@ -50,14 +50,16 @@ export const settingsSetAction: ActionCreator<SettingsSetAction> = (data) => ({
   data,
 })
 
-export const notificationEnqueueAction: ActionCreator<NotificationEnqueueAction> =
-  (data) => ({
-    type: NotificationActionType.NotificationEnqueue,
-    data,
-  })
+export const notificationEnqueueAction: ActionCreator<
+  NotificationEnqueueAction
+> = (data) => ({
+  type: NotificationActionType.NotificationEnqueue,
+  data,
+})
 
-export const notificationRemoveAction: ActionCreator<NotificationRemoveAction> =
-  (data) => ({
-    type: NotificationActionType.NotificationRemove,
-    data,
-  })
+export const notificationRemoveAction: ActionCreator<
+  NotificationRemoveAction
+> = (data) => ({
+  type: NotificationActionType.NotificationRemove,
+  data,
+})

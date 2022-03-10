@@ -1,24 +1,20 @@
 import React, { FunctionComponent, ReactElement } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import List from '@material-ui/core/List'
-import { withStyles } from '@material-ui/core/styles'
+import List from '@mui/material/List'
+import { styled } from '@mui/material/styles'
 import RouteSegment from './RouteSegment'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
 import { combineSegments, hasProperty, mergeRoutes } from '../../common/util'
 import { waypointRemoveAction } from '../redux/actions'
 
-const OuterList = withStyles({
-  root: {
-    height: '100%',
-  },
-})(List)
+const OuterList = styled(List)({
+  height: '100%',
+})
 
-const ScrollingList = withStyles({
-  root: {
-    overflow: 'auto',
-    height: 'calc(100% - 61px)',
-  },
-})(List)
+const ScrollingList = styled(List)({
+  overflow: 'auto',
+  height: 'calc(100% - 61px)',
+})
 
 interface RouteListProps {
   onClick?: () => void

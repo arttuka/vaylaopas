@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { styled } from '@material-ui/styles'
+import { styled } from '@mui/material/styles'
 import SettingField from './SettingField'
 import { settingsSelector } from '../redux/selectors'
 import { Settings } from '../../common/types'

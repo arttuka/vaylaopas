@@ -1,21 +1,19 @@
 import React, { FunctionComponent } from 'react'
-import MuiDrawer from '@material-ui/core/Drawer'
-import IconButton from '@material-ui/core/IconButton'
-import { withStyles } from '@material-ui/core/styles'
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp'
+import MuiDrawer from '@mui/material/Drawer'
+import IconButton from '@mui/material/IconButton'
+import { styled } from '@mui/material/styles'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import SettingsContainer from '../InformationPanel/SettingsContainer'
 
-const Drawer = withStyles(({ spacing }) => ({
-  paper: {
+const Drawer = styled(MuiDrawer)(({ theme: { spacing } }) => ({
+  '& .MuiDrawer-paper': {
     padding: spacing(2, 2, 0),
   },
-}))(MuiDrawer)
+}))
 
-const CloseButton = withStyles({
-  root: {
-    width: '100%',
-  },
-})(IconButton)
+const CloseButton = styled(IconButton)({
+  width: '100%',
+})
 
 interface TopDrawerProps {
   open: boolean

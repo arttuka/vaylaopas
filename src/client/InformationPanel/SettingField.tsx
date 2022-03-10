@@ -1,15 +1,13 @@
 import React, { ChangeEvent, FunctionComponent } from 'react'
-import CancelIcon from '@material-ui/icons/Cancel'
-import MuiIconButton from '@material-ui/core/IconButton'
-import InputAdornment from '@material-ui/core/InputAdornment'
-import { withStyles } from '@material-ui/core/styles'
-import MuiTextField from '@material-ui/core/TextField'
+import CancelIcon from '@mui/icons-material/Cancel'
+import MuiIconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
+import { styled } from '@mui/material/styles'
+import MuiTextField from '@mui/material/TextField'
 
-const IconButton = withStyles({
-  root: {
-    padding: 0,
-  },
-})(MuiIconButton)
+const IconButton = styled(MuiIconButton)({
+  padding: 0,
+})
 
 interface ClearButtonProps {
   disabled: boolean
@@ -27,11 +25,9 @@ const ClearButton: FunctionComponent<ClearButtonProps> = ({
   </InputAdornment>
 )
 
-const TextField = withStyles({
-  root: {
-    flexBasis: '40%',
-  },
-})(MuiTextField)
+const TextField = styled(MuiTextField)({
+  flexBasis: '40%',
+})
 
 interface SettingFieldProps {
   id: string

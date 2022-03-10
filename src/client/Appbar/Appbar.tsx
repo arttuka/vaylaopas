@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useState } from 'react'
-import MuiAppBar from '@material-ui/core/AppBar'
-import IconButton from '@material-ui/core/IconButton'
-import Toolbar from '@material-ui/core/Toolbar'
-import Typography from '@material-ui/core/Typography'
-import SettingsIcon from '@material-ui/icons/Settings'
+import MuiAppBar from '@mui/material/AppBar'
+import IconButton from '@mui/material/IconButton'
+import Toolbar from '@mui/material/Toolbar'
+import Typography from '@mui/material/Typography'
+import SettingsIcon from '@mui/icons-material/Settings'
 import TopDrawer from '../InformationPanel/TopDrawer'
 
 const AppBar: FunctionComponent = () => {
@@ -12,10 +12,11 @@ const AppBar: FunctionComponent = () => {
     <MuiAppBar position="static">
       <Toolbar>
         <IconButton
+          size="large"
           color="inherit"
           edge="start"
           onClick={() => setOpen(true)}
-          sx={{ display: { xs: 'block', sm: 'none' } }}
+          sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
         >
           <SettingsIcon />
         </IconButton>

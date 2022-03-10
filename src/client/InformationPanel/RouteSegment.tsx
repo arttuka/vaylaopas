@@ -1,23 +1,21 @@
 import React, { FunctionComponent } from 'react'
-import MuiAvatar from '@material-ui/core/Avatar'
-import IconButton from '@material-ui/core/IconButton'
-import ListItem from '@material-ui/core/ListItem'
-import ListItemAvatar from '@material-ui/core/ListItemAvatar'
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
-import MuiListItemText from '@material-ui/core/ListItemText'
-import { withStyles } from '@material-ui/core/styles'
-import DeleteIcon from '@material-ui/icons/Delete'
-import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat'
-import WarningIcon from '@material-ui/icons/Warning'
+import MuiAvatar from '@mui/material/Avatar'
+import IconButton from '@mui/material/IconButton'
+import ListItem from '@mui/material/ListItem'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction'
+import MuiListItemText from '@mui/material/ListItemText'
+import { styled } from '@mui/material/styles'
+import DeleteIcon from '@mui/icons-material/Delete'
+import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat'
+import WarningIcon from '@mui/icons-material/Warning'
 import { formatDuration, toNM, numToLetter, round } from '../../common/util'
 
-const Avatar = withStyles(({ palette }) => ({
-  root: {
-    color: '#ffffff',
-    backgroundColor: palette.primary.main,
-    fontWeight: 'bold',
-  },
-}))(MuiAvatar)
+const Avatar = styled(MuiAvatar)(({ theme: { palette } }) => ({
+  color: '#ffffff',
+  backgroundColor: palette.primary.main,
+  fontWeight: 'bold',
+}))
 
 const Point: FunctionComponent<{ text: string }> = ({ text }) => (
   <ListItemAvatar>
@@ -33,25 +31,19 @@ const Delete: FunctionComponent<{ onClick: () => void }> = ({ onClick }) => (
   </ListItemSecondaryAction>
 )
 
-const ListItemText = withStyles({
-  root: {
-    margin: 0,
-  },
-})(MuiListItemText)
+const ListItemText = styled(MuiListItemText)({
+  margin: 0,
+})
 
-const OffsetListItemText = withStyles({
-  root: {
-    margin: 0,
-    position: 'relative',
-    top: -24,
-  },
-})(MuiListItemText)
+const OffsetListItemText = styled(MuiListItemText)({
+  margin: 0,
+  position: 'relative',
+  top: -24,
+})
 
-const NotFoundIcon = withStyles({
-  root: {
-    verticalAlign: 'top',
-  },
-})(WarningIcon)
+const NotFoundIcon = styled(WarningIcon)({
+  verticalAlign: 'top',
+})
 
 interface SegmentProps {
   length?: number

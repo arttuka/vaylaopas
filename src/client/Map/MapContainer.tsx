@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { styled } from '@material-ui/styles'
+import { styled } from '@mui/material/styles'
 import { Map, Point, GeolocateControl, NavigationControl } from 'maplibre-gl'
 import MapFeatures from './MapFeatures'
 import { useMap, longTouchDuration } from '../Mapbox/map'

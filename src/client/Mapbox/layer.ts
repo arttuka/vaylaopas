@@ -1,5 +1,5 @@
 import { Map } from 'maplibre-gl'
-import indigo from '@material-ui/core/colors/indigo'
+import indigo from '@mui/material/colors/indigo'
 import {
   DragStartHandler,
   EventType,
