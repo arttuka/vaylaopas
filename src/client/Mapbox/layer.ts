@@ -3,6 +3,7 @@ import indigo from '@mui/material/colors/indigo'
 import {
   DragStartHandler,
   EventType,
+  EventTypes,
   EventHandler,
   Layer,
   SourceId,
@@ -109,14 +110,14 @@ export const makeLayerDraggable = <S extends SourceId>(
     (e) => {
       e.preventDefault()
       canvas.style.cursor = 'grab'
-      const [move, end] =
-        type === 'mouse' ? ['mousemove', 'mouseup'] : ['touchmove', 'touchend']
+      const move = type === 'mouse' ? 'mousemove' : 'touchmove'
+      const end = type === 'mouse' ? 'mouseup' : 'touchend'
       const feature = e.features && e.features[0]
       if (isFeature(feature)) {
         const { onMove, onMoveEnd } = handler(e, feature, type)
         const throttledOnMove = throttle(onMove, 50)
         map.on(move, throttledOnMove)
-        map.once(end, (e) => {
+        map.once(end, (e: EventTypes[T]) => {
           map.off(move, throttledOnMove)
           onMoveEnd(e)
           canvas.style.cursor = ''

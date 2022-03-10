@@ -1,7 +1,13 @@
 import React, { FunctionComponent, useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { styled } from '@mui/material/styles'
-import { Map, Point, GeolocateControl, NavigationControl } from 'maplibre-gl'
+import {
+  Map,
+  GeolocateControl,
+  NavigationControl,
+  MapLayerTouchEvent,
+} from 'maplibre-gl'
+import Point from '@mapbox/point-geometry'
 import MapFeatures from './MapFeatures'
 import { useMap, longTouchDuration } from '../Mapbox/map'
 import { makeLayerDraggable } from '../Mapbox/layer'
@@ -15,7 +21,6 @@ import {
   Event,
   MouseEventHandler,
   TouchEventHandler,
-  TouchEvent,
   Sources,
 } from '../Mapbox/types'
 import { waypointAddAction, waypointMoveAction } from '../redux/actions'
@@ -88,11 +93,11 @@ const MapContainer: FunctionComponent = () => {
   const onInit = (map: Map): void => {
     let longTouchTimer = 0
     let shortTouch = false
-    const onTouchEnd = (e: TouchEvent): void => {
+    const onTouchEnd = (e: MapLayerTouchEvent): void => {
       window.clearTimeout(longTouchTimer)
       handleTouchEnd(e, shortTouch)
     }
-    const onTouchCancel = (e: TouchEvent): void => {
+    const onTouchCancel = (e: MapLayerTouchEvent): void => {
       window.clearTimeout(longTouchTimer)
       shortTouch = false
       handleTouchEnd(e, false)

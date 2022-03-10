@@ -1,8 +1,7 @@
 import { Geometry, LineString, MultiPoint, Point } from 'geojson'
 import {
-  AnyLayer,
-  AnySourceImpl,
-  EventData,
+  LayerSpecification,
+  Source as MaplibreSource,
   GeoJSONSource,
   MapLayerMouseEvent,
   MapLayerTouchEvent,
@@ -16,11 +15,11 @@ import {
   WaypointFeature,
 } from '../../common/types'
 
-export type MouseEvent = MapLayerMouseEvent & EventData
-export type TouchEvent = MapLayerTouchEvent & EventData
-
-export type MouseEventHandler = (e: MouseEvent) => void
-export type TouchEventHandler = (e: TouchEvent, shortTouch?: boolean) => void
+export type MouseEventHandler = (e: MapLayerMouseEvent) => void
+export type TouchEventHandler = (
+  e: MapLayerTouchEvent,
+  shortTouch?: boolean
+) => void
 export type EventHandler<T extends EventType> = (e: EventTypes[T]) => void
 export type DragStartHandler<F extends FeatureType> = <T extends EventType>(
   e: EventTypes[T],
@@ -32,8 +31,8 @@ export type DragStartHandler<F extends FeatureType> = <T extends EventType>(
 }
 
 export type EventTypes = {
-  mouse: MouseEvent
-  touch: TouchEvent
+  mouse: MapLayerMouseEvent
+  touch: MapLayerTouchEvent
 }
 export type EventType = keyof EventTypes
 export type Event = EventTypes[EventType]
@@ -65,7 +64,7 @@ export type Sources = {
 }
 
 export const sourceIsGeoJSON = (
-  source?: AnySourceImpl
+  source?: MaplibreSource
 ): source is GeoJSONSource => source !== undefined && source.type === 'geojson'
 
 type LayerType<G extends Geometry> = G extends LineString
@@ -76,7 +75,7 @@ type LayerType<G extends Geometry> = G extends LineString
   ? 'symbol'
   : never
 export type Layer<S extends SourceId> = MapBy<
-  AnyLayer,
+  LayerSpecification,
   'type',
   LayerType<SourceFeature<S>['geometry']>
 > & { id: S; source: S }
