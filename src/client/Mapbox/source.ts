@@ -1,15 +1,7 @@
 import { LngLat, Map } from 'maplibre-gl'
 import { SourceId, Source, Sources, sourceIsGeoJSON } from './types'
-import {
-  Collection,
-  Lane,
-  PointFeature,
-  Route,
-  Waypoint,
-  WaypointFeature,
-} from '../../common/types'
-import { numToLetter } from '../../common/util'
-import { useEffect, MutableRefObject } from 'react'
+import { Collection, Lane, PointFeature, Route } from '../../common/types'
+import { useEffect } from 'react'
 
 export const laneFeatureCollection = (
   lanes: Lane[] = []
@@ -17,29 +9,6 @@ export const laneFeatureCollection = (
   type: 'FeatureCollection',
   features: lanes,
 })
-
-export const waypointFeatureCollection = (
-  waypoints: Waypoint[] = []
-): Collection<WaypointFeature> => {
-  let i = 0
-  return {
-    type: 'FeatureCollection',
-    features: waypoints.map(({ id, type, lng, lat }) => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [lng, lat],
-      },
-      properties: {
-        id,
-        letter: type === 'destination' ? numToLetter(i++) : undefined,
-        type,
-        dragged: false,
-      },
-    })),
-  }
-}
-
 export const pointFeature = (
   point?: LngLat,
   dragged = false
@@ -113,12 +82,12 @@ export const setSourceData = <S extends SourceId>(
 }
 
 export const useSource = <S extends SourceId>(
-  mapRef: MutableRefObject<Map | undefined>,
+  map: Map | undefined,
   source: Source<S>
 ): void => {
   useEffect(() => {
-    if (mapRef.current) {
-      setSourceData(mapRef.current, source)
+    if (map) {
+      setSourceData(map, source)
     }
   }, [source])
 }

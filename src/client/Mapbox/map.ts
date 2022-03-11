@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useState } from 'react'
 import { Map } from 'maplibre-gl'
 import { addLayers } from './layer'
 import { addSources, useSource } from './source'
@@ -15,42 +15,50 @@ type useMapProps = {
   mapserverUrl: string
 }
 
+type UseMap = {
+  setContainerRef: (container: HTMLDivElement) => void
+  map: Map | undefined
+}
+
 export const useMap = ({
   onInit,
   center,
   zoom,
   sources,
   mapserverUrl,
-}: useMapProps): ((container: HTMLDivElement) => void) => {
-  const mapRef = useRef<Map>()
-  const setContainerRef = useCallback((container: HTMLDivElement | null) => {
-    if (container == null) {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = undefined
+}: useMapProps): UseMap => {
+  const [map, setMap] = useState<Map>()
+  const setContainerRef = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (container == null) {
+        if (map) {
+          map.remove()
+          setMap(undefined)
+        }
+      } else if (map === undefined) {
+        const map = new Map({
+          container,
+          style: mapserverUrl,
+          hash: true,
+          zoom,
+          center,
+          dragRotate: false,
+        })
+        map.on('load', (): void => {
+          addSources(map, sources)
+          addLayers(map)
+          onInit(map)
+          addMapLoad()
+        })
+        setMap(map)
       }
-    } else if (mapRef.current === undefined) {
-      const map = new Map({
-        container,
-        style: mapserverUrl,
-        hash: true,
-        zoom,
-        center,
-        dragRotate: false,
-      })
-      map.on('load', (): void => {
-        addSources(map, sources)
-        addLayers(map)
-        onInit(map)
-        addMapLoad()
-      })
-      mapRef.current = map
-    }
-  }, [])
+    },
+    [map]
+  )
 
   for (const source of Object.values(sources)) {
-    useSource(mapRef, source)
+    useSource(map, source)
   }
 
-  return setContainerRef
+  return { setContainerRef, map }
 }

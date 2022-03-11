@@ -1,10 +1,4 @@
-import {
-  Feature,
-  FeatureCollection,
-  MultiPoint,
-  Point,
-  LineString,
-} from 'geojson'
+import { Feature, FeatureCollection, MultiPoint, LineString } from 'geojson'
 import { VariantType } from 'notistack'
 
 export type Pred<T> = (t: T) => boolean
@@ -18,9 +12,15 @@ export interface LngLat {
   lat: number
 }
 
+export type Point = {
+  x: number
+  y: number
+}
+
 export type WaypointType = 'destination' | 'waypoint'
 
 export interface Waypoint extends LngLat, Id {
+  letter?: string
   type: WaypointType
 }
 
@@ -40,9 +40,8 @@ export interface WaypointProperties extends Id {
 export type DragIndicatorFeatureProperties = {
   dragged: boolean
 }
-export type WaypointFeature = Feature<Point, WaypointProperties>
 export type PointFeature = Feature<MultiPoint, DragIndicatorFeatureProperties>
-export type FeatureType = Lane | PointFeature | WaypointFeature
+export type FeatureType = Lane | PointFeature
 export type IsFeature<T extends FeatureType> = (
   feature?: Feature
 ) => feature is T
@@ -51,10 +50,6 @@ const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
   feature !== undefined &&
   feature.properties !== null &&
   feature.properties.hasOwnProperty(p)
-
-export const featureIsWaypoint = (
-  feature?: Feature
-): feature is WaypointFeature => featureHasProperty(feature, 'id')
 
 export const featureIsLane = (feature?: Feature): feature is Lane =>
   featureHasProperty(feature, 'route')
@@ -96,8 +91,6 @@ export interface ClientConfig {
 export interface ServerConfig {
   host: string
   port: number
-  devserverPort?: number
-  bundle: string
 }
 
 export interface Config {
@@ -139,12 +132,6 @@ export interface TouchMarkerState {
   direction: 'up' | 'down'
   top: number
   left: number
-}
-
-export interface Stats {
-  assetsByChunkName: {
-    [key: string]: string[]
-  }
 }
 
 export type MapBy<

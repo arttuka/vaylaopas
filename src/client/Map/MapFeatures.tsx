@@ -2,7 +2,6 @@ import React, { FunctionComponent } from 'react'
 import { useDispatch } from 'react-redux'
 import ContextMenu from './ContextMenu'
 import TouchMarker from './TouchMarker'
-import { longTouchDuration } from '../Mapbox/map'
 
 import {
   waypointAddAction,
@@ -60,7 +59,7 @@ const MapFeatures: FunctionComponent<MapFeaturesProps> = ({
           top={touchMarker.top}
           left={touchMarker.left}
           direction={touchMarker.direction}
-          duration={longTouchDuration}
+          duration={750}
         />
       )}
     </>

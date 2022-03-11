@@ -20,6 +20,7 @@ import {
   hasId,
   hasAnyId,
   makeIdGenerator,
+  numToLetter,
 } from '../../common/util'
 
 const initialState: RootState = {
@@ -56,6 +57,14 @@ const getAdjacentWaypointIds = (
   return result
 }
 
+const updateLetters = (waypoints: Waypoint[]): Waypoint[] => {
+  let i = 0
+  return waypoints.map((waypoint) => ({
+    ...waypoint,
+    letter: waypoint.type === 'destination' ? numToLetter(i++) : undefined,
+  }))
+}
+
 const generateWaypointId = makeIdGenerator('waypoint')
 export const waypointReducer: Reducer<WaypointAction> = (
   waypoints = initialState.waypoints,
@@ -64,21 +73,23 @@ export const waypointReducer: Reducer<WaypointAction> = (
   switch (action.type) {
     case WaypointActionType.WaypointAdd: {
       const { point, index, type } = action.data
-      return insertIndex(
-        waypoints,
-        index !== undefined ? index : waypoints.length,
-        { ...point, id: generateWaypointId(), type }
+      return updateLetters(
+        insertIndex(waypoints, index !== undefined ? index : waypoints.length, {
+          ...point,
+          id: generateWaypointId(),
+          type,
+        })
       )
     }
     case WaypointActionType.WaypointChange:
       const { id, type } = action.data
-      return updateWhere(waypoints, hasId(id), { type })
+      return updateLetters(updateWhere(waypoints, hasId(id), { type }))
     case WaypointActionType.WaypointRemove:
       const ids = getAdjacentWaypointIds(waypoints, action.data.id)
-      return removeWhere(waypoints, hasAnyId(ids))
+      return updateLetters(removeWhere(waypoints, hasAnyId(ids)))
     case WaypointActionType.WaypointMove: {
       const { point, id } = action.data
-      return updateWhere(waypoints, hasId(id), point)
+      return updateLetters(updateWhere(waypoints, hasId(id), point))
     }
     default:
       return waypoints

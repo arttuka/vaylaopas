@@ -1,5 +1,4 @@
 import { Map } from 'maplibre-gl'
-import indigo from '@mui/material/colors/indigo'
 import {
   DragStartHandler,
   EventType,
@@ -67,33 +66,6 @@ export const addLayers = (map: Map): void => {
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
       'icon-size': ['case', ['get', 'dragged'], 1.5, 1],
-    },
-  })
-  addLayer(map, {
-    id: 'waypoint',
-    source: 'waypoint',
-    type: 'symbol',
-    layout: {
-      'icon-image': ['match', ['get', 'type'], 'destination', 'pin', 'circle'],
-      'icon-allow-overlap': true,
-      'icon-ignore-placement': true,
-      'icon-anchor': [
-        'match',
-        ['get', 'type'],
-        'destination',
-        'bottom',
-        'center',
-      ],
-      'icon-size': ['case', ['get', 'dragged'], 1.5, 1],
-      'text-field': ['get', 'letter'],
-      'text-font': ['Roboto Medium'],
-      'text-size': ['case', ['get', 'dragged'], 36, 24],
-      'text-offset': [0, -1.5],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-    },
-    paint: {
-      'text-color': indigo[500],
     },
   })
 }
