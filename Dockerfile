@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 FROM base AS builder
 RUN npm ci
 COPY src ./src
-COPY .eslintrc.js .prettierrc.json babel.config.js jest.config.js tsconfig.json webpack.prod.js ./
+COPY .eslintrc.js .prettierrc.json jest.config.js tsconfig.json ./
 RUN npm run lint && npm test && npm run build
 
 FROM base

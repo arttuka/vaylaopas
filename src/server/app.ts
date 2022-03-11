@@ -1,10 +1,14 @@
 import express from 'express'
+import * as fs from 'fs'
+import * as path from 'path'
 import config from './config'
 import { getRoute, addMapLoad } from './db'
 import { Waypoint } from '../common/types'
-import indexHtml from './indexHtml'
 
-const index = indexHtml(config.client, `/js/${config.server.bundle}`)
+const indexPath = path.resolve('./dist/client/index.html')
+const index = fs.existsSync(indexPath)
+  ? fs.readFileSync(indexPath, 'utf-8')
+  : undefined
 
 const app = express()
 app.use(express.json())

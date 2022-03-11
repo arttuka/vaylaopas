@@ -7,7 +7,7 @@
   },
   "private": true,
   "browserslist": [
-    "last 1 Chrome version"
+    "last 2 Chrome versions"
   ],
   "dependencies": {
     "@emotion/react": "^11.4.0",
@@ -33,10 +33,10 @@
     "watch": "concurrently -k -n server,client,typecheck 'npm run watch:server' 'npm run watch:client' 'npm run watch:typecheck'",
     "lint": "tsc --noEmit && eslint \"src/**/*.{js,ts,tsx}\" --max-warnings=0 && prettier --check \"src/**/*.{js,ts,tsx}\"",
     "typecheck": "tsc --noEmit --pretty",
-    "test": "BABEL_ENV=server jest",
-    "test:watch": "BABEL_ENV=server jest --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "convert": "NODE_ENV=development ts-node ./src/convert/convert.ts",
-    "build": "webpack --config webpack.prod.js",
+    "build": "parcel build",
     "start": "NODE_ENV=production node --enable-source-maps dist/server/server.js",
     "clean": "rimraf dist/* .parcel-cache"
   },
@@ -67,5 +67,16 @@
     "ts-node": "^10.2.1",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.4.3"
+  },
+  "targets": {
+    "client": {
+      "source": "src/client/index.html",
+      "context": "browser",
+      "publicUrl": "/js"
+    },
+    "server": {
+      "source": "src/server/server.ts",
+      "context": "node"
+    }
   }
 }

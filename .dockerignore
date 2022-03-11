@@ -18,3 +18,5 @@ yarn-error.log*
 /config.json
 /.vscode
 /resources/openmaptiles
+/.parcel-cache
+/.git
