@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FunctionComponent } from 'react'
+import React, { ChangeEvent, VFC } from 'react'
 import CancelIcon from '@mui/icons-material/Cancel'
 import MuiIconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -14,10 +14,7 @@ type ClearButtonProps = {
   onClick: () => void
 }
 
-const ClearButton: FunctionComponent<ClearButtonProps> = ({
-  disabled,
-  onClick,
-}) => (
+const ClearButton: VFC<ClearButtonProps> = ({ disabled, onClick }) => (
   <InputAdornment position="start">
     <IconButton disabled={disabled} onClick={onClick}>
       <CancelIcon />
@@ -36,27 +33,31 @@ type SettingFieldProps = {
   onChange: (value?: number) => void
 }
 
-const SettingField: FunctionComponent<SettingFieldProps> = (props) => {
-  const onChange = (e: ChangeEvent<HTMLInputElement>): void => {
+const SettingField: VFC<SettingFieldProps> = ({
+  id,
+  label,
+  onChange,
+  value,
+}) => {
+  const onFieldChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const value = parseFloat(e.currentTarget.value)
-    props.onChange(isNaN(value) ? undefined : value)
+    onChange(isNaN(value) ? undefined : value)
   }
-  const onClear = (): void => {
-    props.onChange(undefined)
+  const clearField = (): void => {
+    onChange(undefined)
   }
-  const { id, label, value } = props
   return (
     <TextField
       id={id}
       label={label}
-      value={value !== undefined ? value : ''}
-      onChange={onChange}
+      value={value ?? ''}
+      onChange={onFieldChange}
       type="number"
       variant="standard"
       fullWidth
       InputProps={{
         startAdornment: (
-          <ClearButton disabled={value === undefined} onClick={onClear} />
+          <ClearButton disabled={value === undefined} onClick={clearField} />
         ),
       }}
       inputProps={{

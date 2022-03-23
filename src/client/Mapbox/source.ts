@@ -9,6 +9,7 @@ export const laneFeatureCollection = (
   type: 'FeatureCollection',
   features: lanes,
 })
+
 export const pointFeature = (
   point?: LngLat,
   dragged = false

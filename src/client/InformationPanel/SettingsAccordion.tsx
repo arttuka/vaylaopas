@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react'
+import React, { VFC } from 'react'
 import MuiAccordion from '@mui/material/Accordion'
 import MuiAccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
@@ -25,7 +25,7 @@ const AccordionSummary = styled(MuiAccordionSummary)({
   },
 })
 
-const SettingsAccordion: FunctionComponent = () => (
+const SettingsAccordion: VFC = () => (
   <Accordion>
     <AccordionSummary expandIcon={<SettingsIcon />}>Asetukset</AccordionSummary>
     <AccordionDetails>

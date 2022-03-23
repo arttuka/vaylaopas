@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react'
+import React, { VFC } from 'react'
 import MuiDrawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
@@ -20,7 +20,7 @@ type TopDrawerProps = {
   onClose: () => void
 }
 
-const TopDrawer: FunctionComponent<TopDrawerProps> = ({ open, onClose }) => (
+const TopDrawer: VFC<TopDrawerProps> = ({ open, onClose }) => (
   <Drawer
     anchor="top"
     open={open}

@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react'
+import React, { VFC } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { styled } from '@mui/material/styles'
 import SettingField from './SettingField'
@@ -12,7 +12,7 @@ const Container = styled('div')({
   justifyContent: 'space-between',
 })
 
-const SettingsContainer: FunctionComponent = () => {
+const SettingsContainer: VFC = () => {
   const dispatch = useDispatch()
   const { depth, height, speed, consumption } = useSelector(settingsSelector)
   const updateSetting =

@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react'
+import React, { VFC } from 'react'
 import MuiAvatar from '@mui/material/Avatar'
 import IconButton from '@mui/material/IconButton'
 import ListItem from '@mui/material/ListItem'
@@ -17,13 +17,13 @@ const Avatar = styled(MuiAvatar)(({ theme: { palette } }) => ({
   fontWeight: 'bold',
 }))
 
-const Point: FunctionComponent<{ text: string }> = ({ text }) => (
+const Point: VFC<{ text: string }> = ({ text }) => (
   <ListItemAvatar>
     <Avatar>{text}</Avatar>
   </ListItemAvatar>
 )
 
-const Delete: FunctionComponent<{ onClick: () => void }> = ({ onClick }) => (
+const Delete: VFC<{ onClick: () => void }> = ({ onClick }) => (
   <ListItemSecondaryAction>
     <IconButton onClick={onClick}>
       <DeleteIcon />
@@ -67,7 +67,7 @@ type RouteSegmentProps = (SegmentProps | TotalsProps) & {
   onClick?: () => void
 }
 
-const RouteSegment: FunctionComponent<RouteSegmentProps> = (props) => {
+const RouteSegment: VFC<RouteSegmentProps> = (props) => {
   const { length, duration, fuel, found, onClick } = props
   const durationStr = duration ? formatDuration(duration) : ''
   const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''

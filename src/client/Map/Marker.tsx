@@ -1,9 +1,11 @@
 import React, {
-  FunctionComponent,
-  useMemo,
+  MouseEvent,
+  VFC,
+  useCallback,
   useEffect,
-  useState,
+  useMemo,
   useRef,
+  useState,
 } from 'react'
 import { createPortal } from 'react-dom'
 import { styled } from '@mui/material/styles'
@@ -70,7 +72,7 @@ type MarkerProps = {
   onContextMenu: (waypoint: Waypoint, lngLat: LngLat, point: Point) => void
 }
 
-const Marker: FunctionComponent<MarkerProps> = (props) => {
+const Marker: VFC<MarkerProps> = (props) => {
   const propsRef = useRef(props)
   propsRef.current = props
   const { waypoint, onContextMenu } = props
@@ -96,27 +98,38 @@ const Marker: FunctionComponent<MarkerProps> = (props) => {
       marker.remove()
     }
   }, [])
+  const onDivClick = useCallback(
+    (e: MouseEvent) => {
+      e.nativeEvent.stopImmediatePropagation()
+      onContextMenu(waypoint, marker.getLngLat(), {
+        x: e.pageX,
+        y: e.pageY - 64,
+      })
+    },
+    [onContextMenu]
+  )
+  const onDivContextMenu = useCallback(
+    (e: MouseEvent) => {
+      e.nativeEvent.stopImmediatePropagation()
+      e.preventDefault()
+      onContextMenu(waypoint, marker.getLngLat(), {
+        x: e.pageX,
+        y: e.pageY - 64,
+      })
+    },
+    [onContextMenu]
+  )
+  const onDivMouseDown = useCallback((e: MouseEvent) => {
+    if (e.button === 2) {
+      e.nativeEvent.stopImmediatePropagation()
+    }
+  }, [])
 
   return createPortal(
     <div
-      onClick={(e) => {
-        e.nativeEvent.stopImmediatePropagation()
-        onContextMenu(waypoint, marker.getLngLat(), {
-          x: e.pageX,
-          y: e.pageY - 64,
-        })
-      }}
-      onContextMenu={(e) => {
-        onContextMenu(waypoint, marker.getLngLat(), {
-          x: e.pageX,
-          y: e.pageY,
-        })
-      }}
-      onMouseDown={(e) => {
-        if (e.button === 2) {
-          e.nativeEvent.stopImmediatePropagation()
-        }
-      }}
+      onClick={onDivClick}
+      onContextMenu={onDivContextMenu}
+      onMouseDown={onDivMouseDown}
     >
       {type === 'destination' ? (
         <Destination className={isDragged ? 'marker-dragged' : ''}>

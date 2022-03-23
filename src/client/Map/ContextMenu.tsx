@@ -1,13 +1,17 @@
 import React, { VFC } from 'react'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import { MenuState, WaypointType } from '../../common/types'
+import { LngLat, MenuState } from '../../common/types'
+import { useDispatch } from 'react-redux'
+import {
+  waypointAddAction,
+  waypointChangeAction,
+  waypointRemoveAction,
+} from '../redux/actions'
 
 type ContextMenuProps = MenuState & {
   closeMenu: () => void
-  onAdd: () => void
-  onDelete: (id: string) => void
-  onChange: (id: string, type: WaypointType) => void
+  point: LngLat
 }
 
 const ContextMenu: VFC<ContextMenuProps> = ({
@@ -16,62 +20,56 @@ const ContextMenu: VFC<ContextMenuProps> = ({
   left,
   waypoint,
   isDestination,
-  onAdd,
   closeMenu,
-  onDelete,
-  onChange,
-}) => (
-  <Menu
-    keepMounted
-    open={open}
-    onClose={closeMenu}
-    anchorReference="anchorPosition"
-    anchorPosition={{ top, left }}
-  >
-    {waypoint === undefined ? (
-      <MenuItem
-        onClick={() => {
-          onAdd()
-          closeMenu()
-        }}
-      >
-        Lisää reitille
-      </MenuItem>
-    ) : (
-      [
-        isDestination ? (
-          <MenuItem
-            key="change-to-waypoint"
-            onClick={() => {
-              onChange(waypoint, 'waypoint')
-              closeMenu()
-            }}
-          >
-            Muuta välipisteeksi
-          </MenuItem>
-        ) : (
-          <MenuItem
-            key="change-to-destination"
-            onClick={() => {
-              onChange(waypoint, 'destination')
-              closeMenu()
-            }}
-          >
-            Muuta määränpääksi
-          </MenuItem>
-        ),
+  point,
+}) => {
+  const dispatch = useDispatch()
+  return (
+    <Menu
+      keepMounted
+      open={open}
+      onClose={closeMenu}
+      anchorReference="anchorPosition"
+      anchorPosition={{ top, left }}
+    >
+      {waypoint === undefined ? (
         <MenuItem
-          key="delete-waypoint"
           onClick={() => {
-            onDelete(waypoint)
-            closeMenu
+            dispatch(waypointAddAction({ point, type: 'destination' }))
+            closeMenu()
           }}
         >
-          Poista reittipiste
-        </MenuItem>,
-      ]
-    )}
-  </Menu>
-)
+          Lisää reitille
+        </MenuItem>
+      ) : (
+        [
+          <MenuItem
+            key="change-waypoint"
+            onClick={() => {
+              dispatch(
+                waypointChangeAction({
+                  id: waypoint,
+                  type: isDestination ? 'waypoint' : 'destination',
+                })
+              )
+              closeMenu()
+            }}
+          >
+            {isDestination ? 'Muuta välipisteeksi' : 'Muuta määränpääksi'}
+          </MenuItem>,
+          <MenuItem
+            key="delete-waypoint"
+            onClick={() => {
+              dispatch(waypointRemoveAction({ id: waypoint }))
+              closeMenu()
+            }}
+          >
+            Poista reittipiste
+          </MenuItem>,
+        ]
+      )}
+    </Menu>
+  )
+}
 
 export default ContextMenu

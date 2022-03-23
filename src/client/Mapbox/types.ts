@@ -16,10 +16,7 @@ import {
 } from '../../common/types'
 
 export type MouseEventHandler = (e: MapLayerMouseEvent) => void
-export type TouchEventHandler = (
-  e: MapLayerTouchEvent,
-  shortTouch?: boolean
-) => void
+export type TouchEventHandler = (e: MapLayerTouchEvent) => void
 export type MapEventHandler = (e: MapLibreEvent) => void
 export type EventHandler<T extends EventType> = (e: EventTypes[T]) => void
 export type DragStartHandler<F extends FeatureType> = <T extends EventType>(
@@ -65,7 +62,7 @@ export type Sources = {
 
 export const sourceIsGeoJSON = (
   source?: MaplibreSource
-): source is GeoJSONSource => source !== undefined && source.type === 'geojson'
+): source is GeoJSONSource => source?.type === 'geojson'
 
 type LayerSpecificationType<G extends Geometry> = G extends LineString
   ? 'line'
@@ -87,6 +84,4 @@ export type AnyLayer =
 export type LayerId = AnyLayer['id']
 export type Layer<L extends LayerId> = MapBy<AnyLayer, 'id', L>
 export type Layers = { [key in LayerId]: Layer<key> }
-export type SourceLayer<S extends SourceId> = MapBy<AnyLayer, 'source', S>
-export type SourceLayerId<S extends SourceId> = SourceLayer<S>['id']
 export type LayerFeature<L extends LayerId> = SourceFeature<Layer<L>['source']>

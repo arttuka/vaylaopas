@@ -74,7 +74,7 @@ export const waypointReducer: Reducer<WaypointAction> = (
     case WaypointActionType.WaypointAdd: {
       const { point, index, type } = action.data
       return updateLetters(
-        insertIndex(waypoints, index !== undefined ? index : waypoints.length, {
+        insertIndex(waypoints, index ?? waypoints.length, {
           ...point,
           id: generateWaypointId(),
           type,

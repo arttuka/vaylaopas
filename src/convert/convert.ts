@@ -34,7 +34,7 @@ const toIntersection = ({
   laneids?: number[]
   point: string
 }): Intersection => ({
-  id: id != null ? id : undefined,
+  id: id ?? undefined,
   laneIds: new Set(laneids || []),
   point,
 })

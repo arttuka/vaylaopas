@@ -5,6 +5,7 @@ import {
   Index,
   LngLat,
   MapSettings,
+  Point,
   Pred,
   Route,
   RouteProps,
@@ -252,4 +253,10 @@ export const applyOffset = (
 export const makeIdGenerator = (prefix: string): (() => string) => {
   let i = 0
   return () => `${prefix}-${i++}`
+}
+
+export const sqDistance = (p1: Point, p2: Point): number => {
+  const dx = p2.x - p1.x
+  const dy = p2.y - p1.y
+  return dx * dx + dy * dy
 }

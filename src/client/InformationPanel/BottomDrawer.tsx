@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react'
+import React, { VFC, useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import clsx from 'clsx'
 import Button from '@mui/material/Button'
@@ -67,7 +67,7 @@ const DrawerButton = styled(Button)(({ theme: { palette, spacing } }) => ({
   },
 }))
 
-const BottomDrawer: FunctionComponent = () => {
+const BottomDrawer: VFC = () => {
   const waypoints = useSelector(waypointsSelector)
   const items = Math.min(
     waypoints.filter(hasProperty('type', 'destination')).length,
