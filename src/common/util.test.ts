@@ -85,7 +85,7 @@ test('removeWhere', (): void => {
   expect(removeWhere(arr, (i) => i === 4)).toEqual([0, 1, 2, 3])
 })
 
-interface TestObj {
+type TestObj = {
   id: string
   n: number
 }

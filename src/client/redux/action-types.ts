@@ -49,12 +49,12 @@ export type KeyFromActionType<T extends ActionType> = {
 export type StateFromActionType<T extends ActionType> =
   RootState[KeyFromActionType<T>]
 
-export interface BaseAction<T extends ActionType, D> extends ReduxAction<T> {
+export type BaseAction<T extends ActionType, D> = ReduxAction<T> & {
   type: T
   data: D
 }
 
-export interface WaypointAddProps {
+export type WaypointAddProps = {
   point: LngLat
   index?: number
   type: WaypointType
@@ -64,7 +64,7 @@ export type WaypointAddAction = BaseAction<
   WaypointAddProps
 >
 
-export interface WaypointChangeProps {
+export type WaypointChangeProps = {
   id: string
   type: WaypointType
 }
@@ -73,7 +73,7 @@ export type WaypointChangeAction = BaseAction<
   WaypointChangeProps
 >
 
-export interface WaypointRemoveProps {
+export type WaypointRemoveProps = {
   id: string
 }
 export type WaypointRemoveAction = BaseAction<
@@ -81,7 +81,7 @@ export type WaypointRemoveAction = BaseAction<
   WaypointRemoveProps
 >
 
-export interface WaypointMoveProps {
+export type WaypointMoveProps = {
   point: LngLat
   id: string
 }
@@ -96,7 +96,7 @@ export type WaypointAction =
   | WaypointRemoveAction
   | WaypointMoveAction
 
-export interface RouteUpdateProps {
+export type RouteUpdateProps = {
   routes: Route[]
 }
 export type RouteUpdateAction = BaseAction<
@@ -106,7 +106,7 @@ export type RouteUpdateAction = BaseAction<
 
 export type RouteAction = RouteUpdateAction
 
-export interface SettingsSetProps {
+export type SettingsSetProps = {
   key: keyof Settings
   value?: number
 }
@@ -117,7 +117,7 @@ export type SettingsSetAction = BaseAction<
 
 export type SettingsAction = SettingsSetAction
 
-export interface NotificationEnqueueProps {
+export type NotificationEnqueueProps = {
   key?: Key
   message: string
   variant: VariantType
@@ -127,7 +127,7 @@ export type NotificationEnqueueAction = BaseAction<
   NotificationEnqueueProps
 >
 
-export interface NotificationRemoveProps {
+export type NotificationRemoveProps = {
   key: Key
 }
 export type NotificationRemoveAction = BaseAction<

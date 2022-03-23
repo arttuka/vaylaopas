@@ -45,7 +45,7 @@ const NotFoundIcon = styled(WarningIcon)({
   verticalAlign: 'top',
 })
 
-interface SegmentProps {
+type SegmentProps = {
   length?: number
   duration?: number
   fuel?: number
@@ -55,7 +55,7 @@ interface SegmentProps {
   kind?: 'segment'
 }
 
-interface TotalsProps {
+type TotalsProps = {
   length?: number
   duration?: number
   fuel?: number

@@ -19,7 +19,7 @@ const makeLinestring = (p1: Position, p2: Position): LineString => ({
   coordinates: [p1, p2],
 })
 
-interface RouteEndpoint {
+type RouteEndpoint = {
   lane: number
   vertex: number
   geometry: LineString

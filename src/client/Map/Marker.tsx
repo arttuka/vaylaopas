@@ -8,8 +8,9 @@ import React, {
 import { createPortal } from 'react-dom'
 import { styled } from '@mui/material/styles'
 import indigo from '@mui/material/colors/indigo'
-import { Map, Marker as MaplibreMarker, LngLat } from 'maplibre-gl'
+import { Marker as MaplibreMarker, LngLat } from 'maplibre-gl'
 import { Point, Waypoint } from '../../common/types'
+import { useMap } from './map-context'
 
 const Pin = () => (
   <svg
@@ -51,7 +52,7 @@ const Letter = styled('div')({
   transform: 'translateX(-50%)',
 })
 
-const Waypoint = styled('div')({
+const WaypointMarker = styled('div')({
   width: 24,
   height: 24,
   backgroundColor: 'white',
@@ -65,27 +66,22 @@ const Waypoint = styled('div')({
 
 type MarkerProps = {
   waypoint: Waypoint
-  map: Map
   onDragEnd: (id: string, lngLat: LngLat) => void
   onContextMenu: (waypoint: Waypoint, lngLat: LngLat, point: Point) => void
 }
 
 const Marker: FunctionComponent<MarkerProps> = (props) => {
-  const propsRef = useRef<MarkerProps>(props)
+  const propsRef = useRef(props)
   propsRef.current = props
-  const { waypoint, map, onContextMenu } = props
+  const { waypoint, onContextMenu } = props
   const { lng, lat, type, letter } = waypoint
   const [isDragged, setIsDragged] = useState(false)
+  const map = useMap()
   const marker: MaplibreMarker = useMemo(() => {
     const element = document.createElement('div')
     return new MaplibreMarker({ element, draggable: true })
-      .setLngLat({
-        lng,
-        lat,
-      })
-      .on('dragstart', () => {
-        setIsDragged(true)
-      })
+      .setLngLat({ lng, lat })
+      .on('dragstart', () => setIsDragged(true))
       .on('dragend', () => {
         setIsDragged(false)
         propsRef.current.onDragEnd(
@@ -128,7 +124,7 @@ const Marker: FunctionComponent<MarkerProps> = (props) => {
           <Letter>{letter}</Letter>
         </Destination>
       ) : (
-        <Waypoint className={isDragged ? 'marker-dragged' : ''} />
+        <WaypointMarker className={isDragged ? 'marker-dragged' : ''} />
       )}
     </div>,
     marker.getElement()

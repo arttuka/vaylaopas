@@ -3,11 +3,11 @@ import { VariantType } from 'notistack'
 
 export type Pred<T> = (t: T) => boolean
 
-export interface Id {
+export type Id = {
   id: string
 }
 
-export interface LngLat {
+export type LngLat = {
   lng: number
   lat: number
 }
@@ -19,12 +19,13 @@ export type Point = {
 
 export type WaypointType = 'destination' | 'waypoint'
 
-export interface Waypoint extends LngLat, Id {
-  letter?: string
-  type: WaypointType
-}
+export type Waypoint = LngLat &
+  Id & {
+    letter?: string
+    type: WaypointType
+  }
 
-export interface LaneProperties {
+export type LaneProperties = {
   route: number
 }
 export type Lane = Feature<LineString, LaneProperties>
@@ -32,7 +33,7 @@ export type Collection<F extends FeatureType> = FeatureCollection<
   F['geometry'],
   F['properties']
 >
-export interface WaypointProperties extends Id {
+export type WaypointProperties = Id & {
   letter?: string
   type: WaypointType
   dragged: boolean
@@ -54,24 +55,24 @@ const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
 export const featureIsLane = (feature?: Feature): feature is Lane =>
   featureHasProperty(feature, 'route')
 
-export interface RouteProps {
+export type RouteProps = {
   found: boolean
   length?: number
   duration?: number
   fuel?: number
 }
 
-export interface Route extends RouteProps {
+export type Route = RouteProps & {
   route: Lane
   startAndEnd: Lane[]
   type?: WaypointType
 }
 
-export interface Index<T> {
+export type Index<T> = {
   [key: number]: T
 }
 
-export interface Settings {
+export type Settings = {
   height?: number
   depth?: number
   speed?: number
@@ -84,16 +85,17 @@ export type MapSettings = {
   centerLat: number
 }
 
-export interface ClientConfig {
+export type ClientConfig = {
   mapserver: string
 }
 
-export interface ServerConfig {
+export type ServerConfig = {
   host: string
   port: number
+  bundle: string
 }
 
-export interface Config {
+export type Config = {
   client: ClientConfig
   db: {
     host: string
@@ -105,22 +107,28 @@ export interface Config {
   server: ServerConfig
 }
 
+export type Stats = {
+  assetsByChunkName: {
+    [key: string]: string[]
+  }
+}
+
 export type Key = string | number
 
-export interface Notification {
+export type Notification = {
   key: Key
   message: string
   variant: VariantType
 }
 
-export interface RootState {
+export type RootState = {
   routes: Route[]
   settings: Settings
   waypoints: Waypoint[]
   notifications: Notification[]
 }
 
-export interface MenuState {
+export type MenuState = {
   open: boolean
   top: number
   left: number
@@ -128,7 +136,7 @@ export interface MenuState {
   isDestination?: boolean
 }
 
-export interface TouchMarkerState {
+export type TouchMarkerState = {
   direction: 'up' | 'down'
   top: number
   left: number

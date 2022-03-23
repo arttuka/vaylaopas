@@ -1,6 +1,7 @@
-import React, { FunctionComponent, useState } from 'react'
+import React, { VFC, useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import { styled } from '@mui/material/styles'
+import { TouchMarkerState } from '../../common/types'
 import { useInterval } from '../../common/util'
 
 const interval = 20
@@ -12,14 +13,11 @@ const StyledCircularProgress = styled(CircularProgress)({
   },
 })
 
-interface TouchMarkerProps {
-  direction: 'up' | 'down'
+type TouchMarkerProps = TouchMarkerState & {
   duration: number
-  top: number
-  left: number
 }
 
-const TouchMarker: FunctionComponent<TouchMarkerProps> = ({
+const TouchMarker: VFC<TouchMarkerProps> = ({
   direction,
   duration,
   top,

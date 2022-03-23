@@ -2,29 +2,30 @@ import React, {
   FunctionComponent,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { styled } from '@mui/material/styles'
-import {
-  Map,
-  GeolocateControl,
-  NavigationControl,
-  MapLayerTouchEvent,
-} from 'maplibre-gl'
-import MapFeatures from './MapFeatures'
+import Layer from './Layer'
 import Marker from './Marker'
-import { useMap, longTouchDuration } from '../Mapbox/map'
-import { makeLayerDraggable } from '../Mapbox/layer'
+import Map from './Map'
+import Source from './Source'
+import { layers } from '../Mapbox/layer'
 import { generateRouteSources, pointFeature } from '../Mapbox/source'
 import {
   DragStartHandler,
   Event,
+  MapEventHandler,
   MouseEventHandler,
   TouchEventHandler,
   Sources,
 } from '../Mapbox/types'
-import { waypointAddAction, waypointMoveAction } from '../redux/actions'
+import {
+  waypointAddAction,
+  waypointChangeAction,
+  waypointMoveAction,
+  waypointRemoveAction,
+} from '../redux/actions'
 import { routesSelector, waypointsSelector } from '../redux/selectors'
 import {
   featureIsLane,
@@ -35,8 +36,13 @@ import {
   TouchMarkerState,
   Waypoint,
   WaypointProperties,
+  WaypointType,
 } from '../../common/types'
 import { getStoredSetting, storeSetting, throttle } from '../../common/util'
+import TouchMarker from './TouchMarker'
+import ContextMenu from './ContextMenu'
+
+export const longTouchDuration = 750
 
 const closedMenu: MenuState = {
   open: false,
@@ -57,10 +63,6 @@ const sqDistance = (
   return dx * dx + dy * dy
 }
 
-const Container = styled('div')({
-  flex: 1,
-})
-
 type MapContainerProps = {
   mapserverUrl: string
 }
@@ -74,6 +76,7 @@ const MapContainer: FunctionComponent<MapContainerProps> = ({
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState>()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)
+  const longTouchTimer = useRef(0)
   const [sources, setSources] = useState<Sources>({
     ...generateRouteSources(routes),
     dragIndicator: { id: 'dragIndicator', data: pointFeature() },
@@ -84,130 +87,6 @@ const MapContainer: FunctionComponent<MapContainerProps> = ({
       ...newSources,
     }))
   }, [])
-
-  const onInit = useCallback((map: Map): void => {
-    let longTouchTimer = 0
-    let shortTouch = false
-    const onTouchEnd = (e: MapLayerTouchEvent): void => {
-      window.clearTimeout(longTouchTimer)
-      handleTouchEnd(e, shortTouch)
-    }
-
-    const onTouchCancel = (e: MapLayerTouchEvent): void => {
-      window.clearTimeout(longTouchTimer)
-      shortTouch = false
-      handleTouchEnd(e, false)
-    }
-
-    const handleClick: MouseEventHandler = (e) => {
-      setMenu(closedMenu)
-      e.preventDefault()
-    }
-
-    const handleRightClick: MouseEventHandler = (e) => {
-      e.preventDefault()
-      setLastClick(toLngLat(e))
-      openMenu(e.point)
-    }
-
-    const handleLongTouch: TouchEventHandler = (e) => {
-      e.preventDefault()
-      dispatch(waypointAddAction({ point: toLngLat(e), type: 'destination' }))
-      setTouchMarker(undefined)
-    }
-
-    const handleTouchStart: TouchEventHandler = (e) =>
-      setTouchMarker({
-        direction: 'up',
-        top: e.point.y + 56,
-        left: e.point.x,
-      })
-
-    const handleTouchEnd: TouchEventHandler = (e) => {
-      e.preventDefault()
-      setTouchMarker(undefined)
-    }
-
-    const handleDragRoute: DragStartHandler<Lane> = (e, feature, type) => {
-      const origin = e.point
-      let dragStarted = false
-      return {
-        onMove: (e) => {
-          if (!dragStarted && sqDistance(origin, e.point) > 1000) {
-            dragStarted = true
-          }
-          if (dragStarted) {
-            setSource({
-              dragIndicator: {
-                id: 'dragIndicator',
-                data: pointFeature(e.lngLat, type === 'touch'),
-              },
-            })
-          }
-        },
-        onMoveEnd: (e) => {
-          setSource({
-            dragIndicator: { id: 'dragIndicator', data: pointFeature() },
-          })
-          if (sqDistance(origin, e.point) > 1000) {
-            dispatch(
-              waypointAddAction({
-                point: toLngLat(e),
-                index: feature.properties.route + 1,
-                type: 'waypoint',
-              })
-            )
-          }
-        },
-      }
-    }
-
-    const onRender = throttle(() => {
-      storeSetting('zoom', map.getZoom())
-      const { lng, lat } = map.getCenter()
-      storeSetting('centerLng', lng)
-      storeSetting('centerLat', lat)
-    }, 50)
-
-    map.touchZoomRotate.disableRotation()
-    map
-      .addControl(
-        new GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true,
-          },
-          trackUserLocation: true,
-        })
-      )
-      .addControl(new NavigationControl({ showCompass: false }))
-      .on('click', handleClick)
-      .on('contextmenu', handleRightClick)
-      .on('touchstart', (e): void => {
-        window.clearTimeout(longTouchTimer)
-        handleTouchStart(e)
-        shortTouch = true
-        longTouchTimer = window.setTimeout((): void => {
-          handleLongTouch(e)
-        }, longTouchDuration)
-      })
-      .on('touchend', onTouchEnd)
-      .on('touchcancel', onTouchCancel)
-      .on('touchmove', onTouchCancel)
-      .on('render', onRender)
-
-    makeLayerDraggable(map, 'route', handleDragRoute, featureIsLane)
-  }, [])
-
-  const { setContainerRef, map } = useMap({
-    zoom: getStoredSetting('zoom') || 11,
-    center: [
-      getStoredSetting('centerLng') || 24.94,
-      getStoredSetting('centerLat') || 60.17,
-    ],
-    sources,
-    onInit,
-    mapserverUrl,
-  })
 
   const openMenu = useCallback((p: Point, waypoint?: WaypointProperties) => {
     setMenu((menu) => ({
@@ -223,6 +102,79 @@ const MapContainer: FunctionComponent<MapContainerProps> = ({
         : {}),
     }))
   }, [])
+  const closeMenu = useCallback(() => setMenu(closedMenu), [])
+
+  const onClick: MouseEventHandler = (e) => {
+    closeMenu()
+    e.preventDefault()
+  }
+
+  const onContextMenu: MouseEventHandler = (e) => {
+    e.preventDefault()
+    setLastClick(toLngLat(e))
+    openMenu(e.point)
+  }
+
+  const onTouchStart: TouchEventHandler = (e) => {
+    window.clearTimeout(longTouchTimer.current)
+    setTouchMarker({
+      direction: 'up',
+      top: e.point.y + 56,
+      left: e.point.x,
+    })
+    longTouchTimer.current = window.setTimeout((): void => {
+      e.preventDefault()
+      dispatch(waypointAddAction({ point: toLngLat(e), type: 'destination' }))
+      setTouchMarker(undefined)
+    }, longTouchDuration)
+  }
+
+  const onTouchEnd: TouchEventHandler = (e) => {
+    window.clearTimeout(longTouchTimer.current)
+    e.preventDefault()
+    setTouchMarker(undefined)
+  }
+
+  const onRender: MapEventHandler = throttle(({ target }) => {
+    storeSetting('zoom', target.getZoom())
+    const { lng, lat } = target.getCenter()
+    storeSetting('centerLng', lng)
+    storeSetting('centerLat', lat)
+  }, 50)
+
+  const handleDragRoute: DragStartHandler<Lane> = (e, feature, type) => {
+    const origin = e.point
+    let dragStarted = false
+    return {
+      onMove: (e) => {
+        if (!dragStarted && sqDistance(origin, e.point) > 1000) {
+          dragStarted = true
+        }
+        if (dragStarted) {
+          setSource({
+            dragIndicator: {
+              id: 'dragIndicator',
+              data: pointFeature(e.lngLat, type === 'touch'),
+            },
+          })
+        }
+      },
+      onMoveEnd: (e) => {
+        setSource({
+          dragIndicator: { id: 'dragIndicator', data: pointFeature() },
+        })
+        if (sqDistance(origin, e.point) > 1000) {
+          dispatch(
+            waypointAddAction({
+              point: toLngLat(e),
+              index: feature.properties.route + 1,
+              type: 'waypoint',
+            })
+          )
+        }
+      },
+    }
+  }
 
   const handleDragWaypoint = (id: string, lngLat: LngLat): void => {
     dispatch(
@@ -248,22 +200,57 @@ const MapContainer: FunctionComponent<MapContainerProps> = ({
 
   return (
     <>
-      <Container ref={setContainerRef} />
-      {map &&
-        waypoints.map((waypoint) => (
+      <Map
+        zoom={getStoredSetting('zoom') || 11}
+        center={[
+          getStoredSetting('centerLng') || 24.94,
+          getStoredSetting('centerLat') || 60.17,
+        ]}
+        mapserverUrl={mapserverUrl}
+        onClick={onClick}
+        onContextMenu={onContextMenu}
+        onTouchEnd={onTouchEnd}
+        onTouchStart={onTouchStart}
+        onRender={onRender}
+      >
+        {waypoints.map((waypoint) => (
           <Marker
             key={waypoint.id}
             waypoint={waypoint}
-            map={map}
             onDragEnd={handleDragWaypoint}
             onContextMenu={handleWaypointContextmenu}
           />
         ))}
-      <MapFeatures
-        lastClick={lastClick}
-        touchMarker={touchMarker}
-        menu={menu}
-        closeMenu={() => setMenu(closedMenu)}
+        <Source source={sources.dragIndicator}>
+          <Layer layer={layers.dragIndicator} />
+        </Source>
+        <Source source={sources.notFoundRoute}>
+          <Layer layer={layers.notFoundRoute} />
+        </Source>
+        <Source source={sources.route}>
+          <Layer
+            layer={layers.route}
+            onDrag={handleDragRoute}
+            isFeature={featureIsLane}
+          />
+        </Source>
+        <Source source={sources.routeStartAndEnd}>
+          <Layer layer={layers.routeStartAndEnd} />
+        </Source>
+      </Map>
+      {touchMarker && (
+        <TouchMarker {...touchMarker} duration={longTouchDuration} />
+      )}
+      <ContextMenu
+        {...menu}
+        onAdd={() =>
+          dispatch(waypointAddAction({ point: lastClick, type: 'destination' }))
+        }
+        onChange={(id: string, type: WaypointType) =>
+          dispatch(waypointChangeAction({ id, type }))
+        }
+        onDelete={(id: string) => dispatch(waypointRemoveAction({ id }))}
+        closeMenu={closeMenu}
       />
     </>
   )

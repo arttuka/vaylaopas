@@ -23,7 +23,7 @@ app.get('/', (req, res): void => {
   res.send(index)
 })
 
-interface RouteParams {
+type RouteParams = {
   points: Waypoint[]
   depth?: number
   height?: number

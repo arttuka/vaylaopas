@@ -5,6 +5,7 @@ import {
   GeoJSONSource,
   MapLayerMouseEvent,
   MapLayerTouchEvent,
+  MapLibreEvent,
 } from 'maplibre-gl'
 import {
   Collection,
@@ -19,6 +20,7 @@ export type TouchEventHandler = (
   e: MapLayerTouchEvent,
   shortTouch?: boolean
 ) => void
+export type MapEventHandler = (e: MapLibreEvent) => void
 export type EventHandler<T extends EventType> = (e: EventTypes[T]) => void
 export type DragStartHandler<F extends FeatureType> = <T extends EventType>(
   e: EventTypes[T],
@@ -65,15 +67,26 @@ export const sourceIsGeoJSON = (
   source?: MaplibreSource
 ): source is GeoJSONSource => source !== undefined && source.type === 'geojson'
 
-type LayerType<G extends Geometry> = G extends LineString
+type LayerSpecificationType<G extends Geometry> = G extends LineString
   ? 'line'
   : G extends Point
   ? 'symbol'
   : G extends MultiPoint
   ? 'symbol'
   : never
-export type Layer<S extends SourceId> = MapBy<
+export type LayerType<L extends string, S extends SourceId> = MapBy<
   LayerSpecification,
   'type',
-  LayerType<SourceFeature<S>['geometry']>
-> & { id: S; source: S }
+  LayerSpecificationType<SourceFeature<S>['geometry']>
+> & { id: L; source: S }
+export type AnyLayer =
+  | LayerType<'route', 'route'>
+  | LayerType<'notFoundRoute', 'notFoundRoute'>
+  | LayerType<'routeStartAndEnd', 'routeStartAndEnd'>
+  | LayerType<'dragIndicator', 'dragIndicator'>
+export type LayerId = AnyLayer['id']
+export type Layer<L extends LayerId> = MapBy<AnyLayer, 'id', L>
+export type Layers = { [key in LayerId]: Layer<key> }
+export type SourceLayer<S extends SourceId> = MapBy<AnyLayer, 'source', S>
+export type SourceLayerId<S extends SourceId> = SourceLayer<S>['id']
+export type LayerFeature<L extends LayerId> = SourceFeature<Layer<L>['source']>

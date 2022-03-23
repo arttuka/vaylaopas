@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Map } from 'maplibre-gl'
 import {
   DragStartHandler,
@@ -5,18 +6,22 @@ import {
   EventTypes,
   EventHandler,
   Layer,
-  SourceId,
-  SourceFeature,
+  Layers,
+  LayerId,
+  LayerFeature,
 } from './types'
 import { IsFeature } from '../../common/types'
 import { throttle } from '../../common/util'
 
-const addLayer = <S extends SourceId>(map: Map, layer: Layer<S>): void => {
+export const addLayer = <L extends LayerId>(
+  map: Map,
+  layer: Layer<L>
+): void => {
   map.addLayer(layer)
 }
 
-export const addLayers = (map: Map): void => {
-  addLayer(map, {
+export const layers: Layers = {
+  route: {
     id: 'route',
     source: 'route',
     type: 'line',
@@ -28,8 +33,8 @@ export const addLayers = (map: Map): void => {
       'line-color': '#ff3333',
       'line-width': 3,
     },
-  })
-  addLayer(map, {
+  },
+  notFoundRoute: {
     id: 'notFoundRoute',
     source: 'notFoundRoute',
     type: 'line',
@@ -42,8 +47,8 @@ export const addLayers = (map: Map): void => {
       'line-width': 4,
       'line-dasharray': [0.5, 2],
     },
-  })
-  addLayer(map, {
+  },
+  routeStartAndEnd: {
     id: 'routeStartAndEnd',
     source: 'routeStartAndEnd',
     type: 'line',
@@ -56,8 +61,8 @@ export const addLayers = (map: Map): void => {
       'line-width': 3,
       'line-dasharray': [0.5, 3],
     },
-  })
-  addLayer(map, {
+  },
+  dragIndicator: {
     id: 'dragIndicator',
     source: 'dragIndicator',
     type: 'symbol',
@@ -67,17 +72,17 @@ export const addLayers = (map: Map): void => {
       'icon-ignore-placement': true,
       'icon-size': ['case', ['get', 'dragged'], 1.5, 1],
     },
-  })
+  },
 }
 
-export const makeLayerDraggable = <S extends SourceId>(
+const makeLayerDraggable = <L extends LayerId>(
   map: Map,
-  id: S,
-  handler: DragStartHandler<SourceFeature<S>>,
-  isFeature: IsFeature<SourceFeature<S>>
+  id: L,
+  handler: DragStartHandler<LayerFeature<L>>,
+  isFeature: IsFeature<LayerFeature<L>>
 ): void => {
   const canvas = map.getCanvasContainer()
-  const onDragStart =
+  const makeDragStartHandler =
     <T extends EventType>(type: T): EventHandler<T> =>
     (e) => {
       e.preventDefault()
@@ -96,8 +101,8 @@ export const makeLayerDraggable = <S extends SourceId>(
         })
       }
     }
-  const onMouseStart = onDragStart('mouse')
-  const onTouchStart = onDragStart('touch')
+  const onMouseStart = makeDragStartHandler('mouse')
+  const onTouchStart = makeDragStartHandler('touch')
   map
     .on('mouseenter', id, () => {
       canvas.style.cursor = 'move'
@@ -111,4 +116,26 @@ export const makeLayerDraggable = <S extends SourceId>(
       }
     })
     .on('touchstart', id, onTouchStart)
+}
+
+export type LayerProps<L extends LayerId> = {
+  layer: Layer<L>
+  onDrag?: DragStartHandler<LayerFeature<L>>
+  isFeature?: IsFeature<LayerFeature<L>>
+}
+
+export const useLayer = <L extends LayerId>(
+  map: Map,
+  { layer, onDrag, isFeature }: LayerProps<L>
+): void => {
+  useEffect(() => {
+    const id = layer.id
+    addLayer(map, layer)
+    if (onDrag && isFeature) {
+      makeLayerDraggable(map, id, onDrag, isFeature)
+    }
+    return () => {
+      map.removeLayer(id)
+    }
+  }, [])
 }

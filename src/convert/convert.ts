@@ -13,13 +13,13 @@ const tableTo = 'lane'
 const verticesTo = `${tableTo}_vertices_pgr`
 const tolerance = 20
 
-interface Intersection {
+type Intersection = {
   id?: number
   laneIds: Set<number>
   point: string
 }
 
-interface SavedIntersection extends Intersection {
+type SavedIntersection = Intersection & {
   id: number
 }
 
@@ -41,7 +41,7 @@ const toIntersection = ({
 
 type IntersectionIndex = Index<SavedIntersection>
 
-interface Lane {
+type Lane = {
   id: number
   intersections: Set<number>
 }

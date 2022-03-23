@@ -16,7 +16,7 @@ const ScrollingList = styled(List)({
   height: 'calc(100% - 61px)',
 })
 
-interface RouteListProps {
+type RouteListProps = {
   onClick?: () => void
 }
 

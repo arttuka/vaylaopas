@@ -15,7 +15,7 @@ const CloseButton = styled(IconButton)({
   width: '100%',
 })
 
-interface TopDrawerProps {
+type TopDrawerProps = {
   open: boolean
   onClose: () => void
 }

@@ -9,7 +9,7 @@ const IconButton = styled(MuiIconButton)({
   padding: 0,
 })
 
-interface ClearButtonProps {
+type ClearButtonProps = {
   disabled: boolean
   onClick: () => void
 }
@@ -29,7 +29,7 @@ const TextField = styled(MuiTextField)({
   flexBasis: '40%',
 })
 
-interface SettingFieldProps {
+type SettingFieldProps = {
   id: string
   label: string
   value?: number

@@ -1,5 +1,5 @@
 import { LngLat, Map } from 'maplibre-gl'
-import { SourceId, Source, Sources, sourceIsGeoJSON } from './types'
+import { AnySource, SourceId, Source, Sources, sourceIsGeoJSON } from './types'
 import { Collection, Lane, PointFeature, Route } from '../../common/types'
 import { useEffect } from 'react'
 
@@ -65,10 +65,12 @@ export const generateRouteSources = (
   }
 }
 
-export const addSources = (map: Map, sources: Sources): void => {
-  for (const { id, data } of Object.values(sources)) {
-    map.addSource(id, { type: 'geojson', data })
-  }
+export const addSource = (map: Map, { id, data }: AnySource): void => {
+  map.addSource(id, { type: 'geojson', data })
+}
+
+export const removeSource = (map: Map, id: SourceId): void => {
+  map.removeSource(id)
 }
 
 export const setSourceData = <S extends SourceId>(
@@ -82,12 +84,16 @@ export const setSourceData = <S extends SourceId>(
 }
 
 export const useSource = <S extends SourceId>(
-  map: Map | undefined,
+  map: Map,
   source: Source<S>
 ): void => {
   useEffect(() => {
-    if (map) {
-      setSourceData(map, source)
+    addSource(map, source)
+    return () => {
+      removeSource(map, source.id)
     }
+  }, [])
+  useEffect(() => {
+    setSourceData(map, source)
   }, [source])
 }
