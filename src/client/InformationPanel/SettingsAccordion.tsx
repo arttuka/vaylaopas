@@ -1,4 +1,4 @@
-import React, { VFC } from 'react'
+import React, { FC } from 'react'
 import MuiAccordion from '@mui/material/Accordion'
 import MuiAccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
@@ -25,7 +25,7 @@ const AccordionSummary = styled(MuiAccordionSummary)({
   },
 })
 
-const SettingsAccordion: VFC = () => (
+const SettingsAccordion: FC = () => (
   <Accordion>
     <AccordionSummary expandIcon={<SettingsIcon />}>Asetukset</AccordionSummary>
     <AccordionDetails>

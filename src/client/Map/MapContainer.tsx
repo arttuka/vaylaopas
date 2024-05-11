@@ -1,4 +1,4 @@
-import React, { VFC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import Layer from './Layer'
 import Marker from './Marker'
@@ -49,7 +49,7 @@ const sqDistance = (p1: Point, p2: Point): number => {
   return dx * dx + dy * dy
 }
 
-const MapContainer: VFC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
+const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   const dispatch = useDispatch()
   const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState(closedMenu)

@@ -1,6 +1,6 @@
 import React, {
   MouseEvent,
-  VFC,
+  FC,
   useCallback,
   useEffect,
   useMemo,
@@ -72,7 +72,7 @@ type MarkerProps = {
   onContextMenu: (waypoint: Waypoint, lngLat: LngLat, point: Point) => void
 }
 
-const Marker: VFC<MarkerProps> = (props) => {
+const Marker: FC<MarkerProps> = (props) => {
   const propsRef = useRef(props)
   propsRef.current = props
   const { waypoint, onContextMenu } = props

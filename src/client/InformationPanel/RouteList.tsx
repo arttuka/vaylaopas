@@ -1,4 +1,4 @@
-import React, { VFC, ReactElement } from 'react'
+import React, { FC, ReactElement } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import List from '@mui/material/List'
 import { styled } from '@mui/material/styles'
@@ -20,7 +20,7 @@ type RouteListProps = {
   onClick?: () => void
 }
 
-const RouteList: VFC<RouteListProps> = ({ onClick }) => {
+const RouteList: FC<RouteListProps> = ({ onClick }) => {
   const dispatch = useDispatch()
   const routes = useSelector(routesSelector)
   const waypoints = useSelector(waypointsSelector)

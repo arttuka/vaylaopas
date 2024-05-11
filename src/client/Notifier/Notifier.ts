@@ -1,4 +1,4 @@
-import { VFC, useEffect } from 'react'
+import { FC, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSnackbar } from 'notistack'
 import { notificationRemoveAction } from '../redux/actions'
@@ -13,7 +13,7 @@ const removeDisplayed = (key: Key): void => {
   displayed = displayed.filter((k) => k !== key)
 }
 
-const Notifier: VFC = () => {
+const Notifier: FC = () => {
   const dispatch = useDispatch()
   const notifications = useSelector(notificationsSelector)
   const { enqueueSnackbar } = useSnackbar()

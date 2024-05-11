@@ -1,4 +1,4 @@
-import React, { VFC } from 'react'
+import React, { FC } from 'react'
 import MuiPaper from '@mui/material/Paper'
 import { styled } from '@mui/material/styles'
 import RouteList from './RouteList'
@@ -12,7 +12,7 @@ const Paper = styled(MuiPaper)(({ theme: { spacing } }) => ({
   zIndex: 10,
 }))
 
-const InformationPanel: VFC = () => (
+const InformationPanel: FC = () => (
   <Paper elevation={3} sx={{ display: { xs: 'none', md: 'block' } }}>
     <RouteList />
     <SettingsAccordion />

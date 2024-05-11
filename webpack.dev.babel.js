@@ -1,7 +1,7 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
 import config from './config.json'
-import indexHtml from './src/server/indexHtml'
+import { indexHtml } from './src/server/indexHtml'
 
 const { server: serverConfig, client: clientConfig } = config
 const { host, port, devserverPort } = serverConfig
@@ -22,13 +22,13 @@ module.exports = {
     compress: true,
     host: '0.0.0.0',
     port: devserverPort,
-    public: `${host}:${devserverPort}`,
     historyApiFallback: true,
-    proxy: {
-      '/api': {
+    proxy: [
+      {
+        context: ['/api'],
         target: `http://${host}:${port}`,
       },
-    },
+    ],
   },
   module: {
     rules: [

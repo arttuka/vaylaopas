@@ -1,4 +1,4 @@
-import React, { VFC, useEffect, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import { Provider } from 'react-redux'
 import { SnackbarProvider } from 'notistack'
 import { styled } from '@mui/material/styles'
@@ -20,7 +20,7 @@ const Container = styled('div')({
   height: '100vh',
 })
 
-const App: VFC = () => {
+const App: FC = () => {
   const [config, setConfig] = useState<ClientConfig>()
   useEffect(() => {
     const loadConfig = async (): Promise<void> => {
@@ -40,7 +40,7 @@ const App: VFC = () => {
   )
 }
 
-const WrappedApp: VFC = () => (
+const WrappedApp: FC = () => (
   <Provider store={store}>
     <StyledEngineProvider injectFirst>
       <SnackbarProvider>

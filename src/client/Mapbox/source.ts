@@ -91,7 +91,9 @@ export const useSource = <S extends SourceId>(
   useEffect(() => {
     addSource(map, source)
     return () => {
-      removeSource(map, source.id)
+      setTimeout(() => {
+        removeSource(map, source.id)
+      }, 0)
     }
   }, [])
   useEffect(() => {

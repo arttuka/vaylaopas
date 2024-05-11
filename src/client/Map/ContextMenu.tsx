@@ -1,4 +1,4 @@
-import React, { VFC } from 'react'
+import React, { FC } from 'react'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import { LngLat, MenuState } from '../../common/types'
@@ -14,7 +14,7 @@ type ContextMenuProps = MenuState & {
   point: LngLat
 }
 
-const ContextMenu: VFC<ContextMenuProps> = ({
+const ContextMenu: FC<ContextMenuProps> = ({
   open,
   top,
   left,

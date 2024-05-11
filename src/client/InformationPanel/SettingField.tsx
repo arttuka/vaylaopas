@@ -1,4 +1,4 @@
-import React, { ChangeEvent, VFC } from 'react'
+import React, { ChangeEvent, FC } from 'react'
 import CancelIcon from '@mui/icons-material/Cancel'
 import MuiIconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -14,7 +14,7 @@ type ClearButtonProps = {
   onClick: () => void
 }
 
-const ClearButton: VFC<ClearButtonProps> = ({ disabled, onClick }) => (
+const ClearButton: FC<ClearButtonProps> = ({ disabled, onClick }) => (
   <InputAdornment position="start">
     <IconButton disabled={disabled} onClick={onClick}>
       <CancelIcon />
@@ -33,7 +33,7 @@ type SettingFieldProps = {
   onChange: (value?: number) => void
 }
 
-const SettingField: VFC<SettingFieldProps> = ({
+const SettingField: FC<SettingFieldProps> = ({
   id,
   label,
   onChange,

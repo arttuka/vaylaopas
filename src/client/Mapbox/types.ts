@@ -40,7 +40,7 @@ type GetFeatureType<F extends FeatureType | Collection<FeatureType>> =
 
 export type SourceType<
   I extends string,
-  F extends FeatureType | Collection<FeatureType>
+  F extends FeatureType | Collection<FeatureType>,
 > = {
   id: I
   data: F
@@ -67,10 +67,10 @@ export const sourceIsGeoJSON = (
 type LayerSpecificationType<G extends Geometry> = G extends LineString
   ? 'line'
   : G extends Point
-  ? 'symbol'
-  : G extends MultiPoint
-  ? 'symbol'
-  : never
+    ? 'symbol'
+    : G extends MultiPoint
+      ? 'symbol'
+      : never
 export type LayerType<L extends string, S extends SourceId> = MapBy<
   LayerSpecification,
   'type',

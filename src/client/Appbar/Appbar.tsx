@@ -1,4 +1,4 @@
-import React, { VFC, useState } from 'react'
+import React, { FC, useState } from 'react'
 import MuiAppBar from '@mui/material/AppBar'
 import IconButton from '@mui/material/IconButton'
 import Toolbar from '@mui/material/Toolbar'
@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography'
 import SettingsIcon from '@mui/icons-material/Settings'
 import TopDrawer from '../InformationPanel/TopDrawer'
 
-const AppBar: VFC = () => {
+const AppBar: FC = () => {
   const [open, setOpen] = useState(false)
   return (
     <MuiAppBar position="static">

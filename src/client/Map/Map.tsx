@@ -1,4 +1,4 @@
-import React, { ReactNode, VFC, useRef } from 'react'
+import React, { ReactNode, FC, useRef } from 'react'
 import { styled } from '@mui/material/styles'
 import { MapProps, useMaplibreMap } from '../Mapbox/map'
 import { MapContextProvider } from './map-context'
@@ -7,7 +7,7 @@ const Container = styled('div')({
   flex: 1,
 })
 
-const Map: VFC<MapProps & { children: ReactNode }> = ({
+const Map: FC<MapProps & { children: ReactNode }> = ({
   children,
   ...mapProps
 }) => {

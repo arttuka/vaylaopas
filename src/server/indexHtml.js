@@ -9,7 +9,7 @@ const indexHtml = (cfg, bundle) => `
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no, user-scalable=no"
     />
     <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=Promise"></script>
-    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
     <style type="text/css">
       body {
@@ -33,4 +33,4 @@ const indexHtml = (cfg, bundle) => `
 </html>
 `
 
-export default indexHtml
+module.exports = { indexHtml }

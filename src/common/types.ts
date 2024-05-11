@@ -145,5 +145,5 @@ export type TouchMarkerState = {
 export type MapBy<
   T extends { [key in K]: unknown },
   K extends string,
-  V extends T[K]
+  V extends T[K],
 > = Extract<T, { [key in K]: V }>
