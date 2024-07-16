@@ -7,7 +7,7 @@
   },
   "private": true,
   "browserslist": [
-    "last 2 Chrome versions"
+    "defaults"
   ],
   "dependencies": {
     "@emotion/react": "^11.4.0",
