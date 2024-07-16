@@ -10,9 +10,16 @@ const AppBar: FC = () => {
   const [open, setOpen] = useState(false)
   return (
     <MuiAppBar position="static">
-      <Toolbar>
+      <Toolbar
+        sx={{
+          minHeight: {
+            xs: 40,
+            sm: 56,
+          },
+        }}
+      >
         <IconButton
-          size="large"
+          size="medium"
           color="inherit"
           edge="start"
           onClick={() => setOpen(true)}
@@ -21,7 +28,18 @@ const AppBar: FC = () => {
           <SettingsIcon />
         </IconButton>
         <TopDrawer open={open} onClose={() => setOpen(false)} />
-        <Typography variant="h4">Väyläopas</Typography>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 400,
+            fontSize: {
+              xs: '1.5rem',
+              sm: '2.125rem',
+            },
+          }}
+        >
+          Väyläopas
+        </Typography>
       </Toolbar>
     </MuiAppBar>
   )

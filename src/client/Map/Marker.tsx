@@ -37,10 +37,10 @@ const Destination = styled('div')({
   height: 58,
   fontSize: 24,
   position: 'relative',
-  transform: 'translateY(-50%)',
+  transform: '',
   transition: 'transform 100ms ease-in-out',
   '&.marker-dragged': {
-    transform: 'scale(1.5, 1.5) translateY(-50%)',
+    transform: 'scale(1.5, 1.5)',
   },
 })
 
@@ -81,7 +81,7 @@ const Marker: FC<MarkerProps> = (props) => {
   const map = useMap()
   const marker: MaplibreMarker = useMemo(() => {
     const element = document.createElement('div')
-    return new MaplibreMarker({ element, draggable: true })
+    return new MaplibreMarker({ element, draggable: true, anchor: 'bottom' })
       .setLngLat({ lng, lat })
       .on('dragstart', () => setIsDragged(true))
       .on('dragend', () => {
