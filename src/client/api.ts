@@ -1,4 +1,5 @@
 import { ClientConfig, Route, Settings, Waypoint } from '../common/types'
+import { routesSchema } from './schema'
 
 export const getRoutes = async (
   waypoints: Waypoint[],
@@ -19,7 +20,13 @@ export const getRoutes = async (
   if (response.status >= 400) {
     throw new Error(`Call to /api/route failed with code ${response.status}`)
   }
-  return response.json()
+  const parsed = routesSchema.safeParse(await response.json())
+  if (parsed.success) {
+    return parsed.data
+  } else {
+    console.log('Invalid data', parsed.error.issues)
+    throw new Error(`Invalid data`)
+  }
 }
 
 export const addMapLoad = async (): Promise<void> => {

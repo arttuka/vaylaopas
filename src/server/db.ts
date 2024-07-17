@@ -6,11 +6,11 @@ import { spreadIf, partition, pick, range } from '../common/util'
 
 const pool = new Pool(config.db)
 
-const formatLane = (geometry: LineString, routeNumber: number): Lane => ({
+const formatLane = (geometry: LineString, routeIndex: number): Lane => ({
   type: 'Feature',
   geometry,
   properties: {
-    route: routeNumber,
+    routeIndex,
   },
 })
 

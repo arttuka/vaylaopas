@@ -156,7 +156,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
             editWaypoints({
               type: 'add',
               point: toLngLat(e),
-              index: feature.properties.route + 1,
+              index: feature.properties.routeIndex + 1,
               waypointType: 'via',
             })
           }

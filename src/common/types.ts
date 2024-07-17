@@ -26,7 +26,7 @@ export type Waypoint = LngLat &
   }
 
 export type LaneProperties = {
-  route: number
+  routeIndex: number
 }
 export type Lane = Feature<LineString, LaneProperties>
 export type Collection<F extends FeatureType> = FeatureCollection<
@@ -53,7 +53,7 @@ const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
   feature.properties.hasOwnProperty(p)
 
 export const featureIsLane = (feature?: Feature): feature is Lane =>
-  featureHasProperty(feature, 'route')
+  featureHasProperty(feature, 'routeIndex')
 
 export type RouteProps = {
   found: boolean
