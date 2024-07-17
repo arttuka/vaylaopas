@@ -1,10 +1,8 @@
 import React, { FC, useEffect, useState } from 'react'
-import { Provider } from 'react-redux'
 import { SnackbarProvider } from 'notistack'
 import { styled } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import StyledEngineProvider from '@mui/material/StyledEngineProvider'
-import store from './redux/store'
 import { getConfig } from './api'
 import AppBar from './Appbar/Appbar'
 import MapContainer from './Map/MapContainer'
@@ -41,14 +39,12 @@ const App: FC = () => {
 }
 
 const WrappedApp: FC = () => (
-  <Provider store={store}>
-    <StyledEngineProvider injectFirst>
-      <SnackbarProvider>
-        <CssBaseline />
-        <App />
-      </SnackbarProvider>
-    </StyledEngineProvider>
-  </Provider>
+  <StyledEngineProvider injectFirst>
+    <SnackbarProvider>
+      <CssBaseline />
+      <App />
+    </SnackbarProvider>
+  </StyledEngineProvider>
 )
 
 export default WrappedApp

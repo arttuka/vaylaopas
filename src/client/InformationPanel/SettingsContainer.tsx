@@ -1,10 +1,9 @@
 import React, { FC } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useShallow } from 'zustand/react/shallow'
 import { styled } from '@mui/material/styles'
 import SettingField from './SettingField'
-import { settingsSelector } from '../redux/selectors'
 import { Settings } from '../../common/types'
-import { settingsSetAction } from '../redux/actions'
+import { useStore } from '../store/store'
 
 const Container = styled('div')({
   display: 'flex',
@@ -13,13 +12,18 @@ const Container = styled('div')({
 })
 
 const SettingsContainer: FC = () => {
-  const dispatch = useDispatch()
-  const { depth, height, speed, consumption } = useSelector(settingsSelector)
+  const { settings, setSetting } = useStore(
+    useShallow((state) => ({
+      settings: state.settings,
+      setSetting: state.setSetting,
+    }))
+  )
+  const { depth, height, speed, consumption } = settings
   const updateSetting =
     (key: keyof Settings) =>
     (value?: number): void => {
       const posValue = value && Math.max(0, value)
-      dispatch(settingsSetAction({ key, value: posValue }))
+      setSetting(key, posValue)
     }
   return (
     <Container>

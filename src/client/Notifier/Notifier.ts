@@ -1,9 +1,8 @@
 import { FC, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { useSnackbar } from 'notistack'
-import { notificationRemoveAction } from '../redux/actions'
-import { notificationsSelector } from '../redux/selectors'
+import { useShallow } from 'zustand/react/shallow'
 import { Key } from '../../common/types'
+import { useStore } from '../store/store'
 
 let displayed: Key[] = []
 const setDisplayed = (key: Key): void => {
@@ -14,8 +13,12 @@ const removeDisplayed = (key: Key): void => {
 }
 
 const Notifier: FC = () => {
-  const dispatch = useDispatch()
-  const notifications = useSelector(notificationsSelector)
+  const { notifications, removeNotification } = useStore(
+    useShallow((state) => ({
+      notifications: state.notifications,
+      removeNotification: state.removeNotification,
+    }))
+  )
   const { enqueueSnackbar } = useSnackbar()
 
   useEffect(() => {
@@ -28,14 +31,14 @@ const Notifier: FC = () => {
         key,
         variant,
         onExited: (node, key) => {
-          dispatch(notificationRemoveAction({ key }))
+          removeNotification(key)
           removeDisplayed(key)
         },
       })
 
       setDisplayed(key)
     })
-  }, [notifications, enqueueSnackbar, dispatch])
+  }, [notifications, enqueueSnackbar, removeNotification])
 
   return null
 }

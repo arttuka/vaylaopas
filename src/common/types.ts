@@ -17,7 +17,7 @@ export type Point = {
   y: number
 }
 
-export type WaypointType = 'destination' | 'waypoint'
+export type WaypointType = 'destination' | 'via'
 
 export type Waypoint = LngLat &
   Id & {

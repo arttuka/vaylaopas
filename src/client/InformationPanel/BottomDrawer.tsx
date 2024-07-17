@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect } from 'react'
-import { useSelector } from 'react-redux'
 import clsx from 'clsx'
 import Button from '@mui/material/Button'
 import { default as MuiDrawer } from '@mui/material/Drawer'
@@ -7,7 +6,7 @@ import { styled } from '@mui/material/styles'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import RouteList from './RouteList'
-import { waypointsSelector } from '../redux/selectors'
+import { useStore } from '../store/store'
 import { hasProperty } from '../../common/util'
 
 const openHeight = (items: number): number => 62 + items * 60
@@ -68,7 +67,7 @@ const DrawerButton = styled(Button)(({ theme: { palette, spacing } }) => ({
 }))
 
 const BottomDrawer: FC = () => {
-  const waypoints = useSelector(waypointsSelector)
+  const waypoints = useStore((state) => state.waypoints)
   const items = Math.min(
     waypoints.filter(hasProperty('type', 'destination')).length,
     4

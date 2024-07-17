@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useShallow } from 'zustand/react/shallow'
 import Layer from './Layer'
 import Marker from './Marker'
 import Map from './Map'
@@ -14,8 +14,6 @@ import {
   TouchEventHandler,
   Sources,
 } from '../Mapbox/types'
-import { waypointAddAction, waypointMoveAction } from '../redux/actions'
-import { routesSelector, waypointsSelector } from '../redux/selectors'
 import {
   featureIsLane,
   Lane,
@@ -27,6 +25,7 @@ import {
   WaypointProperties,
 } from '../../common/types'
 import { getStoredSetting, storeSetting, throttle } from '../../common/util'
+import { useStore } from '../store/store'
 import TouchMarker from './TouchMarker'
 import ContextMenu from './ContextMenu'
 
@@ -50,12 +49,16 @@ const sqDistance = (p1: Point, p2: Point): number => {
 }
 
 const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
-  const dispatch = useDispatch()
   const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState(closedMenu)
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState>()
-  const routes = useSelector(routesSelector)
-  const waypoints = useSelector(waypointsSelector)
+  const { routes, waypoints, editWaypoints } = useStore(
+    useShallow((state) => ({
+      routes: state.routes,
+      waypoints: state.waypoints,
+      editWaypoints: state.editWaypoints,
+    }))
+  )
   const longTouchTimer = useRef(0)
   const [sources, setSources] = useState<Sources>({
     ...generateRouteSources(routes),
@@ -102,7 +105,11 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
     })
     longTouchTimer.current = window.setTimeout((): void => {
       e.preventDefault()
-      dispatch(waypointAddAction({ point: toLngLat(e), type: 'destination' }))
+      editWaypoints({
+        type: 'add',
+        point: toLngLat(e),
+        waypointType: 'destination',
+      })
       setTouchMarker(undefined)
     }, longTouchDuration)
   }, [])
@@ -146,13 +153,12 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
             dragIndicator: { id: 'dragIndicator', data: pointFeature() },
           })
           if (sqDistance(origin, e.point) > 1000) {
-            dispatch(
-              waypointAddAction({
-                point: toLngLat(e),
-                index: feature.properties.route + 1,
-                type: 'waypoint',
-              })
-            )
+            editWaypoints({
+              type: 'add',
+              point: toLngLat(e),
+              index: feature.properties.route + 1,
+              waypointType: 'via',
+            })
           }
         },
       }
@@ -161,12 +167,11 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   )
 
   const handleDragWaypoint = useCallback((id: string, lngLat: LngLat): void => {
-    dispatch(
-      waypointMoveAction({
-        point: lngLat,
-        id,
-      })
-    )
+    editWaypoints({
+      type: 'move',
+      point: lngLat,
+      id,
+    })
   }, [])
 
   const handleWaypointContextmenu = useCallback(

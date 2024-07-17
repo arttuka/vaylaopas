@@ -215,7 +215,7 @@ test('combineSegments', (): void => {
       fuel: 1,
     },
     {
-      type: 'waypoint',
+      type: 'via',
       found: true,
       length: 4,
       duration: 2,

@@ -2,12 +2,7 @@ import React, { FC } from 'react'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import { LngLat, MenuState } from '../../common/types'
-import { useDispatch } from 'react-redux'
-import {
-  waypointAddAction,
-  waypointChangeAction,
-  waypointRemoveAction,
-} from '../redux/actions'
+import { useStore } from '../store/store'
 
 type ContextMenuProps = MenuState & {
   closeMenu: () => void
@@ -23,7 +18,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
   closeMenu,
   point,
 }) => {
-  const dispatch = useDispatch()
+  const editWaypoints = useStore((state) => state.editWaypoints)
   return (
     <Menu
       keepMounted
@@ -35,7 +30,11 @@ const ContextMenu: FC<ContextMenuProps> = ({
       {waypoint === undefined ? (
         <MenuItem
           onClick={() => {
-            dispatch(waypointAddAction({ point, type: 'destination' }))
+            editWaypoints({
+              type: 'add',
+              point,
+              waypointType: 'destination',
+            })
             closeMenu()
           }}
         >
@@ -46,12 +45,11 @@ const ContextMenu: FC<ContextMenuProps> = ({
           <MenuItem
             key="change-waypoint"
             onClick={() => {
-              dispatch(
-                waypointChangeAction({
-                  id: waypoint,
-                  type: isDestination ? 'waypoint' : 'destination',
-                })
-              )
+              editWaypoints({
+                type: 'change',
+                id: waypoint,
+                waypointType: isDestination ? 'via' : 'destination',
+              })
               closeMenu()
             }}
           >
@@ -60,7 +58,10 @@ const ContextMenu: FC<ContextMenuProps> = ({
           <MenuItem
             key="delete-waypoint"
             onClick={() => {
-              dispatch(waypointRemoveAction({ id: waypoint }))
+              editWaypoints({
+                type: 'remove',
+                id: waypoint,
+              })
               closeMenu()
             }}
           >
