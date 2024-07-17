@@ -49,6 +49,7 @@ const sqDistance = (p1: Point, p2: Point): number => {
 }
 
 const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
+  const draggingMarker = useRef(false)
   const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState(closedMenu)
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState>()
@@ -143,7 +144,9 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
             setSource({
               dragIndicator: {
                 id: 'dragIndicator',
-                data: pointFeature(e.lngLat, type === 'touch'),
+                data: draggingMarker.current
+                  ? pointFeature()
+                  : pointFeature(e.lngLat, type === 'touch'),
               },
             })
           }
@@ -152,7 +155,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
           setSource({
             dragIndicator: { id: 'dragIndicator', data: pointFeature() },
           })
-          if (sqDistance(origin, e.point) > 1000) {
+          if (!draggingMarker.current && sqDistance(origin, e.point) > 1000) {
             editWaypoints({
               type: 'add',
               point: toLngLat(e),
@@ -205,6 +208,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
           <Marker
             key={waypoint.id}
             waypoint={waypoint}
+            draggingRef={draggingMarker}
             onDragEnd={handleDragWaypoint}
             onContextMenu={handleWaypointContextmenu}
           />

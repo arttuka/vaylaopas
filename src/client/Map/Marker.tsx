@@ -67,6 +67,7 @@ const WaypointMarker = styled('div')({
 })
 
 type MarkerProps = {
+  draggingRef: React.MutableRefObject<boolean>
   waypoint: Waypoint
   onDragEnd: (id: string, lngLat: LngLat) => void
   onContextMenu: (waypoint: Waypoint, lngLat: LngLat, point: Point) => void
@@ -83,8 +84,12 @@ const Marker: FC<MarkerProps> = (props) => {
     const element = document.createElement('div')
     return new MaplibreMarker({ element, draggable: true, anchor: 'bottom' })
       .setLngLat({ lng, lat })
-      .on('dragstart', () => setIsDragged(true))
+      .on('dragstart', () => {
+        propsRef.current.draggingRef.current = true
+        setIsDragged(true)
+      })
       .on('dragend', () => {
+        propsRef.current.draggingRef.current = false
         setIsDragged(false)
         propsRef.current.onDragEnd(
           propsRef.current.waypoint.id,
