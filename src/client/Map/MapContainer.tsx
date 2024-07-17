@@ -85,34 +85,43 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   )
   const closeMenu = useCallback(() => setMenu(closedMenu), [])
 
-  const onClick: MouseEventHandler = useCallback((e) => {
-    closeMenu()
-    e.preventDefault()
-  }, [])
-
-  const onContextMenu: MouseEventHandler = useCallback((e) => {
-    e.preventDefault()
-    setLastClick(toLngLat(e))
-    openMenu(e.point)
-  }, [])
-
-  const onTouchStart: TouchEventHandler = useCallback((e) => {
-    window.clearTimeout(longTouchTimer.current)
-    setTouchMarker({
-      direction: 'up',
-      top: e.point.y + 56,
-      left: e.point.x,
-    })
-    longTouchTimer.current = window.setTimeout((): void => {
+  const onClick: MouseEventHandler = useCallback(
+    (e) => {
+      closeMenu()
       e.preventDefault()
-      editWaypoints({
-        type: 'add',
-        point: toLngLat(e),
-        waypointType: 'destination',
+    },
+    [closeMenu]
+  )
+
+  const onContextMenu: MouseEventHandler = useCallback(
+    (e) => {
+      e.preventDefault()
+      setLastClick(toLngLat(e))
+      openMenu(e.point)
+    },
+    [openMenu]
+  )
+
+  const onTouchStart: TouchEventHandler = useCallback(
+    (e) => {
+      window.clearTimeout(longTouchTimer.current)
+      setTouchMarker({
+        direction: 'up',
+        top: e.point.y + 56,
+        left: e.point.x,
       })
-      setTouchMarker(undefined)
-    }, longTouchDuration)
-  }, [])
+      longTouchTimer.current = window.setTimeout((): void => {
+        e.preventDefault()
+        editWaypoints({
+          type: 'add',
+          point: toLngLat(e),
+          waypointType: 'destination',
+        })
+        setTouchMarker(undefined)
+      }, longTouchDuration)
+    },
+    [editWaypoints]
+  )
 
   const onTouchEnd: TouchEventHandler = useCallback((e) => {
     window.clearTimeout(longTouchTimer.current)
@@ -120,6 +129,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
     setTouchMarker(undefined)
   }, [])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onRender: MapEventHandler = useCallback(
     throttle(({ target }) => {
       storeSetting('zoom', target.getZoom())
@@ -165,28 +175,31 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
         },
       }
     },
-    []
+    [editWaypoints, setSource]
   )
 
-  const handleDragWaypoint = useCallback((id: string, lngLat: LngLat): void => {
-    editWaypoints({
-      type: 'move',
-      point: lngLat,
-      id,
-    })
-  }, [])
+  const handleDragWaypoint = useCallback(
+    (id: string, lngLat: LngLat): void => {
+      editWaypoints({
+        type: 'move',
+        point: lngLat,
+        id,
+      })
+    },
+    [editWaypoints]
+  )
 
   const handleWaypointContextmenu = useCallback(
     (waypoint: Waypoint, lngLat: LngLat, point: Point): void => {
       setLastClick(lngLat)
       openMenu(point, { ...waypoint, dragged: false })
     },
-    []
+    [openMenu]
   )
 
   useEffect(() => {
     setSource(generateRouteSources(routes))
-  }, [routes])
+  }, [routes, setSource])
 
   return (
     <>

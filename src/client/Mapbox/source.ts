@@ -109,8 +109,9 @@ export const useSource = <S extends SourceId, L extends LayerId>(
       }
       removeSource(map, source.id)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     setSourceData(map, source)
-  }, [source])
+  }, [map, source])
 }

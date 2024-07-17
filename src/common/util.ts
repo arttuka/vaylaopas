@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 import geojson from 'geojson'
 import {
   Id,
@@ -262,8 +263,7 @@ export const applyOffset = (
 })
 
 export const makeIdGenerator = (prefix: string): (() => string) => {
-  let i = 0
-  return () => `${prefix}-${i++}`
+  return () => `${prefix}-${uuidv4()}`
 }
 
 export const sqDistance = (p1: Point, p2: Point): number => {

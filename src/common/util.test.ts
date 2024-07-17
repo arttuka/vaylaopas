@@ -19,7 +19,6 @@ import {
   throttle,
   calculateOffset,
   applyOffset,
-  makeIdGenerator,
   combineSegments,
 } from './util'
 import { Route } from './types'
@@ -208,17 +207,6 @@ test('positionOffset', (): void => {
     lng: 59,
     lat: 52,
   })
-})
-
-test('makeIdGenerator', (): void => {
-  const gen1 = makeIdGenerator('gen1')
-  const gen2 = makeIdGenerator('gen2')
-  expect(gen1()).toEqual('gen1-0')
-  expect(gen1()).toEqual('gen1-1')
-  expect(gen2()).toEqual('gen2-0')
-  expect(gen2()).toEqual('gen2-1')
-  expect(gen1()).toEqual('gen1-2')
-  expect(gen2()).toEqual('gen2-2')
 })
 
 test('combineSegments', (): void => {

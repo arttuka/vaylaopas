@@ -80,6 +80,7 @@ const Marker: FC<MarkerProps> = (props) => {
   const { lng, lat, type, letter } = waypoint
   const [isDragged, setIsDragged] = useState(false)
   const map = useMap()
+
   const marker: MaplibreMarker = useMemo(() => {
     const element = document.createElement('div')
     return new MaplibreMarker({ element, draggable: true, anchor: 'bottom' })
@@ -96,13 +97,15 @@ const Marker: FC<MarkerProps> = (props) => {
           marker.getLngLat()
         )
       })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
   useEffect(() => {
     marker.addTo(map)
     return () => {
       marker.remove()
     }
-  }, [])
+  }, [map, marker])
   const onDivClick = useCallback(
     (e: MouseEvent) => {
       e.nativeEvent.stopImmediatePropagation()
@@ -111,7 +114,7 @@ const Marker: FC<MarkerProps> = (props) => {
         y: e.pageY - 64,
       })
     },
-    [onContextMenu]
+    [onContextMenu, waypoint, marker]
   )
   const onDivContextMenu = useCallback(
     (e: MouseEvent) => {
@@ -122,7 +125,7 @@ const Marker: FC<MarkerProps> = (props) => {
         y: e.pageY - 64,
       })
     },
-    [onContextMenu]
+    [onContextMenu, waypoint, marker]
   )
   const onDivMouseDown = useCallback((e: MouseEvent) => {
     if (e.button === 2) {
