@@ -221,6 +221,17 @@ export const useInterval = (
   }, [ms])
 }
 
+export const debounce = <T>(
+  fn: (t: T) => void,
+  ms: number
+): ((t: T) => void) => {
+  let timeout: NodeJS.Timeout
+  return (t: T): void => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => fn(t), ms)
+  }
+}
+
 export const throttle = <T>(
   fn: (t: T) => void,
   ms: number

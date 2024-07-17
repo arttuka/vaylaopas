@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC } from 'react'
+import React, { ChangeEvent, FC, useState } from 'react'
 import CancelIcon from '@mui/icons-material/Cancel'
 import MuiIconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -29,7 +29,7 @@ const TextField = styled(MuiTextField)({
 type SettingFieldProps = {
   id: string
   label: string
-  value?: number
+  initialValue?: number
   onChange: (value?: number) => void
 }
 
@@ -37,13 +37,16 @@ const SettingField: FC<SettingFieldProps> = ({
   id,
   label,
   onChange,
-  value,
+  initialValue,
 }) => {
+  const [value, setValue] = useState(initialValue)
   const onFieldChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const value = parseFloat(e.currentTarget.value)
-    onChange(isNaN(value) ? undefined : value)
+    const v = parseFloat(e.currentTarget.value)
+    setValue(v)
+    onChange(isNaN(v) ? undefined : v)
   }
   const clearField = (): void => {
+    setValue(undefined)
     onChange(undefined)
   }
   return (

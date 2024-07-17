@@ -15,6 +15,7 @@ import {
   pick,
   calculateDuration,
   formatDuration,
+  debounce,
   throttle,
   calculateOffset,
   applyOffset,
@@ -169,6 +170,21 @@ test('formatDuration', (): void => {
   expect(formatDuration(59)).toEqual('59 min')
   expect(formatDuration(60)).toEqual('1 h 0 min')
   expect(formatDuration(61)).toEqual('1 h 1 min')
+})
+
+test('debounce', async (): Promise<void> => {
+  const fn = jest.fn()
+  const debouncedFn = debounce(fn, 50)
+  debouncedFn(1)
+  debouncedFn(2)
+  debouncedFn(3)
+  await timeout(50)
+  debouncedFn(4)
+  debouncedFn(5)
+  debouncedFn(6)
+  await timeout(50)
+  expect(fn).toHaveBeenCalledTimes(2)
+  expect(fn.mock.calls).toEqual([[3], [6]])
 })
 
 test('throttle', async (): Promise<void> => {
