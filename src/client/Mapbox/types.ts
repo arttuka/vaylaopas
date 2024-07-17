@@ -10,6 +10,7 @@ import {
 import {
   Collection,
   FeatureType,
+  IsFeature,
   Lane,
   MapBy,
   PointFeature,
@@ -85,3 +86,8 @@ export type LayerId = AnyLayer['id']
 export type Layer<L extends LayerId> = MapBy<AnyLayer, 'id', L>
 export type Layers = { [key in LayerId]: Layer<key> }
 export type LayerFeature<L extends LayerId> = SourceFeature<Layer<L>['source']>
+export type LayerProps<L extends LayerId> = {
+  layer: Layer<L>
+  onDrag?: DragStartHandler<LayerFeature<L>>
+  isFeature?: IsFeature<LayerFeature<L>>
+}

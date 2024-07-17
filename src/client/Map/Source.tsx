@@ -1,20 +1,25 @@
-import React, { ReactElement, ReactNode } from 'react'
-import { Source as SourceT, SourceId } from '../Mapbox/types'
+import { ReactElement } from 'react'
+import {
+  LayerProps,
+  LayerId,
+  Source as SourceT,
+  SourceId,
+} from '../Mapbox/types'
 import { useSource } from '../Mapbox/source'
 import { useMap } from './map-context'
 
-type SourceProps<S extends SourceId> = {
+type SourceProps<S extends SourceId, L extends LayerId> = {
   source: SourceT<S>
-  children: ReactNode
+  layers: LayerProps<L>[]
 }
 
-const Source = <S extends SourceId>({
+const Source = <S extends SourceId, L extends LayerId>({
   source,
-  children,
-}: SourceProps<S>): ReactElement | null => {
+  layers,
+}: SourceProps<S, L>): ReactElement | null => {
   const map = useMap()
-  useSource(map, source)
-  return map.getSource(source.id) ? <>{children}</> : null
+  useSource(map, source, layers)
+  return null
 }
 
 export default Source

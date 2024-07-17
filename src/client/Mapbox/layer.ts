@@ -1,24 +1,16 @@
-import { useEffect } from 'react'
 import { Map } from 'maplibre-gl'
 import {
   DragStartHandler,
   EventType,
   EventTypes,
   EventHandler,
-  Layer,
+  LayerProps,
   Layers,
   LayerId,
   LayerFeature,
 } from './types'
 import { IsFeature } from '../../common/types'
 import { throttle } from '../../common/util'
-
-export const addLayer = <L extends LayerId>(
-  map: Map,
-  layer: Layer<L>
-): void => {
-  map.addLayer(layer)
-}
 
 export const layers: Layers = {
   route: {
@@ -118,24 +110,17 @@ const makeLayerDraggable = <L extends LayerId>(
     .on('touchstart', id, onTouchStart)
 }
 
-export type LayerProps<L extends LayerId> = {
-  layer: Layer<L>
-  onDrag?: DragStartHandler<LayerFeature<L>>
-  isFeature?: IsFeature<LayerFeature<L>>
-}
-
-export const useLayer = <L extends LayerId>(
+export const addLayer = <L extends LayerId>(
   map: Map,
   { layer, onDrag, isFeature }: LayerProps<L>
 ): void => {
-  useEffect(() => {
-    const id = layer.id
-    addLayer(map, layer)
-    if (onDrag && isFeature) {
-      makeLayerDraggable(map, id, onDrag, isFeature)
-    }
-    return () => {
-      map.removeLayer(id)
-    }
-  }, [])
+  const id = layer.id
+  map.addLayer(layer)
+  if (onDrag && isFeature) {
+    makeLayerDraggable(map, id, onDrag, isFeature)
+  }
+}
+
+export const removeLayer = <L extends LayerId>(map: Map, id: L) => {
+  map.removeLayer(id)
 }

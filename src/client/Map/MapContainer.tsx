@@ -1,6 +1,5 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import Layer from './Layer'
 import Marker from './Marker'
 import Map from './Map'
 import Source from './Source'
@@ -213,22 +212,28 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
             onContextMenu={handleWaypointContextmenu}
           />
         ))}
-        <Source source={sources.dragIndicator}>
-          <Layer layer={layers.dragIndicator} />
-        </Source>
-        <Source source={sources.notFoundRoute}>
-          <Layer layer={layers.notFoundRoute} />
-        </Source>
-        <Source source={sources.route}>
-          <Layer
-            layer={layers.route}
-            onDrag={handleDragRoute}
-            isFeature={featureIsLane}
-          />
-        </Source>
-        <Source source={sources.routeStartAndEnd}>
-          <Layer layer={layers.routeStartAndEnd} />
-        </Source>
+        <Source
+          source={sources.dragIndicator}
+          layers={[{ layer: layers.dragIndicator }]}
+        />
+        <Source
+          source={sources.notFoundRoute}
+          layers={[{ layer: layers.notFoundRoute }]}
+        />
+        <Source
+          source={sources.route}
+          layers={[
+            {
+              layer: layers.route,
+              onDrag: handleDragRoute,
+              isFeature: featureIsLane,
+            },
+          ]}
+        />
+        <Source
+          source={sources.routeStartAndEnd}
+          layers={[{ layer: layers.routeStartAndEnd }]}
+        />
       </Map>
       {touchMarker && (
         <TouchMarker {...touchMarker} duration={longTouchDuration} />
