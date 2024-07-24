@@ -1,4 +1,6 @@
-import React, { FC } from 'react'
+import React, { FC, forwardRef } from 'react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import MuiAvatar from '@mui/material/Avatar'
 import IconButton from '@mui/material/IconButton'
 import ListItem from '@mui/material/ListItem'
@@ -9,7 +11,7 @@ import { styled } from '@mui/material/styles'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat'
 import WarningIcon from '@mui/icons-material/Warning'
-import { formatDuration, toNM, numToLetter, round } from '../../common/util'
+import { formatDuration, toNM, round } from '../../common/util'
 
 const Avatar = styled(MuiAvatar)(({ theme: { palette } }) => ({
   color: '#ffffff',
@@ -17,11 +19,16 @@ const Avatar = styled(MuiAvatar)(({ theme: { palette } }) => ({
   fontWeight: 'bold',
 }))
 
-const Point: FC<{ text: string }> = ({ text }) => (
-  <ListItemAvatar>
-    <Avatar>{text}</Avatar>
-  </ListItemAvatar>
-)
+const Point = forwardRef<HTMLElement, { text: string }>(function Point(
+  { text, ...props },
+  ref
+) {
+  return (
+    <ListItemAvatar ref={ref} {...props}>
+      <Avatar>{text}</Avatar>
+    </ListItemAvatar>
+  )
+})
 
 const Delete: FC<{ onClick: () => void }> = ({ onClick }) => (
   <ListItemSecondaryAction>
@@ -49,9 +56,10 @@ type SegmentProps = {
   length?: number
   duration?: number
   fuel?: number
-  index: number
+  letter: string
   found: boolean
-  onDelete: () => void
+  onDelete?: () => void
+  id: string
   kind?: 'segment'
 }
 
@@ -60,14 +68,16 @@ type TotalsProps = {
   duration?: number
   fuel?: number
   found: boolean
+  id: string
   kind: 'totals'
 }
 
 type RouteSegmentProps = (SegmentProps | TotalsProps) & {
   onClick?: () => void
+  dragHandle?: JSX.Element
 }
 
-const RouteSegment: FC<RouteSegmentProps> = (props) => {
+export const RouteSegment: FC<RouteSegmentProps> = (props) => {
   const { length, duration, fuel, found, onClick } = props
   const durationStr = duration ? formatDuration(duration) : ''
   const fuelStr = fuel ? `, ${round(fuel, 1)} l` : ''
@@ -83,6 +93,7 @@ const RouteSegment: FC<RouteSegmentProps> = (props) => {
           </>
         ),
       }
+
   if (props.kind === 'totals') {
     return (
       <ListItem divider={true} onClick={onClick}>
@@ -95,15 +106,49 @@ const RouteSegment: FC<RouteSegmentProps> = (props) => {
       </ListItem>
     )
   } else {
-    const { index, onDelete } = props
+    const { letter = '', onDelete, dragHandle } = props
     return (
       <ListItem>
-        <Point text={numToLetter(index)} />
+        {dragHandle || <Point text={letter} />}
         <OffsetListItemText {...listItemTextProps} />
-        <Delete onClick={onDelete} />
+        {onDelete && <Delete onClick={onDelete} />}
       </ListItem>
     )
   }
 }
 
-export default RouteSegment
+export const SortableRouteSegment: FC<RouteSegmentProps> = (props) => {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: props.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : undefined,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <RouteSegment
+        {...props}
+        dragHandle={
+          props.kind !== 'totals' ? (
+            <Point
+              text={props.letter}
+              ref={setActivatorNodeRef}
+              {...attributes}
+              {...listeners}
+            />
+          ) : undefined
+        }
+      />
+    </div>
+  )
+}

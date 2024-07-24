@@ -1,4 +1,9 @@
-import { getNewWaypoints } from './waypoint'
+import {
+  getNewWaypoints,
+  getVias,
+  reorderVias,
+  reorderWaypoints,
+} from './waypoint'
 import { Waypoint, WaypointType } from '../../common/types'
 
 const makeWaypoint = (
@@ -78,5 +83,128 @@ describe('waypointReducer', () => {
         id: '2',
       })
     ).toEqual([w1, { ...w2, lng: 6, lat: 6 }, w3, w4, w5])
+  })
+})
+
+const getIds = (waypoints: Waypoint[][]): string[][] =>
+  waypoints.map((l) => l.map((w) => w.id))
+
+describe('getVias', () => {
+  it('returns lists of via points between destinations', () => {
+    const waypoints = [
+      makeWaypoint(1, 'destination', 'A'),
+      makeWaypoint(2, 'via'),
+      makeWaypoint(3, 'via'),
+      makeWaypoint(4, 'destination', 'B'),
+      makeWaypoint(5, 'destination', 'C'),
+      makeWaypoint(6, 'via'),
+      makeWaypoint(7, 'destination', 'D'),
+    ]
+    const vias = getVias(waypoints)
+    expect(getIds(vias)).toEqual([['2', '3'], [], ['6']])
+  })
+})
+
+describe('reorderVias', () => {
+  const input = [
+    ['0A', '0B'],
+    ['1A', '1B'],
+    ['2A', '2B'],
+    ['3A', '3B'],
+    ['4A', '4B'],
+    ['5A', '5B'],
+    ['6A', '6B'],
+  ]
+  it('move from start to end', () => {
+    expect(reorderVias(input, 0, 7)).toEqual([
+      ['1A', '1B'],
+      ['2A', '2B'],
+      ['3A', '3B'],
+      ['4A', '4B'],
+      ['5A', '5B'],
+      ['6A', '6B'],
+      [],
+    ])
+  })
+  it('move from end to start', () => {
+    expect(reorderVias(input, 7, 0)).toEqual([
+      [],
+      ['0A', '0B'],
+      ['1A', '1B'],
+      ['2A', '2B'],
+      ['3A', '3B'],
+      ['4A', '4B'],
+      ['5A', '5B'],
+    ])
+  })
+  it('move one step forward', () => {
+    expect(reorderVias(input, 2, 3)).toEqual([
+      ['0A', '0B'],
+      [],
+      ['2B', '2A'],
+      [],
+      ['4A', '4B'],
+      ['5A', '5B'],
+      ['6A', '6B'],
+    ])
+  })
+  it('move one step backward', () => {
+    expect(reorderVias(input, 3, 2)).toEqual([
+      ['0A', '0B'],
+      [],
+      ['2B', '2A'],
+      [],
+      ['4A', '4B'],
+      ['5A', '5B'],
+      ['6A', '6B'],
+    ])
+  })
+  it('move forward', () => {
+    expect(reorderVias(input, 1, 4)).toEqual([
+      [],
+      ['2A', '2B'],
+      ['3A', '3B'],
+      [],
+      [],
+      ['5A', '5B'],
+      ['6A', '6B'],
+    ])
+  })
+  it('move backward', () => {
+    expect(reorderVias(input, 4, 1)).toEqual([
+      [],
+      [],
+      ['1A', '1B'],
+      ['2A', '2B'],
+      [],
+      ['5A', '5B'],
+      ['6A', '6B'],
+    ])
+  })
+})
+
+describe('reorderWaypoints', () => {
+  it('moves waypoint and reorders via points', () => {
+    const waypoints = [
+      makeWaypoint(1, 'destination', 'A'),
+      makeWaypoint(2, 'via'),
+      makeWaypoint(3, 'destination', 'B'),
+      makeWaypoint(4, 'via'),
+      makeWaypoint(5, 'destination', 'C'),
+      makeWaypoint(6, 'via'),
+      makeWaypoint(7, 'destination', 'D'),
+      makeWaypoint(8, 'via'),
+      makeWaypoint(9, 'destination', 'E'),
+    ]
+    const reordered = reorderWaypoints(waypoints, 0, 2)
+    expect(reordered.map((w) => w.id)).toEqual([
+      '3',
+      '4',
+      '5',
+      '1',
+      '7',
+      '8',
+      '9',
+    ])
   })
 })

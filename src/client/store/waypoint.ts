@@ -1,4 +1,5 @@
 import { StateCreator } from 'zustand'
+import { arrayMove } from '@dnd-kit/sortable'
 import { LngLat, Waypoint, WaypointType } from '../../common/types'
 import {
   insertIndex,
@@ -32,10 +33,69 @@ export type WaypointAction =
       id: string
       point: LngLat
     }
+  | {
+      type: 'reorder'
+      from: number
+      to: number
+    }
 
 export type WaypointSlice = {
   waypoints: Waypoint[]
   editWaypoints: (action: WaypointAction) => void
+}
+
+export const getVias = (waypoints: Waypoint[]): Waypoint[][] => {
+  const ret: Waypoint[][] = []
+  let curr: Waypoint[] = []
+  for (const w of waypoints.slice(1)) {
+    if (w.type === 'destination') {
+      ret.push(curr)
+      curr = []
+    } else {
+      curr.push(w)
+    }
+  }
+  return ret
+}
+
+export const reorderVias = <T>(
+  vias: T[][],
+  from: number,
+  to: number
+): T[][] => {
+  if (to > from) {
+    const start = from === 0 ? [] : [...vias.slice(0, from - 1), []]
+    const end = to === vias.length ? [] : [[], ...vias.slice(to + 1)]
+    if (from + 1 === to) {
+      return [...start, vias[from].toReversed(), ...end]
+    } else {
+      const mid = vias.slice(from + 1, to)
+      return [...start, ...mid, [], ...end]
+    }
+  } else {
+    const start = to === 0 ? [] : [...vias.slice(0, to - 1), []]
+    const end = from === vias.length ? [] : [[], ...vias.slice(from + 1)]
+    if (from - 1 === to) {
+      return [...start, vias[to].toReversed(), ...end]
+    } else {
+      const mid = vias.slice(to, from - 1)
+      return [...start, [], ...mid, ...end]
+    }
+  }
+}
+
+export const reorderWaypoints = (
+  waypoints: Waypoint[],
+  from: number,
+  to: number
+): Waypoint[] => {
+  const destinations = arrayMove(
+    waypoints.filter((w) => w.type === 'destination'),
+    from,
+    to
+  )
+  const vias = reorderVias(getVias(waypoints), from, to)
+  return destinations.flatMap((d, i) => [d, ...(vias[i] || [])])
 }
 
 const getAdjacentViaIds = (waypoints: Waypoint[], id: string): string[] => {
@@ -93,6 +153,10 @@ export const getNewWaypoints = (
     case 'move': {
       const { point, id } = action
       return updateLetters(updateWhere(waypoints, hasId(id), point))
+    }
+    case 'reorder': {
+      const { from, to } = action
+      return updateLetters(reorderWaypoints(waypoints, from, to))
     }
     default:
       return waypoints

@@ -42,7 +42,9 @@ const SettingField: FC<SettingFieldProps> = ({
   const [value, setValue] = useState(initialValue)
   const onFieldChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const v = parseFloat(e.currentTarget.value)
-    setValue(v)
+    if (!isNaN(v)) {
+      setValue(v)
+    }
     onChange(isNaN(v) ? undefined : v)
   }
   const clearField = (): void => {
