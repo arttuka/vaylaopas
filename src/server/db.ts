@@ -6,11 +6,16 @@ import { spreadIf, partition, pick, range } from '../common/util'
 
 const pool = new Pool(config.db)
 
-const formatLane = (geometry: LineString, routeIndex: number): Lane => ({
+const formatLane = (
+  geometry: LineString,
+  routeIndex: number,
+  routeType: 'regular' | 'outside'
+): Lane => ({
   type: 'Feature',
   geometry,
   properties: {
     routeIndex,
+    routeType,
   },
 })
 
@@ -49,7 +54,11 @@ const getClosestPoints = async (
             ) AS geom, UNNEST($3::TEXT[]) AS type, UNNEST($4::INT[]) AS seq
       ) origin,
       LATERAL (
-        SELECT id, source, target, ST_ClosestPoint(geom, origin.geom) point
+        SELECT id, source, target, 
+        CASE origin.type
+          WHEN 'viadirect' THEN origin.geom
+          ELSE ST_ClosestPoint(geom, origin.geom)
+        END AS point
         FROM lane
         ${depth ? `WHERE depth IS NULL OR depth >= $5` : ''}
         ORDER BY geom <-> origin.geom
@@ -80,6 +89,13 @@ const assertNumber = (n?: number): void => {
   }
 }
 
+type DirectLane = {
+  source: number
+  target: number
+  sourcePoint: string
+  targetPoint: string
+}
+
 const insertExtraLanes = async (
   client: PoolClient,
   endpoints: RouteEndpoint[]
@@ -94,11 +110,42 @@ const insertExtraLanes = async (
       GROUP BY l.id
     ) AS p,
     LATERAL split_linestring(p.vertex_ids, p.points, p.geom, p.source, p.target, p.length) AS s(id INT, source INT, target INT, length FLOAT, geom Geometry)`
-  const filteredEndpoints = endpoints.filter(({ vertex }) => vertex < 0)
+  const filteredEndpoints = endpoints.filter(
+    ({ type, vertex }) => type !== 'viadirect' && vertex < 0
+  )
   await client.query(query, [
     pick(filteredEndpoints, 'vertex'),
     pick(filteredEndpoints, 'lane'),
     pick(filteredEndpoints, 'point'),
+  ])
+
+  const directLanes: DirectLane[] = []
+  for (let i = 0; i < endpoints.length - 1; ++i) {
+    const from = endpoints[i]
+    const to = endpoints[i + 1]
+    if (from.type === 'viadirect' || to.type === 'viadirect') {
+      directLanes.push({
+        source: from.vertex,
+        target: to.vertex,
+        sourcePoint: from.point,
+        targetPoint: to.point,
+      })
+    }
+  }
+
+  const query2 = `
+    INSERT INTO extra_lane (id, source, target, length, geom)
+    SELECT nextval('extra_lane_id_seq')::INT AS id, l.source, l.target,
+    ST_DISTANCE(l.source_point, l.target_point) AS length, 
+    ST_MAKELINE(l.source_point, l.target_point) AS geom
+    FROM UNNEST($1::INT[], $2::INT[], $3::TEXT[], $4::TEXT[]) l(source, target, source_point, target_point)
+  `
+
+  await client.query(query2, [
+    pick(directLanes, 'source'),
+    pick(directLanes, 'target'),
+    pick(directLanes, 'sourcePoint'),
+    pick(directLanes, 'targetPoint'),
   ])
 }
 
@@ -137,20 +184,24 @@ const getRouteBetweenVertices = async (
       )
     ),
     lanes AS (
-      SELECT length, geom, node = source AS forward, ids.seq, ids.start_vid, ids.end_vid
+      SELECT length, geom, node = source AS forward, ids.seq, ids.start_vid, ids.end_vid, false AS outside
       FROM lane l JOIN ids ON l.id = ids.id
       UNION ALL
-      SELECT length, geom, node = source AS forward, ids.seq, ids.start_vid, ids.end_vid
+      SELECT length, geom, node = source AS forward, ids.seq, ids.start_vid, ids.end_vid, e.laneid IS NULL AS outside
       FROM extra_lane e JOIN ids ON e.id = ids.id
     )
     SELECT COUNT(length) > 0 AS found, SUM(length) AS length,
-           AsJSON(ST_MakeLine(CASE WHEN forward THEN geom ELSE ST_Reverse(geom) END ORDER BY seq ASC)) AS geometry
+           AsJSON(ST_MakeLine(CASE WHEN forward THEN geom ELSE ST_Reverse(geom) END ORDER BY seq ASC)) AS geometry,
+           CASE
+             WHEN BOOL_OR(lanes.outside) THEN 'outside'
+             ELSE 'regular'
+          END AS type
     FROM ${vertexQuery} v(v_from, v_to, num)
     LEFT JOIN lanes ON start_vid = v_from AND end_vid = v_to
     GROUP BY num
     ORDER BY num ASC`)
 
-  return result.rows.map(({ geometry, length, found }, i) => {
+  return result.rows.map(({ geometry, length, found, type }, i) => {
     const from = endpoints[i]
     const to = endpoints[i + 1]
     const route = formatLane(
@@ -160,11 +211,15 @@ const getRouteBetweenVertices = async (
             from.geometry.coordinates[1],
             to.geometry.coordinates[1]
           ),
-      i
+      i,
+      type
     )
     return {
       route,
-      startAndEnd: [formatLane(from.geometry, i), formatLane(to.geometry, i)],
+      startAndEnd: [
+        formatLane(from.geometry, i, 'regular'),
+        formatLane(to.geometry, i, 'regular'),
+      ],
       found,
       type: to.type,
       length: length || undefined,

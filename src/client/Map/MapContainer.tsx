@@ -79,7 +79,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
         top: p.y + 64,
         left: p.x,
         waypoint: waypoint?.id,
-        isDestination: waypoint?.type === 'destination',
+        waypointType: waypoint?.type,
       })),
     []
   )
@@ -169,7 +169,10 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
               type: 'add',
               point: toLngLat(e),
               index: feature.properties.routeIndex + 1,
-              waypointType: 'via',
+              waypointType:
+                feature.properties.routeType === 'outside'
+                  ? 'viadirect'
+                  : 'via',
             })
           }
         },

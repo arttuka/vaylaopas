@@ -9,6 +9,7 @@ const lineStringSchema = z.object({
 
 const lanePropertiesSchema = z.object({
   routeIndex: z.number().int(),
+  routeType: z.enum(['regular', 'outside']),
 })
 
 const laneSchema = z.object({
@@ -22,7 +23,7 @@ const routeSchema = z.object({
   length: z.number().optional(),
   startAndEnd: z.tuple([laneSchema, laneSchema]),
   route: laneSchema,
-  type: z.enum(['destination', 'via']),
+  type: z.enum(['destination', 'via', 'viadirect']),
 })
 
 export const routesSchema = z.array(routeSchema)

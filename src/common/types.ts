@@ -17,7 +17,7 @@ export type Point = {
   y: number
 }
 
-export type WaypointType = 'destination' | 'via'
+export type WaypointType = 'destination' | 'via' | 'viadirect'
 
 export type Waypoint = LngLat &
   Id & {
@@ -27,6 +27,7 @@ export type Waypoint = LngLat &
 
 export type LaneProperties = {
   routeIndex: number
+  routeType: 'regular' | 'outside'
 }
 export type Lane = Feature<LineString, LaneProperties>
 export type Collection<F extends FeatureType> = FeatureCollection<
@@ -133,7 +134,7 @@ export type MenuState = {
   top: number
   left: number
   waypoint?: string
-  isDestination?: boolean
+  waypointType?: WaypointType
 }
 
 export type TouchMarkerState = {

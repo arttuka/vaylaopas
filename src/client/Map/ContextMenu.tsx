@@ -14,11 +14,12 @@ const ContextMenu: FC<ContextMenuProps> = ({
   top,
   left,
   waypoint,
-  isDestination,
+  waypointType,
   closeMenu,
   point,
 }) => {
   const editWaypoints = useStore((state) => state.editWaypoints)
+  const isDestination = waypointType === 'destination'
   return (
     <Menu
       keepMounted
@@ -55,6 +56,23 @@ const ContextMenu: FC<ContextMenuProps> = ({
           >
             {isDestination ? 'Muuta välipisteeksi' : 'Muuta määränpääksi'}
           </MenuItem>,
+          isDestination ? null : (
+            <MenuItem
+              key="change-via-waypoint"
+              onClick={() => {
+                editWaypoints({
+                  type: 'change',
+                  id: waypoint,
+                  waypointType: waypointType === 'via' ? 'viadirect' : 'via',
+                })
+                closeMenu()
+              }}
+            >
+              {waypointType === 'via'
+                ? 'Kulje väylien ulkopuolella'
+                : 'Kulje väyliä pitkin'}
+            </MenuItem>
+          ),
           <MenuItem
             key="delete-waypoint"
             onClick={() => {

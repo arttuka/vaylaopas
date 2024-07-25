@@ -100,17 +100,17 @@ export const reorderWaypoints = (
 
 const getAdjacentViaIds = (waypoints: Waypoint[], id: string): string[] => {
   const idx = waypoints.findIndex(hasId(id))
-  if (waypoints[idx].type === 'via') {
+  if (waypoints[idx].type !== 'destination') {
     return [id]
   }
   const result = [id]
   let i = idx + 1
-  while (i < waypoints.length && waypoints[i].type === 'via') {
+  while (i < waypoints.length && waypoints[i].type !== 'destination') {
     result.push(waypoints[i].id)
     i++
   }
   i = idx - 1
-  while (i >= 0 && waypoints[i].type === 'via') {
+  while (i >= 0 && waypoints[i].type !== 'destination') {
     result.push(waypoints[i].id)
     i--
   }

@@ -8,6 +8,7 @@ import React, {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import clsx from 'clsx'
 import { styled } from '@mui/material/styles'
 import indigo from '@mui/material/colors/indigo'
 import { Marker as MaplibreMarker, LngLat } from 'maplibre-gl'
@@ -61,8 +62,12 @@ const WaypointMarker = styled('div')({
   border: '2px solid black',
   borderRadius: 999,
   transition: 'transform 100ms ease-in-out',
+  transform: 'translateY(12px)',
   '&.marker-dragged': {
-    transform: 'scale(1.5, 1.5)',
+    transform: 'translateY(12px) scale(1.5, 1.5)',
+  },
+  '&.marker-outside': {
+    backgroundColor: '#f090a0',
   },
 })
 
@@ -145,7 +150,12 @@ const Marker: FC<MarkerProps> = (props) => {
           <Letter>{letter}</Letter>
         </Destination>
       ) : (
-        <WaypointMarker className={isDragged ? 'marker-dragged' : ''} />
+        <WaypointMarker
+          className={clsx({
+            'marker-dragged': isDragged,
+            'marker-outside': type === 'viadirect',
+          })}
+        />
       )}
     </div>,
     marker.getElement()

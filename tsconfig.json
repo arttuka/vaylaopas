@@ -21,7 +21,8 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "jsx": "react",
-    "rootDir": "./"
+    "rootDir": "./",
+    "noErrorTruncation": true
   },
   "exclude": [
     "node_modules",
