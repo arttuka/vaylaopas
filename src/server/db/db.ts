@@ -130,7 +130,7 @@ const insertEndpoints = async (
             .then(ref('l.source'))
             .when(ref('t.the_geom'))
             .then(ref('l.target'))
-            .else(neg(parens('origin.seq', '+', lit(1))))
+            .else(neg(parens('origin.seq', '+', lit(2))))
             .end()
             .as('vertex'),
           fn('ST_MakeLine', ['origin.geom', 'l.point']).as('geometry'),

@@ -244,15 +244,15 @@ test('combineSegments', (): void => {
   expect(segments).toEqual([
     {
       found: true,
-      length: 3,
-      duration: 1,
-      fuel: 1,
+      length: 7,
+      duration: 3,
+      fuel: 3,
     },
     {
       found: true,
-      length: 9,
-      duration: 5,
-      fuel: 5,
+      length: 5,
+      duration: 3,
+      fuel: 3,
     },
     {
       found: true,

@@ -164,7 +164,7 @@ export const mergeRoutes = (routes: RouteProps[]): RouteProps =>
   })
 
 export const combineSegments = (routes: Route[]): RouteProps[] =>
-  splitAt(routes, (r) => r.type === 'destination').map(mergeRoutes)
+  splitAt(routes, (_, r) => r.type === 'destination').map(mergeRoutes)
 
 export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
   const { speed, consumption } = settings
