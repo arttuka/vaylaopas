@@ -2,7 +2,7 @@ import express from 'express'
 import * as fs from 'fs'
 import * as path from 'path'
 import config from './config'
-import { getRoute, addMapLoad } from './db'
+import { getRoute } from './db/db'
 import { Waypoint } from '../common/types'
 
 const indexPath = path.resolve('./dist/client/index.html')
@@ -37,15 +37,6 @@ app.post('/api/route', async (req, res, next): Promise<void> => {
   const { points, depth, height }: RouteParams = req.body
   try {
     res.send(await getRoute(points, depth, height))
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.post('/api/map-load', async (req, res, next): Promise<void> => {
-  try {
-    await addMapLoad()
-    res.send()
   } catch (error) {
     next(error)
   }

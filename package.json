@@ -19,6 +19,7 @@
     "@redux-devtools/extension": "^3.2.2",
     "clsx": "^2.1.1",
     "express": "^4.17.1",
+    "kysely": "^0.27.4",
     "maplibre-gl": "^4.2.0",
     "notistack": "^3.0.1",
     "pg": "^8.7.1",
