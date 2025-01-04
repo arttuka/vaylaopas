@@ -100,17 +100,24 @@ export const pgrDijkstra = <Db>(
 ): AliasableExpression<PgrDijkstra> =>
   db.fn('pgr_dijkstra', [sql.lit(laneSql), sql.lit(vertexSql), sql.lit(false)])
 
-export const hydrate = <Db, Tb extends keyof Db, O>(
-  qb: SelectQueryBuilder<Db, Tb, O>
-) => {
+export const hydrate = <T extends Compilable>(qb: T) => {
   const query = qb.compile()
-  return query.sql.replace(/(\$\d+)/g, (arg) =>
-    String(query.parameters[parseInt(arg.slice(1)) - 1])
-  )
+  return query.sql.replace(/(\$\d+)/g, (arg) => {
+    const param = query.parameters[parseInt(arg.slice(1)) - 1]
+    if (typeof param === 'string') {
+      return `'${param}'`
+    }
+    return String(param)
+  })
 }
 
 export const logQuery = <T extends Compilable>(qb: T): T => {
   console.log(qb.compile())
+  return qb
+}
+
+export const logHydratedQuery = <T extends Compilable>(qb: T): T => {
+  console.log(hydrate(qb))
   return qb
 }
 

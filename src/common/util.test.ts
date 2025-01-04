@@ -1,8 +1,6 @@
 import {
-  partition,
   splitAt,
   range,
-  spreadIf,
   numToLetter,
   removeWhere,
   updateIndex,
@@ -12,13 +10,10 @@ import {
   hasId,
   addMany,
   mapBy,
-  pick,
   calculateDuration,
   formatDuration,
   debounce,
   throttle,
-  calculateOffset,
-  applyOffset,
   combineSegments,
 } from './util'
 import { Route } from './types'
@@ -27,29 +22,6 @@ const timeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
-
-test('partition', (): void => {
-  const arr = [0, 1, 2, 3, 4, 5, 6, 7]
-  expect(partition(arr, 2)).toEqual([
-    [0, 1],
-    [2, 3],
-    [4, 5],
-    [6, 7],
-  ])
-  expect(partition(arr, 3)).toEqual([
-    [0, 1, 2],
-    [3, 4, 5],
-  ])
-  expect(partition(arr, 2, 1)).toEqual([
-    [0, 1],
-    [1, 2],
-    [2, 3],
-    [3, 4],
-    [4, 5],
-    [5, 6],
-    [6, 7],
-  ])
-})
 
 test('splitAt', (): void => {
   const pred = (i: number, j: number): boolean => i > j
@@ -64,13 +36,6 @@ test('range', (): void => {
   expect(range(5)).toEqual([0, 1, 2, 3, 4])
   expect(range(5, 3)).toEqual([3, 4, 5, 6, 7])
   expect(range(5, 3, 2)).toEqual([3, 5, 7, 9, 11])
-})
-
-test('spreadIf', (): void => {
-  expect(spreadIf('foo')).toEqual(['foo'])
-  expect(spreadIf('foo', 'bar')).toEqual(['bar'])
-  expect(spreadIf(undefined)).toEqual([])
-  expect(spreadIf(undefined, 'bar')).toEqual([])
 })
 
 test('numToLetter', (): void => {
@@ -152,14 +117,6 @@ test('mapBy', (): void => {
   })
 })
 
-test('pick', (): void => {
-  const arr: TestObj[] = [
-    { id: '0', n: 0 },
-    { id: '1', n: 1 },
-  ]
-  expect(pick(arr, 'n')).toEqual([0, 1])
-})
-
 test('calculateDuration', (): void => {
   expect(calculateDuration(1852 * 5, 5)).toEqual(60)
   expect(calculateDuration(1852 * 1.5, 4.5)).toEqual(20)
@@ -198,15 +155,6 @@ test('throttle', async (): Promise<void> => {
   throttledFn(6)
   expect(fn).toHaveBeenCalledTimes(2)
   expect(fn.mock.calls).toEqual([[1], [4]])
-})
-
-test('positionOffset', (): void => {
-  const offset = calculateOffset({ lng: 50, lat: 40 }, [49, 42])
-  expect(offset).toEqual([1, -2])
-  expect(applyOffset({ lng: 60, lat: 50 }, offset)).toEqual({
-    lng: 59,
-    lat: 52,
-  })
 })
 
 test('combineSegments', (): void => {

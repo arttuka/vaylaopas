@@ -1,10 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import geojson from 'geojson'
 import {
   Id,
   Index,
-  LngLat,
   MapSettings,
   NotEmptyArray,
   Point,
@@ -15,16 +13,6 @@ import {
 } from './types'
 
 const identity = <T>(t: T): T => t
-
-export const partition = <T>(arr: T[], n: number, step: number = n): T[][] => {
-  const result = []
-  let i = 0
-  while (i + n <= arr.length) {
-    result.push(arr.slice(i, i + n))
-    i += step
-  }
-  return result
-}
 
 export const splitAt = <T>(
   arr: T[],
@@ -44,12 +32,6 @@ export const splitAt = <T>(
 
 export const range = (count: number, start = 0, step = 1): number[] =>
   [...Array(count).keys()].map((i) => start + i * step)
-
-export function spreadIf<T>(t: T): [] | [T]
-export function spreadIf<T, S>(t: T, s: S): [] | [S]
-export function spreadIf<T, S>(t: T, s?: S): [] | [T | S] {
-  return t ? [s ?? t] : []
-}
 
 export const round = (n: number, decimals = 0): number => {
   const m = Math.pow(10, decimals)
@@ -134,9 +116,6 @@ export function mapBy<T, S>(
   }
 }
 
-export const pick = <T, K extends keyof T>(arr: T[], key: K): T[K][] =>
-  arr.map((t) => t[key])
-
 export const calculateDuration = (meters: number, knots: number): number =>
   (toNM(meters) / knots) * 60
 
@@ -183,19 +162,26 @@ export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
 export const getStoredSetting = (
   key: keyof (Settings & MapSettings)
 ): number | undefined => {
-  const value = localStorage.getItem(key)
-  return value ? parseFloat(value) : undefined
+  try {
+    const value = localStorage.getItem(key)
+    const parsed = value != null ? parseFloat(value) : NaN
+    return isNaN(parsed) ? undefined : parsed
+  } catch {
+    return undefined
+  }
 }
 
 export const storeSetting = (
   key: keyof (Settings & MapSettings),
   value?: number
 ): void => {
-  if (value !== undefined) {
-    localStorage.setItem(key, value.toString())
-  } else {
-    localStorage.removeItem(key)
-  }
+  try {
+    if (value !== undefined) {
+      localStorage.setItem(key, value.toString())
+    } else {
+      localStorage.removeItem(key)
+    }
+  } catch {}
 }
 
 export const useInterval = (
@@ -223,45 +209,32 @@ export const useInterval = (
   }, [ms])
 }
 
-export const debounce = <T>(
-  fn: (t: T) => void,
+export const debounce = <T extends unknown[]>(
+  fn: (...args: T) => void,
   ms: number
-): ((t: T) => void) => {
+) => {
   let timeout: NodeJS.Timeout
-  return (t: T): void => {
+  return (...args: T): void => {
     clearTimeout(timeout)
-    timeout = setTimeout(() => fn(t), ms)
+    timeout = setTimeout(() => fn(...args), ms)
   }
 }
 
-export const throttle = <T>(
-  fn: (t: T) => void,
+export const throttle = <T extends unknown[]>(
+  fn: (...args: T) => void,
   ms: number
-): ((t: T) => void) => {
+) => {
   let throttled = false
-  return (t: T): void => {
+  return (...args: T): void => {
     if (!throttled) {
       throttled = true
-      fn(t)
+      fn(...args)
       setTimeout(() => {
         throttled = false
       }, ms)
     }
   }
 }
-
-export const calculateOffset = (
-  lngLat: LngLat,
-  point: geojson.Position
-): geojson.Position => [lngLat.lng - point[0], lngLat.lat - point[1]]
-
-export const applyOffset = (
-  lngLat: LngLat,
-  offset: geojson.Position
-): LngLat => ({
-  lng: lngLat.lng - offset[0],
-  lat: lngLat.lat - offset[1],
-})
 
 export const makeIdGenerator = (prefix: string): (() => string) => {
   return () => `${prefix}-${uuidv4()}`

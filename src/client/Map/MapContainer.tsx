@@ -23,7 +23,12 @@ import {
   Waypoint,
   WaypointProperties,
 } from '../../common/types'
-import { getStoredSetting, storeSetting, throttle } from '../../common/util'
+import {
+  getStoredSetting,
+  sqDistance,
+  storeSetting,
+  throttle,
+} from '../../common/util'
 import { useStore } from '../store/store'
 import TouchMarker from './TouchMarker'
 import ContextMenu from './ContextMenu'
@@ -40,12 +45,6 @@ const toLngLat = (e: Event): LngLat => ({
   lng: e.lngLat.lng,
   lat: e.lngLat.lat,
 })
-
-const sqDistance = (p1: Point, p2: Point): number => {
-  const dx = p2.x - p1.x
-  const dy = p2.y - p1.y
-  return dx * dx + dy * dy
-}
 
 const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   const draggingMarker = useRef(false)

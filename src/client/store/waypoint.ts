@@ -169,9 +169,7 @@ export const createWaypointSlice: StateCreator<State, [], [], WaypointSlice> = (
 ) => ({
   waypoints: [],
   editWaypoints: (action) => {
-    set((state) => {
-      return { waypoints: getNewWaypoints(state.waypoints, action) }
-    })
+    set((state) => ({ waypoints: getNewWaypoints(state.waypoints, action) }))
     get().fetchRoutes()
   },
 })
