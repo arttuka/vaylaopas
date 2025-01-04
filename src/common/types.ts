@@ -25,9 +25,11 @@ export type Waypoint = LngLat &
     type: WaypointType
   }
 
+export type RouteType = 'regular' | 'outside'
+
 export type LaneProperties = {
   routeIndex: number
-  routeType: 'regular' | 'outside'
+  routeType: RouteType
 }
 export type Lane = Feature<LineString, LaneProperties>
 export type Collection<F extends FeatureType> = FeatureCollection<

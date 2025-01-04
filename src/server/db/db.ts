@@ -1,20 +1,36 @@
 import { Pool } from 'pg'
 import { LineString, Position } from 'geojson'
 import {
-  Expression,
-  ExpressionBuilder,
   Kysely,
   PostgresDialect,
+  QueryCreator,
   SelectQueryBuilder,
-  SqlBool,
   Transaction,
+  expressionBuilder,
   sql,
 } from 'kysely'
 import config from '../config'
-import { Lane, Route, Waypoint, WaypointType } from '../../common/types'
+import {
+  Lane,
+  Route,
+  RouteType,
+  Waypoint,
+  WaypointType,
+} from '../../common/types'
 import { partition } from '../../common/util'
-import { Database, BaseLaneTable } from './types'
-import { hydrate, pgrDijkstra, splitLinestring, values } from './util'
+import { Database, ExtraLaneTable, LaneTable, PgrDijkstra } from './types'
+import {
+  extendKysely,
+  hydrate,
+  makeLine,
+  makeLineAgg,
+  makePoint,
+  maybeUnion,
+  pgrDijkstra,
+  splitLinestring,
+  values,
+  whereNullOrGreater,
+} from './util'
 
 const dialect = new PostgresDialect({
   pool: new Pool(config.db),
@@ -24,10 +40,12 @@ const db = new Kysely<Database>({
   dialect,
 })
 
+extendKysely(db)
+
 const formatLane = (
   geometry: LineString,
   routeIndex: number,
-  routeType: 'regular' | 'outside'
+  routeType: RouteType
 ): Lane => ({
   type: 'Feature',
   geometry,
@@ -56,68 +74,49 @@ const getClosestPoints = async (
   depth?: number
 ): Promise<RouteEndpoint[]> => {
   const ps = points.map((p, i) => ({
-    lng: p.lng,
-    lat: p.lat,
+    geom: makePoint(expressionBuilder(), sql.val(p.lng), sql.val(p.lat)),
     type: p.type,
     seq: i,
   }))
+
   return tx
-    .with('origin', (db) =>
-      db.selectFrom(values(ps, 'ps')).select(({ ref }) => [
-        'type',
-        'seq',
-        sql<string>`
-          ST_Transform(
-            ST_SetSRID(
-              ST_MakePoint(${ref('lng')}, ${ref('lat')}),
-              4326
-            ),
-            3067
-          )`.as('geom'),
-      ])
-    )
-    .selectFrom('origin')
-    .innerJoinLateral(
-      (db) => {
-        let query = db.selectFrom('lane').select(({ ref }) => [
+    .selectFrom(values(ps).as('origin'))
+    .crossJoinLateral((eb) =>
+      eb
+        .selectFrom('lane')
+        .select(({ eb, fn, ref }) => [
           'id',
           'source',
           'target',
-          sql<string>`
-            CASE ${ref('origin.type')}
-              WHEN 'viadirect' THEN ${ref('origin.geom')}
-              ELSE ST_ClosestPoint(${ref('lane.geom')}, ${ref('origin.geom')})
-            END`.as('point'),
+          eb
+            .case('origin.type')
+            .when(sql.lit('viadirect'))
+            .then(ref('origin.geom'))
+            .else(fn<string>('ST_ClosestPoint', ['lane.geom', 'origin.geom']))
+            .end()
+            .as('point'),
         ])
-        if (depth !== undefined) {
-          query = query.where((eb) =>
-            eb.or([eb('depth', 'is', null), eb('depth', '>=', depth)])
-          )
-        }
-        return query
-          .orderBy(
-            ({ ref }) => sql`${ref('lane.geom')} <-> ${ref('origin.geom')}`
-          )
-          .limit(1)
-          .as('l')
-      },
-      (join) => join.onTrue()
+        .$call(whereNullOrGreater('depth', depth))
+        .orderBy(({ eb, ref }) => eb('lane.geom', '<->', ref('origin.geom')))
+        .limit(sql.lit(1))
+        .as('l')
     )
     .innerJoin('lane_vertices_pgr as s', 'l.source', 's.id')
     .innerJoin('lane_vertices_pgr as t', 'l.target', 't.id')
-    .select(({ ref }) => [
+    .select(({ eb, lit, neg, parens, ref }) => [
       'l.id as lane',
       'l.point',
-      sql<LineString>`AsJSON(ST_MakeLine(${ref('origin.geom')}, ${ref('l.point')}))::jsonb`.as(
-        'geometry'
-      ),
+      makeLine(eb, 'origin.geom', 'l.point').as('geometry'),
       'origin.type',
-      sql<number>`
-        CASE ${ref('l.point')}
-          WHEN ${ref('s.the_geom')} THEN ${ref('l.source')}
-          WHEN ${ref('t.the_geom')} THEN ${ref('l.target')}
-          ELSE -(${ref('origin.seq')} + 1)
-        END`.as('vertex'),
+      eb
+        .case('l.point')
+        .when(ref('s.the_geom'))
+        .then(ref('l.source'))
+        .when(ref('t.the_geom'))
+        .then(ref('l.target'))
+        .else(neg(parens('origin.seq', '+', lit(1))))
+        .end()
+        .as('vertex'),
     ])
     .orderBy('origin.seq asc')
     .execute()
@@ -140,22 +139,13 @@ const insertExtraLanes = async (
   tx: Transaction<Database>,
   endpoints: RouteEndpoint[]
 ): Promise<void> => {
-  const filteredEndpoints = endpoints.filter(
-    ({ type, vertex }) => type !== 'viadirect' && vertex < 0
-  )
-  const ps = filteredEndpoints.length
-    ? filteredEndpoints.map((p) => ({
-        id: p.vertex,
-        laneid: p.lane,
-        point: p.point,
-      }))
-    : [
-        {
-          id: 0,
-          laneid: -1,
-          point: '',
-        },
-      ]
+  const ps = endpoints
+    .filter(({ type, vertex }) => type !== 'viadirect' && vertex < 0)
+    .map((p) => ({
+      id: p.vertex,
+      laneid: p.lane,
+      point: p.point,
+    }))
   const directLanes: DirectLane[] = []
   for (let i = 0; i < endpoints.length - 1; ++i) {
     const from = endpoints[i]
@@ -169,82 +159,82 @@ const insertExtraLanes = async (
       })
     }
   }
-  await tx
-    .with('lanepoints', (db) =>
-      db
-        .selectFrom(values(ps, 'p'))
-        .innerJoin('lane as l', 'p.laneid', 'l.id')
-        .select(({ fn }) => [
-          fn.agg<number[]>('array_agg', ['p.id']).as('vertex_ids'),
-          fn.agg<string[]>('array_agg', ['p.point']).as('points'),
-          'l.id as laneid',
-          'l.geom',
-          'l.source',
-          'l.target',
-          'l.length',
-          'l.depth',
-          'l.height',
-        ])
-        .groupBy('l.id')
-    )
-    .insertInto('extra_lane')
-    .columns([
-      'id',
-      'laneid',
-      'source',
-      'target',
-      'length',
-      'depth',
-      'height',
-      'geom',
-    ])
-    .expression((eb) => {
-      let qb = eb
-        .selectFrom('lanepoints as p')
-        .innerJoinLateral(
-          ({ ref }) =>
-            splitLinestring(
-              ref('p.vertex_ids'),
-              ref('p.points'),
-              ref('p.geom'),
-              ref('p.source'),
-              ref('p.target'),
-              ref('p.length'),
-              's'
-            ),
-          (join) => join.onTrue()
-        )
-        .select([
-          's.id',
-          'p.laneid',
-          's.source',
-          's.target',
-          's.length',
-          'p.depth',
-          'p.height',
-          's.geom',
-        ])
-      if (directLanes.length) {
-        qb = qb.union(
-          tx.selectFrom(values(directLanes, 'lanes')).select(({ fn, ref }) => [
-            fn<number>('nextval', [sql.lit('extra_lane_id_seq')]).as('id'),
-            sql.lit<number>(null as any).as('laneid'), //eslint-disable-line
-            'source',
-            'target',
-            sql<number>`ST_Distance(${ref('sourcePoint')}, ${ref('targetPoint')})`.as(
-              'length'
-            ),
-            sql.lit<number>(null as any).as('depth'), //eslint-disable-line
-            sql.lit<number>(null as any).as('height'), //eslint-disable-line
-            sql<string>`ST_Makeline(${ref('sourcePoint')}, ${ref('targetPoint')})`.as(
-              'geom'
-            ),
-          ])
-        )
-      }
-      return qb
-    })
-    .execute()
+  const hasPoints = ps.length > 0
+  const hasDirect = directLanes.length > 0
+
+  if (hasPoints || hasDirect) {
+    await tx
+      .insertInto('extra_lane')
+      .columns([
+        'id',
+        'laneid',
+        'source',
+        'target',
+        'length',
+        'depth',
+        'height',
+        'geom',
+      ])
+      .expression((eb) => {
+        const q1 = hasPoints
+          ? eb
+              .selectFrom((eb) =>
+                eb
+                  .selectFrom(values(ps).as('ps'))
+                  .select(({ fn }) => [
+                    'laneid',
+                    fn.agg<number[]>('array_agg', ['ps.id']).as('vertex_ids'),
+                    fn.agg<string[]>('array_agg', ['ps.point']).as('points'),
+                  ])
+                  .groupBy('laneid')
+                  .as('p')
+              )
+              .innerJoin('lane as l', 'p.laneid', 'l.id')
+              .crossJoinLateral((eb) =>
+                splitLinestring(
+                  eb,
+                  'p.vertex_ids',
+                  'p.points',
+                  'l.geom',
+                  'l.source',
+                  'l.target',
+                  'l.length',
+                  's'
+                )
+              )
+              .select([
+                's.id',
+                'l.id as laneid',
+                's.source',
+                's.target',
+                's.length',
+                'l.depth',
+                'l.height',
+                's.geom',
+              ])
+          : null
+        const q2 = hasDirect
+          ? eb
+              .selectFrom(values(directLanes).as('lanes'))
+              .select(({ fn, lit }) => [
+                fn<number>('nextval', [sql.lit('extra_lane_id_seq')]).as('id'),
+                lit<number | null>(null).as('laneid'),
+                'source',
+                'target',
+                fn<number>('ST_Distance', ['sourcePoint', 'targetPoint']).as(
+                  'length'
+                ),
+                lit<number | null>(null).as('depth'),
+                lit<number | null>(null).as('height'),
+                fn<string>('ST_MakeLine', ['sourcePoint', 'targetPoint']).as(
+                  'geom'
+                ),
+              ])
+          : null
+        return maybeUnion(q1, q2)
+      })
+      .execute()
+  }
 }
 
 const getRouteBetweenVertices = async (
@@ -253,43 +243,30 @@ const getRouteBetweenVertices = async (
   depth?: number,
   height?: number
 ): Promise<Route[]> => {
-  const whereSettings = (
-    eb: ExpressionBuilder<Database, 'lane' | 'extra_lane'>
-  ) => {
-    const ands: Expression<SqlBool>[] = []
-    if (depth !== undefined) {
-      ands.push(
-        eb.or([eb('depth', 'is', null), eb('depth', '>=', sql.lit(depth))])
-      )
-    }
-    if (height !== undefined) {
-      ands.push(
-        eb.or([eb('height', 'is', null), eb('height', '>=', sql.lit(height))])
-      )
-    }
-    return eb.and(ands)
-  }
+  const makeSelect = <T extends 'lane' | 'extra_lane'>(
+    db: QueryCreator<Database>,
+    table: T
+  ) =>
+    db
+      .selectFrom<'lane as l' | 'extra_lane as l'>(`${table} as l`)
+      .select(['id', 'source', 'target', 'length as cost'])
+      .$call(whereNullOrGreater('depth', depth))
+      .$call(whereNullOrGreater('height', height))
 
-  const laneSql = tx
-    .selectFrom('lane')
-    .select(['id', 'source', 'target', 'length as cost'])
-    .where(({ not, exists, selectFrom }) =>
-      not(
-        exists(
-          selectFrom('extra_lane')
-            .select(['id'])
-            .whereRef('laneid', '=', 'lane.id')
+  const laneSql = hydrate(
+    maybeUnion(
+      makeSelect(tx, 'lane').where(({ not, exists, selectFrom }) =>
+        not(
+          exists(
+            selectFrom('extra_lane')
+              .select('id')
+              .whereRef('laneid', '=', 'l.id')
+          )
         )
-      )
+      ),
+      makeSelect(tx, 'extra_lane')
     )
-    .where(whereSettings)
-    .unionAll(
-      tx
-        .selectFrom('extra_lane')
-        .select(['id', 'source', 'target', 'length as cost'])
-        .where(whereSettings)
-    )
-    .compile().sql
+  )
 
   const segments = partition(endpoints, 2, 1).map(([from, to], i) => ({
     v_from: from.vertex,
@@ -299,71 +276,81 @@ const getRouteBetweenVertices = async (
 
   const vertexSql = hydrate(
     tx
-      .selectFrom(values(segments, 'v'))
+      .selectFrom(values(segments).as('v'))
       .select(['v_from as source', 'v_to as target'])
-      .compile()
   )
 
-  type WithIds<Db, M extends BaseLaneTable> = Db & {
-    ids: {
-      seq: number
-      start_vid: number
-      end_vid: number
-      node: number
-      id: number
-    }
-    l: M
+  type Out = {
+    length: number
+    geom: string
+    forward: boolean
+    seq: number
+    start_vid: number
+    end_vid: number
   }
 
-  const makeLaneSelect = <M extends BaseLaneTable, Db, O>(
-    qb: SelectQueryBuilder<WithIds<Db, M>, 'l', O>
+  type LaneT<T extends 'lane' | 'extra_lane'> = 'lane' extends T
+    ? LaneTable
+    : 'extra_lane' extends T
+      ? ExtraLaneTable
+      : never
+
+  const makeLaneSelect = <T extends 'lane' | 'extra_lane'>(
+    table: T,
+    db: QueryCreator<Database & { ids: PgrDijkstra }>
   ) =>
-    qb
-      .innerJoin('ids', 'l.id', 'ids.id')
-      .select((eb) => [
+    db
+      .selectFrom<'lane as l' | 'extra_lane as l'>(`${table} as l`)
+      .innerJoin('ids', 'ids.edge', 'l.id')
+      .select(({ eb, ref }) => [
         'l.length',
         'l.geom',
-        sql<SqlBool>`${eb.ref('l.source')} = ${eb.ref('ids.node')}`.as(
-          'forward'
-        ),
+        eb('l.source', '=', ref('ids.node')).as('forward'),
         'ids.seq',
         'ids.start_vid',
         'ids.end_vid',
-      ])
+      ]) as SelectQueryBuilder<
+      Database & { ids: PgrDijkstra; l: LaneT<T> },
+      'ids' | 'l',
+      Out
+    >
 
   const result = await tx
     .with('ids', (db) =>
-      db
-        .selectFrom(pgrDijkstra(laneSql, vertexSql, 'i'))
-        .select(['edge as id', 'node', 'seq', 'start_vid', 'end_vid'])
+      db.selectFrom(pgrDijkstra(tx, laneSql, vertexSql, 'i')).selectAll()
     )
     .with('lanes', (db) =>
-      db
-        .selectFrom('lane as l')
-        .$call(makeLaneSelect)
-        .select([sql.lit<SqlBool>(false).as('outside')])
-        .unionAll(
-          db
-            .selectFrom('extra_lane as l')
-            .$call(makeLaneSelect)
-            .select((eb) => [eb('laneid', 'is', null).as('outside')])
+      maybeUnion(
+        makeLaneSelect('lane', db).select(sql.lit(false).as('outside')),
+        makeLaneSelect('extra_lane', db).select((eb) =>
+          eb('laneid', 'is', null).as('outside')
         )
+      )
     )
-    .selectFrom(values(segments, 'v'))
+    .selectFrom(values(segments).as('v'))
     .leftJoin('lanes', (join) =>
       join.onRef('start_vid', '=', 'v_from').onRef('end_vid', '=', 'v_to')
     )
-    .select((eb) => [
-      eb(eb.fn<number>('count', ['length']), '>', sql.lit(0)).as('found'),
-      eb.fn<number>('sum', ['length']).as('length'),
-      sql<LineString>`AsJSON(ST_MakeLine(CASE WHEN ${eb.ref('forward')} THEN ${eb.ref('geom')} ELSE ST_Reverse(${eb.ref('geom')}) END ORDER BY ${eb.ref('seq')} ASC))::jsonb`.as(
-        'geometry'
-      ),
-      sql<
-        'outside' | 'regular'
-      >`CASE WHEN BOOL_OR(${eb.ref('lanes.outside')}) THEN 'outside' ELSE 'regular' END`.as(
-        'type'
-      ),
+    .select(({ eb, fn, lit, ref }) => [
+      eb(fn.count('length'), '>', lit(0)).as('found'),
+      fn.sum<number>('length').as('length'),
+      makeLineAgg(
+        eb,
+        eb
+          .case()
+          .when(ref('forward'))
+          .then(ref('geom').$notNull())
+          .else(fn<string>('ST_Reverse', ['geom']))
+          .end(),
+        'seq'
+      ).as('geometry'),
+      eb
+        .case()
+        .when(fn.agg('bool_or', ['lanes.outside']))
+        .then(sql.lit('outside' as const))
+        .else(sql.lit('regular' as const))
+        .end()
+        .as('type'),
     ])
     .groupBy('v_num')
     .orderBy('v_num asc')
