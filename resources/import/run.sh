@@ -9,7 +9,7 @@ export PGPASSWORD=${PGPASSWORD:-vaylaopas}
 INITFILE=${INITFILE:-init-db.sql}
 SHAPEFILE=${SHAPEFILE:-vaylat.shp}
 
-psql -1 vaylaopas < "$INITFILE"
+psql -a -1 vaylaopas < "$INITFILE"
 
 shp2pgsql -e -s 3067 -W LATIN1 "$SHAPEFILE" public.lane_tmp \
   | psql -1 vaylaopas

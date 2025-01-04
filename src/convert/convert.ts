@@ -85,7 +85,7 @@ const createTables = async (): Promise<void> => {
       FROM (
         SELECT
           jnro::integer AS jnro, vay_nimisu AS name,
-          COALESCE(kulkusyv1::real, kulkusyv2::real, kulkusyv3::real) AS depth,
+          (SELECT MAX(d) FROM UNNEST(STRING_TO_ARRAY(syvyydet, ', ')::real[]) AS d(d)) AS depth,
           (ST_Dump(geom)).geom AS geom
         FROM ${tableFrom}
       ) parts
@@ -299,12 +299,13 @@ const saveManualLanes = async (): Promise<void> => {
         'manual_' || s.id || '_' || t.id AS name,
         s.id AS source,
         t.id AS target,
-        ST_Length(${line}) AS length,
-        ${line} AS geom,
+        ST_Length(line) AS length,
+        line AS geom,
         $1 as depth
-      FROM ${verticesTo} s
-      JOIN ${verticesTo} t
-      ON s.id = $2
+      FROM ${verticesTo} s,
+      ${verticesTo} t,
+      LATERAL (VALUES (${line})) line(line)
+      WHERE s.id = $2
       AND t.id = $3`
     try {
       const result = await client.query(query, [depth, source, target])
@@ -341,37 +342,29 @@ const saveObstructions = async (): Promise<void> => {
 }
 
 const splitLanesAtObstructions = async (): Promise<Intersection[]> => {
-  return (
-    await Promise.all(
-      obstructions.map(async ({ points }) => {
-        const query = `
-          WITH intersections AS (
-            SELECT
-              lane.id,
-              lane.geom,
-              ${tolerance} / ST_Length(lane.geom) AS distance_diff,
-              ST_Intersection(lane.geom, obstruction.geom) AS point,
-              ST_LineLocatePoint(lane.geom, ST_Intersection(lane.geom, obstruction.geom)) AS distance
-            FROM ${tableTmp} AS lane,
-            (VALUES (ST_MakeLine(${points
-              .map(point)
-              .join(',')}))) AS obstruction(geom)
-            WHERE ST_Intersects(lane.geom, obstruction.geom)
-          )
-          SELECT ARRAY[id] AS laneids, ST_LineInterpolatePoint(geom, distance - diff) AS point
-          FROM intersections,
-          LATERAL UNNEST(ARRAY[distance_diff, -distance_diff]) AS diff`
-        try {
-          return (await client.query(query)).rows.map(toIntersection)
-        } catch (err) {
-          console.error(
-            `Error splitting lanes at obstruction ${JSON.stringify(points)}`
-          )
-          throw err
-        }
-      })
+  const query = `
+    WITH intersections AS (
+      SELECT
+        lane.id,
+        lane.geom,
+        ${tolerance} / ST_Length(lane.geom) AS distance_diff,
+        ST_Intersection(lane.geom, obstruction.geom) AS point,
+        ST_LineLocatePoint(lane.geom, ST_Intersection(lane.geom, obstruction.geom)) AS distance
+      FROM ${tableTmp} AS lane
+      JOIN (VALUES ${obstructions
+        .map(({ points }) => `(ST_MakeLine(${points.map(point).join(',')}))`)
+        .join(', ')}) AS obstruction(geom)
+      ON ST_Intersects(lane.geom, obstruction.geom)
     )
-  ).flat()
+    SELECT ARRAY[id] AS laneids, ST_LineInterpolatePoint(geom, distance - diff) AS point
+    FROM intersections,
+    LATERAL UNNEST(ARRAY[distance_diff, -distance_diff]) AS diff`
+  try {
+    return (await client.query(query)).rows.map(toIntersection)
+  } catch (err) {
+    console.error(`Error splitting lanes at obstructions`)
+    throw err
+  }
 }
 
 const removeUnnecessaryVertices = async (): Promise<void> => {

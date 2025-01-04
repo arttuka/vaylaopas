@@ -17,4 +17,5 @@ yarn-error.log*
 
 /.vscode
 /resources/openmaptiles/*.mbtiles
+/resources/vaylat
 /.parcel-cache
