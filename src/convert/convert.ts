@@ -234,14 +234,14 @@ const saveLane = async (l: Lane): Promise<void> => {
       ROW_NUMBER() OVER (ORDER BY distance ASC) AS segment,
       LAG(d.id, 1, l.source) OVER (ORDER BY distance ASC) AS source,
       d.id AS target,
-      ST_Length(ST_LineSubstring(l.geom, LAG(d.distance, 1, 0.0::double precision) OVER (ORDER BY distance ASC), distance)) AS length,
-      ST_LineSubstring(l.geom, LAG(d.distance, 1, 0.0::double precision) OVER (ORDER BY distance ASC), distance) AS geom,
+      ST_Length(ST_LineSubstring(l.geom, LAG(d.distance, 1, 0.0) OVER (ORDER BY distance ASC), distance)) AS length,
+      ST_LineSubstring(l.geom, LAG(d.distance, 1, 0.0) OVER (ORDER BY distance ASC), distance) AS geom,
       l.jnro, l.jnropart, l.name, l.depth, l.height
     FROM ${tableTmp} l,
     LATERAL (
       SELECT split.id,
       split.id <> LAG(split.id, 1, l.source) OVER (ORDER BY distance asc)
-        OR ST_Length(l.geom) * (distance - LAG(distance, 1, 0.0::double precision) OVER (ORDER BY distance asc)) > ${tolerance} AS include,
+        OR ST_Length(l.geom) * (distance - LAG(distance, 1, 0.0) OVER (ORDER BY distance asc)) > ${tolerance} AS include,
       distance
       FROM (
         SELECT v.id, ST_LineLocatePoint(l.geom, v.the_geom) AS distance

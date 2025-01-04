@@ -150,3 +150,5 @@ export type MapBy<
   K extends string,
   V extends T[K],
 > = Extract<T, { [key in K]: V }>
+
+export type NotEmptyArray<T> = [T, ...T[]]

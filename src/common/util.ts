@@ -6,6 +6,7 @@ import {
   Index,
   LngLat,
   MapSettings,
+  NotEmptyArray,
   Point,
   Pred,
   Route,
@@ -271,3 +272,8 @@ export const sqDistance = (p1: Point, p2: Point): number => {
   const dy = p2.y - p1.y
   return dx * dx + dy * dy
 }
+
+export const splitLast = <T>(arr: Readonly<NotEmptyArray<T>>): [T[], T] => [
+  arr.slice(0, -1),
+  arr.at(-1)!,
+]

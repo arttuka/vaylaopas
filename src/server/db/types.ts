@@ -5,18 +5,20 @@ import {
   Expression,
   ExtractTypeFromStringReference,
   Generated,
-  isExpression,
   OperandExpression,
   OperationNode,
   sql,
   StringReference,
 } from 'kysely'
 import { joinList, getSqlType } from './util'
+import { WaypointType } from '../../common/types'
 
 export type Database = {
   lane: LaneTable
   lane_vertices_pgr: LaneVerticesPgrTable
   extra_lane: ExtraLaneTable
+  endpoint: EndpointTable
+  segment: SegmentView
 }
 
 export type BaseLaneTable = {
@@ -45,6 +47,27 @@ export type ExtraLaneTable = BaseLaneTable & {
   laneid: number
 }
 
+export type EndpointTable = {
+  seq: number
+  lane: number
+  vertex: number
+  geometry: string
+  point: string
+  type: WaypointType
+}
+
+export type SegmentView = {
+  seq: number
+  source: number
+  target: number
+  source_point: string
+  target_point: string
+  source_geometry: string
+  target_geometry: string
+  direct: boolean
+  type: WaypointType
+}
+
 export type SplitLinestring = {
   id: number
   source: number
@@ -55,13 +78,10 @@ export type SplitLinestring = {
 
 export type PgrDijkstra = {
   seq: number
-  path_seq: number
   start_vid: number
   end_vid: number
   node: number
   edge: number
-  cost: number
-  agg_cost: number
 }
 
 export type TypedStringReference<Db, Tb extends keyof Db, T> = {
@@ -78,38 +98,19 @@ export type TypedReferenceExpression<Db, Tb extends keyof Db, T> =
   | TypedStringReference<Db, Tb, T>
   | OperandExpression<T>
 
-type RecordWithExpression<T extends Record<string, unknown>> = {
-  [K in keyof T]: Expression<T[K]>
-}
-
-export type RecordWithValueOrExpression<T extends Record<string, unknown>> = {
-  [K in keyof T]: T[K] | Expression<T[K]>
-}
-
-const wrapRecord = <T extends Record<string, unknown>>(
-  r: RecordWithValueOrExpression<T>
-) => {
-  const ret: Record<string, unknown> = {}
-  for (const k in r) {
-    ret[k] = isExpression(r[k]) ? r[k] : sql.val(r[k])
-  }
-  return ret as RecordWithExpression<T>
-}
-
 export class ValuesExpression<T extends Record<string, unknown>>
   implements AliasableExpression<T>
 {
   #expression: Expression<T>
   #keys: (keyof T & string)[]
 
-  constructor(records: RecordWithValueOrExpression<T>[]) {
-    const recs = records.map(wrapRecord)
-    if (recs.length === 0) {
+  constructor(records: T[]) {
+    if (records.length === 0) {
       throw new Error('Empty values list')
     } else {
-      const keys = Object.keys(recs[0])
+      const keys = Object.keys(records[0])
       const types = keys.map((k) => getSqlType(records, k))
-      const values = recs.map((r) =>
+      const values = records.map((r) =>
         joinList(
           keys.map((k, i) => {
             const t = types[i]
