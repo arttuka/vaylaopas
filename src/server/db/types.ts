@@ -13,6 +13,11 @@ import {
 import { joinList, getSqlType } from './util'
 import { WaypointType } from '../../common/types'
 
+declare const tags: unique symbol
+export type DbPoint = string & { [tags]: { Point: void } }
+export type DbLineString = string & { [tags]: { LineString: void } }
+export type DbGeometry = DbPoint | DbLineString
+
 export type Database = {
   lane: LaneTable
   lane_vertices_pgr: LaneVerticesPgrTable
@@ -28,7 +33,7 @@ export type BaseLaneTable = {
   length: number
   depth: number
   height: number
-  geom: string
+  geom: DbLineString
 }
 
 export type LaneTable = BaseLaneTable & {
@@ -40,7 +45,7 @@ export type LaneTable = BaseLaneTable & {
 
 export type LaneVerticesPgrTable = {
   id: Generated<number>
-  the_geom: string
+  the_geom: DbPoint
 }
 
 export type ExtraLaneTable = BaseLaneTable & {
@@ -51,8 +56,8 @@ export type EndpointTable = {
   seq: number
   lane: number
   vertex: number
-  geometry: string
-  point: string
+  geometry: DbLineString
+  point: DbPoint
   type: WaypointType
 }
 
@@ -60,10 +65,10 @@ export type SegmentView = {
   seq: number
   source: number
   target: number
-  source_point: string
-  target_point: string
-  source_geometry: string
-  target_geometry: string
+  source_point: DbPoint
+  target_point: DbPoint
+  source_geometry: DbLineString
+  target_geometry: DbLineString
   direct: boolean
   type: WaypointType
 }
@@ -73,7 +78,7 @@ export type SplitLinestring = {
   source: number
   target: number
   length: number
-  geom: string
+  geom: DbLineString
 }
 
 export type PgrDijkstra = {

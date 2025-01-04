@@ -4,6 +4,7 @@ import {
   Expression,
   ExpressionBuilder,
   ExtractTypeFromReferenceExpression,
+  ExtractTypeFromStringReference,
   FunctionModule,
   Kysely,
   SelectQueryBuilder,
@@ -16,9 +17,13 @@ import {
 } from 'kysely'
 import { LineString } from 'geojson'
 import {
+  DbGeometry,
+  DbLineString,
+  DbPoint,
   PgrDijkstra,
   SplitLinestring,
   TypedReferenceExpression,
+  TypedStringReference,
   ValuesExpression,
 } from './types'
 import { NotEmptyArray } from '../../common/types'
@@ -69,17 +74,36 @@ export const aggBuilder =
     dir: 'asc' | 'desc' = 'asc'
   ) => {
     const [firstArgs, lastArg] = splitLast(args)
-    return fn.agg<O, RE>(name, [
+    return fn.agg<O>(name, [
       ...firstArgs,
-      sql`${parseAggExpression(lastArg)} ORDER BY ${parseAggExpression(orderBy)} ${sql.raw(dir)}` as unknown as RE,
+      sql`${parseAggExpression(lastArg)} ORDER BY ${parseAggExpression(orderBy)} ${sql.raw(dir)}`,
     ])
   }
+
+type ExtractType<Db, Tb extends keyof Db, E extends AggExpression<Db, Tb>> =
+  E extends StringReference<Db, Tb>
+    ? ExtractTypeFromStringReference<Db, Tb, E>
+    : E extends Expression<infer T>
+      ? T
+      : never
+
+export const arrayAgg = <
+  Db,
+  Tb extends keyof Db,
+  RE extends AggExpression<Db, Tb> = AggExpression<Db, Tb>,
+  OE extends AggExpression<Db, Tb> = AggExpression<Db, Tb>,
+>(
+  fn: FunctionModule<Db, Tb>,
+  args: Readonly<NotEmptyArray<RE>>,
+  orderBy: OE,
+  dir: 'asc' | 'desc' = 'asc'
+) => aggBuilder(fn, 'array_agg')<ExtractType<Db, Tb, RE>[]>(args, orderBy, dir)
 
 export const splitLinestring = <Db, Tb extends keyof Db>(
   eb: ExpressionBuilder<Db, Tb>,
   vertexIds: TypedReferenceExpression<Db, Tb, number[]>,
-  points: TypedReferenceExpression<Db, Tb, string[]>,
-  geom: TypedReferenceExpression<Db, Tb, string>,
+  points: TypedReferenceExpression<Db, Tb, DbPoint[]>,
+  geom: TypedReferenceExpression<Db, Tb, DbLineString>,
   source: TypedReferenceExpression<Db, Tb, number>,
   target: TypedReferenceExpression<Db, Tb, number>,
   length: TypedReferenceExpression<Db, Tb, number>
@@ -111,6 +135,12 @@ export const hydrate = <T extends Compilable>(qb: T) => {
   })
 }
 
+export const distance = <Db, Tb extends keyof Db>(
+  eb: ExpressionBuilder<Db, Tb>,
+  from: TypedStringReference<Db, Tb, DbGeometry>,
+  to: TypedStringReference<Db, Tb, DbGeometry>
+) => eb(from, '<->', eb.ref(to)).$castTo<number>()
+
 export const logQuery = <T extends Compilable>(qb: T): T => {
   console.log(qb.compile())
   return qb
@@ -123,26 +153,26 @@ export const logHydratedQuery = <T extends Compilable>(qb: T): T => {
 
 export const asJSON = <Db, Tb extends keyof Db>(
   eb: ExpressionBuilder<Db, Tb>,
-  expr: TypedReferenceExpression<Db, Tb, string>
-) => eb.cast<LineString>(eb.fn('AsJSON', [expr]), 'jsonb')
+  expr: TypedReferenceExpression<Db, Tb, DbLineString>
+) => eb.fn<LineString>('AsJSON', [expr])
 
-export const makeLine = <Db, Tb extends keyof Db>(
+export const makeLine = <Db, Tb extends keyof Db, T extends DbGeometry>(
   eb: ExpressionBuilder<Db, Tb>,
-  ...exprs: TypedReferenceExpression<Db, Tb, string>[]
-) => asJSON(eb, eb.fn('ST_MakeLine', exprs))
+  ...exprs: TypedReferenceExpression<Db, Tb, T>[]
+) => asJSON(eb, eb.fn<DbLineString>('ST_MakeLine', exprs))
 
-export const makeLineAgg = <Db, Tb extends keyof Db>(
+export const makeLineAgg = <Db, Tb extends keyof Db, T extends DbGeometry>(
   eb: ExpressionBuilder<Db, Tb>,
-  expr: TypedReferenceExpression<Db, Tb, string>,
+  expr: TypedReferenceExpression<Db, Tb, T>,
   orderBy: AggExpression<Db, Tb>
-) => asJSON(eb, aggBuilder(eb.fn, 'ST_MakeLine')([expr], orderBy))
+) => asJSON(eb, aggBuilder(eb.fn, 'ST_MakeLine')<DbLineString>([expr], orderBy))
 
 export const makePoint = <Db, Tb extends keyof Db>(
   eb: ExpressionBuilder<Db, Tb>,
   lng: TypedReferenceExpression<Db, Tb, number>,
   lat: TypedReferenceExpression<Db, Tb, number>
 ) =>
-  eb.fn<string>('ST_Transform', [
+  eb.fn<DbPoint>('ST_Transform', [
     eb.fn('ST_SetSRID', [eb.fn('ST_MakePoint', [lng, lat]), eb.lit(4326)]),
     eb.lit(3067),
   ])

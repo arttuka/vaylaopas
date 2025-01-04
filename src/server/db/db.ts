@@ -14,8 +14,9 @@ import config from '../config'
 import { Lane, Route, RouteType, Waypoint } from '../../common/types'
 import { Database, PgrDijkstra } from './types'
 import {
-  aggBuilder,
+  arrayAgg,
   asJSON,
+  distance,
   extendKysely,
   hydrate,
   makeLine,
@@ -107,9 +108,7 @@ const insertEndpoints = async (
                 .as('point'),
             ])
             .$call(whereNullOrGreater('depth', depth))
-            .orderBy(({ eb, ref }) =>
-              eb('lane.geom', '<->', ref('origin.geom'))
-            )
+            .orderBy((eb) => distance(eb, 'lane.geom', 'origin.geom'))
             .limit(sql.lit(1))
             .as('l')
         )
@@ -153,14 +152,11 @@ const insertExtraLanes = async (tx: Transaction<Database>): Promise<void> => {
     .with('lane_endpoints', (db) =>
       db
         .selectFrom('endpoint')
-        .select(({ fn }) => {
-          const arrayAgg = aggBuilder(fn, 'array_agg')
-          return [
-            'lane as laneid',
-            arrayAgg<number[]>(['vertex'], 'seq').as('vertex_ids'),
-            arrayAgg<string[]>(['point'], 'seq').as('points'),
-          ]
-        })
+        .select(({ fn }) => [
+          'lane as laneid',
+          arrayAgg(fn, ['vertex'], 'seq').as('vertex_ids'),
+          arrayAgg(fn, ['point'], 'seq').as('points'),
+        ])
         .where('type', '!=', sql.lit('viadirect' as const))
         .where('vertex', '<', sql.lit(0))
         .groupBy(['lane'])
