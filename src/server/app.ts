@@ -12,22 +12,13 @@ const index = fs.existsSync(indexPath)
 
 const app = express()
 app.use(express.json())
-app.use(
-  '/js',
-  express.static('./dist/client', {
-    maxAge: 86400000,
-  })
-)
+app.use('/js', express.static('./dist/client', { maxAge: 86400000 }))
 
 app.get('/', (req, res): void => {
   res.send(index)
 })
 
-type RouteParams = {
-  points: Waypoint[]
-  depth?: number
-  height?: number
-}
+type RouteParams = { points: Waypoint[]; depth?: number; height?: number }
 
 app.get('/api/config', (req, res): void => {
   res.json(config.client)

@@ -9,35 +9,16 @@ import {
   hasAnyId,
   makeIdGenerator,
   numToLetter,
+  reverse,
 } from '../../common/util'
 import type { State } from './store'
 
 export type WaypointAction =
-  | {
-      type: 'add'
-      index?: number
-      point: LngLat
-      waypointType: WaypointType
-    }
-  | {
-      type: 'change'
-      id: string
-      waypointType: WaypointType
-    }
-  | {
-      type: 'remove'
-      id: string
-    }
-  | {
-      type: 'move'
-      id: string
-      point: LngLat
-    }
-  | {
-      type: 'reorder'
-      from: number
-      to: number
-    }
+  | { type: 'add'; index?: number; point: LngLat; waypointType: WaypointType }
+  | { type: 'change'; id: string; waypointType: WaypointType }
+  | { type: 'remove'; id: string }
+  | { type: 'move'; id: string; point: LngLat }
+  | { type: 'reorder'; from: number; to: number }
 
 export type WaypointSlice = {
   waypoints: Waypoint[]
@@ -67,7 +48,7 @@ export const reorderVias = <T>(
     const start = from === 0 ? [] : [...vias.slice(0, from - 1), []]
     const end = to === vias.length ? [] : [[], ...vias.slice(to + 1)]
     if (from + 1 === to) {
-      return [...start, vias[from].toReversed(), ...end]
+      return [...start, reverse(vias[from]), ...end]
     } else {
       const mid = vias.slice(from + 1, to)
       return [...start, ...mid, [], ...end]
@@ -76,7 +57,7 @@ export const reorderVias = <T>(
     const start = to === 0 ? [] : [...vias.slice(0, to - 1), []]
     const end = from === vias.length ? [] : [[], ...vias.slice(from + 1)]
     if (from - 1 === to) {
-      return [...start, vias[to].toReversed(), ...end]
+      return [...start, reverse(vias[to]), ...end]
     } else {
       const mid = vias.slice(to, from - 1)
       return [...start, [], ...mid, ...end]
@@ -142,14 +123,16 @@ export const getNewWaypoints = (
         })
       )
     }
-    case 'change':
+    case 'change': {
       const { id, waypointType } = action
       return updateLetters(
         updateWhere(waypoints, hasId(id), { type: waypointType })
       )
-    case 'remove':
+    }
+    case 'remove': {
       const ids = getAdjacentViaIds(waypoints, action.id)
       return updateLetters(removeWhere(waypoints, hasAnyId(ids)))
+    }
     case 'move': {
       const { point, id } = action
       return updateLetters(updateWhere(waypoints, hasId(id), point))

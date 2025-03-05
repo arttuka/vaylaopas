@@ -1,18 +1,13 @@
-import React, { ChangeEvent, FC, useState } from 'react'
+import { ChangeEvent, FC, useState } from 'react'
 import CancelIcon from '@mui/icons-material/Cancel'
 import MuiIconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import { styled } from '@mui/material/styles'
 import MuiTextField from '@mui/material/TextField'
 
-const IconButton = styled(MuiIconButton)({
-  padding: 0,
-})
+const IconButton = styled(MuiIconButton)({ padding: 0 })
 
-type ClearButtonProps = {
-  disabled: boolean
-  onClick: () => void
-}
+type ClearButtonProps = { disabled: boolean; onClick: () => void }
 
 const ClearButton: FC<ClearButtonProps> = ({ disabled, onClick }) => (
   <InputAdornment position="start">
@@ -22,9 +17,7 @@ const ClearButton: FC<ClearButtonProps> = ({ disabled, onClick }) => (
   </InputAdornment>
 )
 
-const TextField = styled(MuiTextField)({
-  flexBasis: '40%',
-})
+const TextField = styled(MuiTextField)({ flexBasis: '40%' })
 
 type SettingFieldProps = {
   id: string
@@ -65,9 +58,7 @@ const SettingField: FC<SettingFieldProps> = ({
           <ClearButton disabled={value === undefined} onClick={clearField} />
         ),
       }}
-      inputProps={{
-        step: 0.1,
-      }}
+      inputProps={{ step: 0.1 }}
     />
   )
 }

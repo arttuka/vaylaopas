@@ -151,11 +151,7 @@ export const enrichRoutes = (routes: Route[], settings: Settings): Route[] => {
     const { length } = route
     const duration = speed && length && calculateDuration(length, speed)
     const fuel = duration && consumption && (duration * consumption) / 60
-    return {
-      ...route,
-      duration,
-      fuel,
-    }
+    return { ...route, duration, fuel }
   })
 }
 
@@ -181,7 +177,9 @@ export const storeSetting = (
     } else {
       localStorage.removeItem(key)
     }
-  } catch {}
+  } catch {
+    /* */
+  }
 }
 
 export const useInterval = (
@@ -250,3 +248,5 @@ export const splitLast = <T>(arr: Readonly<NotEmptyArray<T>>): [T[], T] => [
   arr.slice(0, -1),
   arr.at(-1)!,
 ]
+
+export const reverse = <T>(arr: T[]): T[] => [...arr].reverse()

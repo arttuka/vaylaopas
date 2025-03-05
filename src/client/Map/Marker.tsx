@@ -40,9 +40,7 @@ const Destination = styled('div')({
   position: 'relative',
   transform: '',
   transition: 'transform 100ms ease-in-out',
-  '&.marker-dragged': {
-    transform: 'scale(1.5, 1.5)',
-  },
+  '&.marker-dragged': { transform: 'scale(1.5, 1.5)' },
 })
 
 const Letter = styled('div')({
@@ -63,12 +61,8 @@ const WaypointMarker = styled('div')({
   borderRadius: 999,
   transition: 'transform 100ms ease-in-out',
   transform: 'translateY(12px)',
-  '&.marker-dragged': {
-    transform: 'translateY(12px) scale(1.5, 1.5)',
-  },
-  '&.marker-outside': {
-    backgroundColor: '#f090a0',
-  },
+  '&.marker-dragged': { transform: 'translateY(12px) scale(1.5, 1.5)' },
+  '&.marker-outside': { backgroundColor: '#f090a0' },
 })
 
 type MarkerProps = {

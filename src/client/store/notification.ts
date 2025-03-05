@@ -4,11 +4,7 @@ import { Key, Notification } from '../../common/types'
 import { makeIdGenerator } from '../../common/util'
 import type { State } from './store'
 
-type EnqueueProps = {
-  key?: Key
-  message: string
-  variant: VariantType
-}
+type EnqueueProps = { key?: Key; message: string; variant: VariantType }
 
 export type NotificationSlice = {
   notifications: Notification[]
@@ -29,11 +25,7 @@ export const createNotificationSlice: StateCreator<
     set((state) => ({
       notifications: [
         ...state.notifications,
-        {
-          key: key || generateKey(),
-          message,
-          variant,
-        },
+        { key: key || generateKey(), message, variant },
       ],
     })),
   removeNotification: (key) =>

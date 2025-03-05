@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import MuiAppBar from '@mui/material/AppBar'
 import IconButton from '@mui/material/IconButton'
 import Toolbar from '@mui/material/Toolbar'
@@ -10,14 +10,7 @@ const AppBar: FC = () => {
   const [open, setOpen] = useState(false)
   return (
     <MuiAppBar position="static">
-      <Toolbar
-        sx={{
-          minHeight: {
-            xs: 40,
-            sm: 56,
-          },
-        }}
-      >
+      <Toolbar sx={{ minHeight: { xs: 40, sm: 56 } }}>
         <IconButton
           size="medium"
           color="inherit"
@@ -30,13 +23,7 @@ const AppBar: FC = () => {
         <TopDrawer open={open} onClose={() => setOpen(false)} />
         <Typography
           variant="h4"
-          sx={{
-            fontWeight: 400,
-            fontSize: {
-              xs: '1.5rem',
-              sm: '2.125rem',
-            },
-          }}
+          sx={{ fontWeight: 400, fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
         >
           Väyläopas
         </Typography>

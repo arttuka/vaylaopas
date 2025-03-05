@@ -10,21 +10,10 @@ const makeWaypoint = (
   i: number,
   type: WaypointType,
   letter?: string
-): Waypoint => ({
-  lng: i,
-  lat: i,
-  id: i.toString(),
-  type,
-  letter,
-})
+): Waypoint => ({ lng: i, lat: i, id: i.toString(), type, letter })
 
 const expectWaypoint = (i: number, type: WaypointType, letter?: string) =>
-  expect.objectContaining({
-    lng: i,
-    lat: i,
-    type,
-    letter,
-  })
+  expect.objectContaining({ lng: i, lat: i, type, letter })
 
 const w1 = makeWaypoint(1, 'destination', 'A')
 const w2 = makeWaypoint(2, 'destination', 'B')

@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect } from 'react'
 import clsx from 'clsx'
 import Button from '@mui/material/Button'
 import { default as MuiDrawer } from '@mui/material/Drawer'
@@ -56,14 +56,8 @@ const DrawerButton = styled(Button)(({ theme: { palette, spacing } }) => ({
   borderWidth: '1px 1px 0 1px',
   borderStyle: 'solid',
   borderRadius: '8px 8px 0 0',
-  '&:active': {
-    backgroundColor: '#ffffff',
-    boxShadow: 'none',
-  },
-  '&:hover': {
-    backgroundColor: '#ffffff',
-    boxShadow: 'none',
-  },
+  '&:active': { backgroundColor: '#ffffff', boxShadow: 'none' },
+  '&:hover': { backgroundColor: '#ffffff', boxShadow: 'none' },
 }))
 
 const BottomDrawer: FC = () => {
@@ -81,10 +75,7 @@ const BottomDrawer: FC = () => {
     }
   }, [items, open])
 
-  const className = clsx({
-    [openDrawer]: open,
-    [closedDrawer]: !open,
-  })
+  const className = clsx({ [openDrawer]: open, [closedDrawer]: !open })
   const height = open ? openHeight(items) : undefined
 
   return (
@@ -92,16 +83,11 @@ const BottomDrawer: FC = () => {
       variant="permanent"
       anchor="bottom"
       data-items={items}
-      classes={{
-        root: className,
-        paper: className,
-      }}
+      classes={{ root: className, paper: className }}
       sx={{
         display: { xs: 'block', sm: 'none' },
         height,
-        '& .MuiDrawer-paper': {
-          height,
-        },
+        '& .MuiDrawer-paper': { height },
       }}
     >
       {items > 0 && (

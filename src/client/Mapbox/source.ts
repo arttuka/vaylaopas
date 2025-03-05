@@ -20,10 +20,7 @@ import { addLayer, removeLayer } from './layer'
 
 export const featureCollection = <F extends FeatureType>(
   features: F[] = []
-): Collection<F> => ({
-  type: 'FeatureCollection',
-  features,
-})
+): Collection<F> => ({ type: 'FeatureCollection', features })
 
 export const pointFeature = (
   point?: LngLat,
@@ -34,9 +31,7 @@ export const pointFeature = (
     type: 'MultiPoint',
     coordinates: point ? [[point.lng, point.lat]] : [],
   },
-  properties: {
-    dragged,
-  },
+  properties: { dragged },
 })
 
 type CollectedRoutes = {
@@ -52,10 +47,7 @@ const collectRoutes = (routes: Route[]): CollectedRoutes =>
         ? notFoundGeometry
         : [...notFoundGeometry, r.geometry],
     }),
-    {
-      geometry: [],
-      notFoundGeometry: [],
-    }
+    { geometry: [], notFoundGeometry: [] }
   )
 
 export const generateRouteSources = (

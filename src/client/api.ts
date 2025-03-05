@@ -7,14 +7,8 @@ export const getRoutes = async (
 ): Promise<ApiRoutes> => {
   const response = await fetch('/api/route', {
     method: 'POST',
-    body: JSON.stringify({
-      points: waypoints,
-      depth,
-      height,
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    body: JSON.stringify({ points: waypoints, depth, height }),
+    headers: { 'Content-Type': 'application/json' },
   })
 
   if (response.status >= 400) {
@@ -34,9 +28,7 @@ export const addMapLoad = async (): Promise<void> => {
 }
 
 export const getConfig = async (): Promise<ClientConfig> => {
-  const response = await fetch('/api/config', {
-    method: 'GET',
-  })
+  const response = await fetch('/api/config', { method: 'GET' })
 
   if (response.status >= 400) {
     throw new Error(`Call to /api/config failed with code ${response.status}`)

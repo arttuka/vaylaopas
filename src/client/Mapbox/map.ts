@@ -19,7 +19,7 @@ export type MapProps = {
 }
 
 export const useMaplibreMap = (
-  containerRef: RefObject<HTMLDivElement>,
+  containerRef: RefObject<HTMLDivElement | null>,
   {
     center,
     zoom,
@@ -34,8 +34,7 @@ export const useMaplibreMap = (
   const [map, setMap] = useState<Map>()
   useEffect(() => {
     const maplibreMap = new Map({
-      container:
-        containerRef.current! /* eslint-disable-line @typescript-eslint/no-non-null-assertion */,
+      container: containerRef.current!,
       style: mapserverUrl,
       hash: true,
       zoom,
@@ -49,9 +48,7 @@ export const useMaplibreMap = (
       maplibreMap
         .addControl(
           new GeolocateControl({
-            positionOptions: {
-              enableHighAccuracy: true,
-            },
+            positionOptions: { enableHighAccuracy: true },
             trackUserLocation: true,
           })
         )

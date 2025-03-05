@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useRef, useState } from 'react'
+import { FC, useCallback, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import Marker from './Marker'
 import Map from './Map'
@@ -39,11 +39,7 @@ import ContextMenu from './ContextMenu'
 
 const longTouchDuration = 750
 
-const closedMenu: MenuState = {
-  open: false,
-  top: 0,
-  left: 0,
-}
+const closedMenu: MenuState = { open: false, top: 0, left: 0 }
 
 const toLngLat = (e: Event): LngLat => ({
   lng: e.lngLat.lng,
@@ -68,18 +64,12 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
     [routes]
   )
   const waypointLineSource = useMemo<Sources['waypointLine']>(
-    () => ({
-      id: 'waypointLine',
-      data: featureCollection(waypointLines),
-    }),
+    () => ({ id: 'waypointLine', data: featureCollection(waypointLines) }),
     [waypointLines]
   )
   const [dragIndicatorSource, setDragIndicatorSource] = useState<
     Sources['dragIndicator']
-  >({
-    id: 'dragIndicator',
-    data: pointFeature(),
-  })
+  >({ id: 'dragIndicator', data: pointFeature() })
   const longTouchTimer = useRef(0)
 
   const openMenu = useCallback(
@@ -116,11 +106,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   const onTouchStart: TouchEventHandler = useCallback(
     (e) => {
       window.clearTimeout(longTouchTimer.current)
-      setTouchMarker({
-        direction: 'up',
-        top: e.point.y + 56,
-        left: e.point.x,
-      })
+      setTouchMarker({ direction: 'up', top: e.point.y + 56, left: e.point.x })
       longTouchTimer.current = window.setTimeout((): void => {
         e.preventDefault()
         editWaypoints({
@@ -190,11 +176,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
 
   const handleDragWaypoint = useCallback(
     (id: string, lngLat: LngLat): void => {
-      editWaypoints({
-        type: 'move',
-        point: lngLat,
-        id,
-      })
+      editWaypoints({ type: 'move', point: lngLat, id })
     },
     [editWaypoints]
   )

@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, useEffect, useState } from 'react'
+import { FC, ReactElement, useEffect, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -27,23 +27,16 @@ import {
   numToLetter,
 } from '../../common/util'
 
-const OuterList = styled(List)({
-  height: '100%',
-})
+const OuterList = styled(List)({ height: '100%' })
 
 const ScrollingList = styled(List)({
   overflow: 'auto',
   height: 'calc(100% - 61px)',
 })
 
-type RouteListProps = {
-  onClick?: () => void
-}
+type RouteListProps = { onClick?: () => void }
 
-type Active = {
-  id: string
-  letter: string
-}
+type Active = { id: string; letter: string }
 
 const RouteList: FC<RouteListProps> = ({ onClick }) => {
   const { routes, waypoints, editWaypoints } = useStore(
@@ -64,23 +57,13 @@ const RouteList: FC<RouteListProps> = ({ onClick }) => {
   const totals = mergeRoutes(combinedRoutes)
 
   const onDelete = (id: string): void => {
-    editWaypoints({
-      type: 'remove',
-      id,
-    })
+    editWaypoints({ type: 'remove', id })
   }
 
   const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
     useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
+      activationConstraint: { delay: 250, tolerance: 5 },
     })
   )
 

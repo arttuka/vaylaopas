@@ -8,6 +8,7 @@
       "dom",
       "dom.iterable",
       "esnext",
+      "ESNext.Array",
       "scripthost",
       "es2015.promise"
     ],
@@ -20,7 +21,7 @@
     "downlevelIteration": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "rootDir": "./",
     "noErrorTruncation": true
   },

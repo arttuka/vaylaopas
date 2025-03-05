@@ -1,13 +1,10 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import { LngLat, MenuState } from '../../common/types'
 import { useStore } from '../store/store'
 
-type ContextMenuProps = MenuState & {
-  closeMenu: () => void
-  point: LngLat
-}
+type ContextMenuProps = MenuState & { closeMenu: () => void; point: LngLat }
 
 const ContextMenu: FC<ContextMenuProps> = ({
   open,
@@ -31,11 +28,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
       {waypoint === undefined ? (
         <MenuItem
           onClick={() => {
-            editWaypoints({
-              type: 'add',
-              point,
-              waypointType: 'destination',
-            })
+            editWaypoints({ type: 'add', point, waypointType: 'destination' })
             closeMenu()
           }}
         >
@@ -76,10 +69,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
           <MenuItem
             key="delete-waypoint"
             onClick={() => {
-              editWaypoints({
-                type: 'remove',
-                id: waypoint,
-              })
+              editWaypoints({ type: 'remove', id: waypoint })
               closeMenu()
             }}
           >

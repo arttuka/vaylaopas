@@ -43,14 +43,9 @@ export type LaneTable = BaseLaneTable & {
   name: string
 }
 
-export type LaneVerticesPgrTable = {
-  id: Generated<number>
-  the_geom: DbPoint
-}
+export type LaneVerticesPgrTable = { id: Generated<number>; the_geom: DbPoint }
 
-export type ExtraLaneTable = BaseLaneTable & {
-  laneid: number
-}
+export type ExtraLaneTable = BaseLaneTable & { laneid: number }
 
 export type EndpointTable = {
   seq: number

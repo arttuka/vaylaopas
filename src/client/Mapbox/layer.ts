@@ -17,23 +17,14 @@ export const layers: Layers = {
     id: 'route',
     source: 'route',
     type: 'line',
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
-    paint: {
-      'line-color': '#ff3333',
-      'line-width': 3,
-    },
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: { 'line-color': '#ff3333', 'line-width': 3 },
   },
   notFoundRoute: {
     id: 'notFoundRoute',
     source: 'notFoundRoute',
     type: 'line',
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
     paint: {
       'line-color': '#ff0000',
       'line-width': 4,
@@ -44,10 +35,7 @@ export const layers: Layers = {
     id: 'waypointLine',
     source: 'waypointLine',
     type: 'line',
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
     paint: {
       'line-color': '#ff0000',
       'line-width': 3,

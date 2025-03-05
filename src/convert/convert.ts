@@ -13,15 +13,9 @@ const tableTo = 'lane'
 const verticesTo = `${tableTo}_vertices_pgr`
 const tolerance = 20
 
-type Intersection = {
-  id?: number
-  laneIds: Set<number>
-  point: string
-}
+type Intersection = { id?: number; laneIds: Set<number>; point: string }
 
-type SavedIntersection = Intersection & {
-  id: number
-}
+type SavedIntersection = Intersection & { id: number }
 
 const isSaved = (i: Intersection): i is SavedIntersection => i.id !== undefined
 
@@ -41,10 +35,7 @@ const toIntersection = ({
 
 type IntersectionIndex = Index<SavedIntersection>
 
-type Lane = {
-  id: number
-  intersections: Set<number>
-}
+type Lane = { id: number; intersections: Set<number> }
 
 type LaneIndex = Index<Lane>
 
@@ -132,10 +123,7 @@ const getLanes = async (): Promise<LaneIndex> => {
   return mapBy(
     result.rows,
     ({ id }): number => id,
-    ({ id }): Lane => ({
-      id,
-      intersections: new Set(),
-    })
+    ({ id }): Lane => ({ id, intersections: new Set() })
   )
 }
 

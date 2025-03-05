@@ -33,7 +33,7 @@ export const createRouteSlice: StateCreator<State, [], [], RouteSlice> = (
           })
         }
         set({ routes: enrichRoutes(routes, settings), waypointLines })
-      } catch (err) {
+      } catch {
         get().enqueueNotification({
           message: 'Reitinhaussa tapahtui odottamaton virhe',
           variant: 'error',

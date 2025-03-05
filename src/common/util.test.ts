@@ -50,10 +50,7 @@ test('removeWhere', (): void => {
   expect(removeWhere(arr, (i) => i === 4)).toEqual([0, 1, 2, 3])
 })
 
-type TestObj = {
-  id: string
-  n: number
-}
+type TestObj = { id: string; n: number }
 
 test('hasProperty', (): void => {
   const obj: TestObj = { id: '0', n: 1 }
@@ -110,11 +107,7 @@ test('mapBy', (): void => {
     1: 'x2',
     2: 'x3',
   })
-  expect(mapBy(arr, keyfn)).toEqual({
-    0: '1',
-    1: '2',
-    2: '3',
-  })
+  expect(mapBy(arr, keyfn)).toEqual({ 0: '1', 1: '2', 2: '3' })
 })
 
 test('calculateDuration', (): void => {
@@ -159,54 +152,15 @@ test('throttle', async (): Promise<void> => {
 
 test('combineSegments', (): void => {
   const routes = [
-    {
-      type: 'destination',
-      found: true,
-      length: 3,
-      duration: 1,
-      fuel: 1,
-    },
-    {
-      type: 'via',
-      found: true,
-      length: 4,
-      duration: 2,
-      fuel: 2,
-    },
-    {
-      type: 'destination',
-      found: true,
-      length: 5,
-      duration: 3,
-      fuel: 3,
-    },
-    {
-      type: 'destination',
-      found: true,
-      length: 6,
-      duration: 4,
-      fuel: 4,
-    },
+    { type: 'destination', found: true, length: 3, duration: 1, fuel: 1 },
+    { type: 'via', found: true, length: 4, duration: 2, fuel: 2 },
+    { type: 'destination', found: true, length: 5, duration: 3, fuel: 3 },
+    { type: 'destination', found: true, length: 6, duration: 4, fuel: 4 },
   ] as Route[]
   const segments = combineSegments(routes)
   expect(segments).toEqual([
-    {
-      found: true,
-      length: 7,
-      duration: 3,
-      fuel: 3,
-    },
-    {
-      found: true,
-      length: 5,
-      duration: 3,
-      fuel: 3,
-    },
-    {
-      found: true,
-      length: 6,
-      duration: 4,
-      fuel: 4,
-    },
+    { found: true, length: 7, duration: 3, fuel: 3 },
+    { found: true, length: 5, duration: 3, fuel: 3 },
+    { found: true, length: 6, duration: 4, fuel: 4 },
   ])
 })

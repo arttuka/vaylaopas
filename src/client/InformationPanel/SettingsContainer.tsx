@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { styled } from '@mui/material/styles'
 import SettingField from './SettingField'

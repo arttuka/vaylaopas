@@ -1,4 +1,4 @@
-import React, { FC, forwardRef } from 'react'
+import { FC, JSX, forwardRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import MuiAvatar from '@mui/material/Avatar'
@@ -38,9 +38,7 @@ const Delete: FC<{ onClick: () => void }> = ({ onClick }) => (
   </ListItemSecondaryAction>
 )
 
-const ListItemText = styled(MuiListItemText)({
-  margin: 0,
-})
+const ListItemText = styled(MuiListItemText)({ margin: 0 })
 
 const OffsetListItemText = styled(MuiListItemText)({
   margin: 0,
@@ -48,9 +46,7 @@ const OffsetListItemText = styled(MuiListItemText)({
   top: -24,
 })
 
-const NotFoundIcon = styled(WarningIcon)({
-  verticalAlign: 'top',
-})
+const NotFoundIcon = styled(WarningIcon)({ verticalAlign: 'top' })
 
 type SegmentProps = {
   length?: number

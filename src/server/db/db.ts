@@ -34,9 +34,7 @@ import {
   whereNullOrGreater,
 } from './util'
 
-const dialect = new PostgresDialect({
-  pool: new Pool(config.db),
-})
+const dialect = new PostgresDialect({ pool: new Pool(config.db) })
 
 const db = new Kysely<Database>({
   dialect,
@@ -57,12 +55,7 @@ extendKysely(db)
 const formatFeature = <F extends FeatureType>(
   geometry: F['geometry'],
   properties: F['properties']
-) =>
-  ({
-    type: 'Feature',
-    geometry,
-    properties,
-  }) as F
+) => ({ type: 'Feature', geometry, properties }) as F
 
 const insertEndpoints = async (
   tx: Transaction<Database>,

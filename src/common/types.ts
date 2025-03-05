@@ -3,27 +3,15 @@ import { VariantType } from 'notistack'
 
 export type Pred<T> = (t: T) => boolean
 
-export type Id = {
-  id: string
-}
+export type Id = { id: string }
 
-export type LngLat = {
-  lng: number
-  lat: number
-}
+export type LngLat = { lng: number; lat: number }
 
-export type Point = {
-  x: number
-  y: number
-}
+export type Point = { x: number; y: number }
 
 export type WaypointType = 'destination' | 'via' | 'viadirect'
 
-export type Waypoint = LngLat &
-  Id & {
-    letter?: string
-    type: WaypointType
-  }
+export type Waypoint = LngLat & Id & { letter?: string; type: WaypointType }
 
 export type RouteType = 'regular' | 'outside'
 
@@ -41,9 +29,7 @@ export type WaypointProperties = Id & {
   type: WaypointType
   dragged: boolean
 }
-export type DragIndicatorFeatureProperties = {
-  dragged: boolean
-}
+export type DragIndicatorFeatureProperties = { dragged: boolean }
 export type PointFeature = Feature<MultiPoint, DragIndicatorFeatureProperties>
 export type LineStringFeature = Feature<LineString>
 export type FeatureType = RouteFeature | PointFeature | LineStringFeature
@@ -54,7 +40,7 @@ export type IsFeature<T extends FeatureType> = (
 const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
   feature !== undefined &&
   feature.properties !== null &&
-  feature.properties.hasOwnProperty(p)
+  feature.properties.hasOwn(p)
 
 export const featureIsRouteFeature = (
   feature?: Feature
@@ -67,19 +53,11 @@ export type RouteProps = {
   fuel?: number
 }
 
-export type Route = RouteProps & {
-  geometry: RouteFeature
-  type?: WaypointType
-}
+export type Route = RouteProps & { geometry: RouteFeature; type?: WaypointType }
 
-export type ApiRoutes = {
-  routes: Route[]
-  waypointLines: LineStringFeature[]
-}
+export type ApiRoutes = { routes: Route[]; waypointLines: LineStringFeature[] }
 
-export type Index<T> = {
-  [key: number]: T
-}
+export type Index<T> = { [key: number]: T }
 
 export type Settings = {
   height?: number
@@ -88,21 +66,11 @@ export type Settings = {
   consumption?: number
 }
 
-export type MapSettings = {
-  zoom: number
-  centerLng: number
-  centerLat: number
-}
+export type MapSettings = { zoom: number; centerLng: number; centerLat: number }
 
-export type ClientConfig = {
-  mapserver: string
-}
+export type ClientConfig = { mapserver: string }
 
-export type ServerConfig = {
-  host: string
-  port: number
-  bundle: string
-}
+export type ServerConfig = { host: string; port: number; bundle: string }
 
 export type Config = {
   client: ClientConfig
@@ -116,19 +84,11 @@ export type Config = {
   server: ServerConfig
 }
 
-export type Stats = {
-  assetsByChunkName: {
-    [key: string]: string[]
-  }
-}
+export type Stats = { assetsByChunkName: { [key: string]: string[] } }
 
 export type Key = string | number
 
-export type Notification = {
-  key: Key
-  message: string
-  variant: VariantType
-}
+export type Notification = { key: Key; message: string; variant: VariantType }
 
 export type RootState = {
   routes: Route[]

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import { styled } from '@mui/material/styles'
 import { TouchMarkerState } from '../../common/types'
@@ -8,14 +8,10 @@ const interval = 20
 
 const StyledCircularProgress = styled(CircularProgress)({
   position: 'absolute',
-  '& .MuiCircularProgress-circleDeterminate': {
-    transition: 'none',
-  },
+  '& .MuiCircularProgress-circleDeterminate': { transition: 'none' },
 })
 
-type TouchMarkerProps = TouchMarkerState & {
-  duration: number
-}
+type TouchMarkerProps = TouchMarkerState & { duration: number }
 
 const TouchMarker: FC<TouchMarkerProps> = ({
   direction,
@@ -36,13 +32,8 @@ const TouchMarker: FC<TouchMarkerProps> = ({
     <StyledCircularProgress
       variant="determinate"
       value={value}
-      sx={{
-        top: `${top}px`,
-        left: `${left}px`,
-      }}
-      style={{
-        transform: 'translate(-50%, -50%) rotate(-90deg)',
-      }}
+      sx={{ top: `${top}px`, left: `${left}px` }}
+      style={{ transform: 'translate(-50%, -50%) rotate(-90deg)' }}
       size={100}
     />
   )

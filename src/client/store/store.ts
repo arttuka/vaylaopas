@@ -22,9 +22,7 @@ export const useStore = create<State>()(
     {
       name: 'vaylaopas',
       storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({
-        waypoints: state.waypoints,
-      }),
+      partialize: (state) => ({ waypoints: state.waypoints }),
       onRehydrateStorage: () => (state) => state?.fetchRoutes(),
     }
   )

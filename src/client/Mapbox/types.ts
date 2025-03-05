@@ -25,10 +25,7 @@ export type DragStartHandler<F extends FeatureType> = <T extends EventType>(
   e: EventTypes[T],
   feature: F,
   type: T
-) => {
-  onMove: EventHandler<T>
-  onMoveEnd: EventHandler<T>
-}
+) => { onMove: EventHandler<T>; onMoveEnd: EventHandler<T> }
 
 export type EventTypes = {
   mouse: MapLayerMouseEvent
@@ -43,10 +40,7 @@ type GetFeatureType<F extends FeatureType | Collection<FeatureType>> =
 export type SourceType<
   I extends string,
   F extends FeatureType | Collection<FeatureType>,
-> = {
-  id: I
-  data: F
-}
+> = { id: I; data: F }
 
 export type AnySource =
   | SourceType<'route', Collection<RouteFeature>>
@@ -58,9 +52,7 @@ export type Source<S extends SourceId> = MapBy<AnySource, 'id', S>
 export type SourceFeature<S extends SourceId> = GetFeatureType<
   Source<S>['data']
 >
-export type Sources = {
-  [key in SourceId]: Source<key>
-}
+export type Sources = { [key in SourceId]: Source<key> }
 
 export const sourceIsGeoJSON = (
   source?: MaplibreSource

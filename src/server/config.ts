@@ -4,13 +4,10 @@ import { Config } from '../common/types'
 
 const configFile = path.resolve('./config.json')
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 const config: Config = fs.existsSync(configFile)
   ? JSON.parse(fs.readFileSync(configFile, 'utf8'))
   : {
-      client: {
-        mapserver: process.env.MAPSERVER!,
-      },
+      client: { mapserver: process.env.MAPSERVER! },
       db: {
         host: process.env.DB_HOST!,
         port: parseInt(process.env.DB_PORT!, 10),
@@ -23,6 +20,5 @@ const config: Config = fs.existsSync(configFile)
         port: parseInt(process.env.PORT!, 10),
       },
     }
-/* eslint-enable */
 
 export default config
