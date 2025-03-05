@@ -40,7 +40,7 @@ export type IsFeature<T extends FeatureType> = (
 const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
   feature !== undefined &&
   feature.properties !== null &&
-  feature.properties.hasOwn(p)
+  Object.hasOwn(feature.properties, p)
 
 export const featureIsRouteFeature = (
   feature?: Feature

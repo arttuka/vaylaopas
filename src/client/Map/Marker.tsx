@@ -82,20 +82,24 @@ const Marker: FC<MarkerProps> = (props) => {
 
   const marker: MaplibreMarker = useMemo(() => {
     const element = document.createElement('div')
-    return new MaplibreMarker({ element, draggable: true, anchor: 'bottom' })
-      .setLngLat({ lng, lat })
-      .on('dragstart', () => {
-        propsRef.current.draggingRef.current = true
-        setIsDragged(true)
-      })
-      .on('dragend', () => {
-        propsRef.current.draggingRef.current = false
-        setIsDragged(false)
-        propsRef.current.onDragEnd(
-          propsRef.current.waypoint.id,
-          marker.getLngLat()
-        )
-      })
+    const m = new MaplibreMarker({
+      element,
+      draggable: true,
+      anchor: 'bottom',
+    }).setLngLat({ lng, lat })
+    m.on('dragstart', () => {
+      propsRef.current.draggingRef.current = true
+      setIsDragged(true)
+    })
+    m.on('dragend', () => {
+      propsRef.current.draggingRef.current = false
+      setIsDragged(false)
+      propsRef.current.onDragEnd(
+        propsRef.current.waypoint.id,
+        marker.getLngLat()
+      )
+    })
+    return m
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

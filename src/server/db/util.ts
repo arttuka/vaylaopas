@@ -191,7 +191,7 @@ export const unnest = <Db, Tb extends keyof Db, T, A extends string>(
   alias: A
 ) => eb.fn<T>('unnest', [expr]).as(alias)
 
-declare module 'kysely/dist/cjs/query-builder/select-query-builder' {
+declare module 'kysely' {
   interface SelectQueryBuilder<DB, TB extends keyof DB, O> {
     crossJoinLateral<TE extends TableExpression<DB, TB>>(
       table: TE

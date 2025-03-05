@@ -83,19 +83,18 @@ const makeLayerDraggable = <L extends LayerId>(
     }
   const onMouseStart = makeDragStartHandler('mouse')
   const onTouchStart = makeDragStartHandler('touch')
-  map
-    .on('mouseenter', id, () => {
-      canvas.style.cursor = 'move'
-    })
-    .on('mouseleave', id, () => {
-      canvas.style.cursor = ''
-    })
-    .on('mousedown', id, (e) => {
-      if (e.originalEvent.button === 0) {
-        onMouseStart(e)
-      }
-    })
-    .on('touchstart', id, onTouchStart)
+  map.on('mouseenter', id, () => {
+    canvas.style.cursor = 'move'
+  })
+  map.on('mouseleave', id, () => {
+    canvas.style.cursor = ''
+  })
+  map.on('mousedown', id, (e) => {
+    if (e.originalEvent.button === 0) {
+      onMouseStart(e)
+    }
+  })
+  map.on('touchstart', id, onTouchStart)
 }
 
 export const addLayer = <L extends LayerId>(

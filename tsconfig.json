@@ -2,8 +2,8 @@
   "compilerOptions": {
     "noEmitOnError": true,
     "outDir": "dist",
-    "module": "commonjs",
-    "target": "es6",
+    "module": "nodenext",
+    "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
@@ -19,7 +19,7 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "downlevelIteration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "rootDir": "./",
