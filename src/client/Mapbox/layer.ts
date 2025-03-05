@@ -40,9 +40,9 @@ export const layers: Layers = {
       'line-dasharray': [0.5, 2],
     },
   },
-  routeStartAndEnd: {
-    id: 'routeStartAndEnd',
-    source: 'routeStartAndEnd',
+  waypointLine: {
+    id: 'waypointLine',
+    source: 'waypointLine',
     type: 'line',
     layout: {
       'line-join': 'round',

@@ -7,23 +7,31 @@ const lineStringSchema = z.object({
   coordinates: z.array(pointSchema),
 })
 
-const lanePropertiesSchema = z.object({
+const routeFeaturePropertiesSchema = z.object({
   routeIndex: z.number().int(),
   routeType: z.enum(['regular', 'outside']),
 })
 
-const laneSchema = z.object({
+const routeFeatureSchema = z.object({
   type: z.literal('Feature'),
-  properties: lanePropertiesSchema,
+  properties: routeFeaturePropertiesSchema,
+  geometry: lineStringSchema,
+})
+
+const lineStringFeatureSchema = z.object({
+  type: z.literal('Feature'),
+  properties: z.record(z.never()),
   geometry: lineStringSchema,
 })
 
 const routeSchema = z.object({
   found: z.boolean(),
   length: z.number().optional(),
-  startAndEnd: z.tuple([laneSchema, laneSchema]),
-  route: laneSchema,
+  geometry: routeFeatureSchema,
   type: z.enum(['destination', 'via', 'viadirect']),
 })
 
-export const routesSchema = z.array(routeSchema)
+export const apiRoutesSchema = z.object({
+  routes: z.array(routeSchema),
+  waypointLines: z.array(lineStringFeatureSchema),
+})

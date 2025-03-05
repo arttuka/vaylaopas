@@ -1,10 +1,10 @@
-import { ClientConfig, Route, Settings, Waypoint } from '../common/types'
-import { routesSchema } from './schema'
+import { ApiRoutes, ClientConfig, Settings, Waypoint } from '../common/types'
+import { apiRoutesSchema } from './schema'
 
 export const getRoutes = async (
   waypoints: Waypoint[],
   { depth, height }: Settings
-): Promise<Route[]> => {
+): Promise<ApiRoutes> => {
   const response = await fetch('/api/route', {
     method: 'POST',
     body: JSON.stringify({
@@ -20,7 +20,7 @@ export const getRoutes = async (
   if (response.status >= 400) {
     throw new Error(`Call to /api/route failed with code ${response.status}`)
   }
-  const parsed = routesSchema.safeParse(await response.json())
+  const parsed = apiRoutesSchema.safeParse(await response.json())
   if (parsed.success) {
     return parsed.data
   } else {

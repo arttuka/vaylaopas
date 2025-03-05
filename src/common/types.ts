@@ -27,11 +27,11 @@ export type Waypoint = LngLat &
 
 export type RouteType = 'regular' | 'outside'
 
-export type LaneProperties = {
+export type RouteFeatureProperties = {
   routeIndex: number
   routeType: RouteType
 }
-export type Lane = Feature<LineString, LaneProperties>
+export type RouteFeature = Feature<LineString, RouteFeatureProperties>
 export type Collection<F extends FeatureType> = FeatureCollection<
   F['geometry'],
   F['properties']
@@ -45,7 +45,8 @@ export type DragIndicatorFeatureProperties = {
   dragged: boolean
 }
 export type PointFeature = Feature<MultiPoint, DragIndicatorFeatureProperties>
-export type FeatureType = Lane | PointFeature
+export type LineStringFeature = Feature<LineString>
+export type FeatureType = RouteFeature | PointFeature | LineStringFeature
 export type IsFeature<T extends FeatureType> = (
   feature?: Feature
 ) => feature is T
@@ -55,8 +56,9 @@ const featureHasProperty = (feature: Feature | undefined, p: string): boolean =>
   feature.properties !== null &&
   feature.properties.hasOwnProperty(p)
 
-export const featureIsLane = (feature?: Feature): feature is Lane =>
-  featureHasProperty(feature, 'routeIndex')
+export const featureIsRouteFeature = (
+  feature?: Feature
+): feature is RouteFeature => featureHasProperty(feature, 'routeIndex')
 
 export type RouteProps = {
   found: boolean
@@ -66,9 +68,13 @@ export type RouteProps = {
 }
 
 export type Route = RouteProps & {
-  route: Lane
-  startAndEnd: Lane[]
+  geometry: RouteFeature
   type?: WaypointType
+}
+
+export type ApiRoutes = {
+  routes: Route[]
+  waypointLines: LineStringFeature[]
 }
 
 export type Index<T> = {

@@ -1,5 +1,4 @@
 import { Pool } from 'pg'
-import { LineString } from 'geojson'
 import {
   AliasableExpression,
   ExpressionBuilder,
@@ -11,7 +10,13 @@ import {
   sql,
 } from 'kysely'
 import config from '../config'
-import { Lane, Route, RouteType, Waypoint } from '../../common/types'
+import {
+  ApiRoutes,
+  FeatureType,
+  LineStringFeature,
+  Route,
+  Waypoint,
+} from '../../common/types'
 import { Database, PgrDijkstra } from './types'
 import {
   arrayAgg,
@@ -49,18 +54,15 @@ const db = new Kysely<Database>({
 
 extendKysely(db)
 
-const formatLane = (
-  geometry: LineString,
-  routeIndex: number,
-  routeType: RouteType
-): Lane => ({
-  type: 'Feature',
-  geometry,
-  properties: {
-    routeIndex,
-    routeType,
-  },
-})
+const formatFeature = <F extends FeatureType>(
+  geometry: F['geometry'],
+  properties: F['properties']
+) =>
+  ({
+    type: 'Feature',
+    geometry,
+    properties,
+  }) as F
 
 const insertEndpoints = async (
   tx: Transaction<Database>,
@@ -228,7 +230,7 @@ const getRouteBetweenVertices = async (
   tx: Transaction<Database>,
   depth?: number,
   height?: number
-): Promise<Route[]> => {
+): Promise<ApiRoutes> => {
   const makeSelect = <T extends 'lane' | 'extra_lane'>(
     db: QueryCreator<Database>,
     table: T
@@ -275,65 +277,65 @@ const getRouteBetweenVertices = async (
         outside(eb as EB<T>).as('outside'),
       ])
 
-  const result = await tx
-    .with('route', (db) =>
-      db
-        .selectFrom(pgrDijkstra(tx, laneSql, vertexSql).as('r'))
-        .select(['seq', 'start_vid', 'end_vid', 'node', 'edge'])
-    )
-    .with('lanes', (db) =>
-      makeLaneSelect(db, 'lane', () => sql.lit(false)).union(
-        makeLaneSelect(db, 'extra_lane', (eb) => eb('laneid', 'is', null))
+  const routes: Route[] = (
+    await tx
+      .with('route', (db) =>
+        db
+          .selectFrom(pgrDijkstra(tx, laneSql, vertexSql).as('r'))
+          .select(['seq', 'start_vid', 'end_vid', 'node', 'edge'])
       )
-    )
-    .selectFrom('segment as s')
-    .leftJoin('lanes as l', (join) =>
-      join
-        .onRef('l.segment_source', '=', 's.source')
-        .onRef('l.segment_target', '=', 's.target')
-    )
-    .select(({ eb, fn, lit }) => [
-      's.seq',
-      eb(fn.count('l.length'), '>', lit(0)).as('found'),
-      fn.sum<number>('l.length').as('length'),
-      fn
-        .coalesce(
-          makeLineAgg(eb, 'l.geom', 'l.seq'),
-          makeLine(eb, 's.source_point', 's.target_point')
+      .with('lanes', (db) =>
+        makeLaneSelect(db, 'lane', () => sql.lit(false)).union(
+          makeLaneSelect(db, 'extra_lane', (eb) => eb('laneid', 'is', null))
         )
-        .as('geometry'),
-      asJSON(eb, 's.source_geometry').as('source_geometry'),
-      asJSON(eb, 's.target_geometry').as('target_geometry'),
-      eb
-        .case()
-        .when(fn.agg('bool_or', ['l.outside']))
-        .then(sql.lit('outside' as const))
-        .else(sql.lit('regular' as const))
-        .end()
-        .as('route_type'),
-      's.type',
-    ])
-    .groupBy([
-      's.seq',
-      's.source_geometry',
-      's.target_geometry',
-      's.source_point',
-      's.target_point',
-      's.type',
-    ])
-    .orderBy('s.seq asc')
-    .execute()
-
-  return result.map((r) => ({
-    route: formatLane(r.geometry, r.seq, r.route_type),
-    startAndEnd: [
-      formatLane(r.source_geometry, r.seq, 'regular'),
-      formatLane(r.target_geometry, r.seq, 'regular'),
-    ],
+      )
+      .selectFrom('segment as s')
+      .leftJoin('lanes as l', (join) =>
+        join
+          .onRef('l.segment_source', '=', 's.source')
+          .onRef('l.segment_target', '=', 's.target')
+      )
+      .select(({ eb, fn, lit }) => [
+        's.seq',
+        eb(fn.count('l.length'), '>', lit(0)).as('found'),
+        fn.sum<number>('l.length').as('length'),
+        fn
+          .coalesce(
+            makeLineAgg(eb, 'l.geom', 'l.seq'),
+            makeLine(eb, 's.source_point', 's.target_point')
+          )
+          .as('geometry'),
+        eb
+          .case()
+          .when(fn.agg('bool_or', ['l.outside']))
+          .then(sql.lit('outside' as const))
+          .else(sql.lit('regular' as const))
+          .end()
+          .as('route_type'),
+        's.type',
+      ])
+      .groupBy(['s.seq', 's.source_point', 's.target_point', 's.type'])
+      .orderBy('s.seq asc')
+      .execute()
+  ).map((r) => ({
+    geometry: formatFeature(r.geometry, {
+      routeIndex: r.seq,
+      routeType: r.route_type,
+    }),
     found: Boolean(r.found),
     type: r.type,
     length: r.length ?? undefined,
   }))
+
+  const waypointLines: LineStringFeature[] = (
+    await tx
+      .selectFrom('endpoint')
+      .select((eb) => [asJSON(eb, 'geometry').as('geometry')])
+      .orderBy('seq asc')
+      .execute()
+  ).map((w) => formatFeature(w.geometry, {}))
+
+  return { routes, waypointLines }
 }
 
 const createTempTables = (tx: Transaction<Database>) =>
@@ -343,7 +345,7 @@ export const getRoute = async (
   points: Waypoint[],
   depth?: number,
   height?: number
-): Promise<Route[]> => {
+): Promise<ApiRoutes> => {
   assertNumber(depth)
   assertNumber(height)
   return db.transaction().execute(async (tx) => {

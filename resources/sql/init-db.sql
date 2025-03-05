@@ -94,7 +94,6 @@ AS $$
       source.seq,
       source.vertex AS source, target.vertex AS target,
       source.point AS source_point, target.point AS target_point,
-      source.geometry AS source_geometry, target.geometry AS target_geometry,
       source.type,
       source.type = 'viadirect' OR target.type = 'viadirect' AS direct
     FROM endpoint AS source

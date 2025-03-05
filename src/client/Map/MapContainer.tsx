@@ -4,7 +4,11 @@ import Marker from './Marker'
 import Map from './Map'
 import Source from './Source'
 import { layers } from '../Mapbox/layer'
-import { generateRouteSources, pointFeature } from '../Mapbox/source'
+import {
+  featureCollection,
+  generateRouteSources,
+  pointFeature,
+} from '../Mapbox/source'
 import {
   DragStartHandler,
   Event,
@@ -14,8 +18,8 @@ import {
   Sources,
 } from '../Mapbox/types'
 import {
-  featureIsLane,
-  Lane,
+  featureIsRouteFeature,
+  RouteFeature,
   LngLat,
   MenuState,
   Point,
@@ -51,9 +55,10 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   const [lastClick, setLastClick] = useState({ lng: 0, lat: 0 })
   const [menu, setMenu] = useState(closedMenu)
   const [touchMarker, setTouchMarker] = useState<TouchMarkerState>()
-  const { routes, waypoints, editWaypoints } = useStore(
+  const { routes, waypointLines, waypoints, editWaypoints } = useStore(
     useShallow((state) => ({
       routes: state.routes,
+      waypointLines: state.waypointLines,
       waypoints: state.waypoints,
       editWaypoints: state.editWaypoints,
     }))
@@ -61,6 +66,10 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
   const longTouchTimer = useRef(0)
   const [sources, setSources] = useState<Sources>({
     ...generateRouteSources(routes),
+    waypointLine: {
+      id: 'waypointLine',
+      data: featureCollection(waypointLines),
+    },
     dragIndicator: { id: 'dragIndicator', data: pointFeature() },
   })
   const setSource = useCallback((newSources: Partial<Sources>): void => {
@@ -139,7 +148,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
     []
   )
 
-  const handleDragRoute: DragStartHandler<Lane> = useCallback(
+  const handleDragRoute: DragStartHandler<RouteFeature> = useCallback(
     (e, feature, type) => {
       const origin = e.point
       let dragStarted = false
@@ -203,6 +212,15 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
     setSource(generateRouteSources(routes))
   }, [routes, setSource])
 
+  useEffect(() => {
+    setSource({
+      waypointLine: {
+        id: 'waypointLine',
+        data: featureCollection(waypointLines),
+      },
+    })
+  }, [waypointLines, setSource])
+
   return (
     <>
       <Map
@@ -241,13 +259,13 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
             {
               layer: layers.route,
               onDrag: handleDragRoute,
-              isFeature: featureIsLane,
+              isFeature: featureIsRouteFeature,
             },
           ]}
         />
         <Source
-          source={sources.routeStartAndEnd}
-          layers={[{ layer: layers.routeStartAndEnd }]}
+          source={sources.waypointLine}
+          layers={[{ layer: layers.waypointLine }]}
         />
       </Map>
       {touchMarker && (

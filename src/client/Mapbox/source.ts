@@ -8,15 +8,21 @@ import {
   Sources,
   sourceIsGeoJSON,
 } from './types'
-import { Collection, Lane, PointFeature, Route } from '../../common/types'
+import {
+  Collection,
+  RouteFeature,
+  PointFeature,
+  Route,
+  FeatureType,
+} from '../../common/types'
 import { useEffect } from 'react'
 import { addLayer, removeLayer } from './layer'
 
-export const laneFeatureCollection = (
-  lanes: Lane[] = []
-): Collection<Lane> => ({
+export const featureCollection = <F extends FeatureType>(
+  features: F[] = []
+): Collection<F> => ({
   type: 'FeatureCollection',
-  features: lanes,
+  features,
 })
 
 export const pointFeature = (
@@ -33,44 +39,34 @@ export const pointFeature = (
   },
 })
 
-const collectRoutes = (
-  routes: Route[]
-): { route: Lane[]; notFoundRoute: Lane[]; startAndEnd: Lane[] } => {
-  return routes.length
-    ? routes.reduce<{
-        route: Lane[]
-        notFoundRoute: Lane[]
-        startAndEnd: Lane[]
-      }>(
-        (acc, route) => ({
-          route: route.found ? acc.route.concat(route.route) : acc.route,
-          startAndEnd: [...acc.startAndEnd, route.startAndEnd[1]],
-          notFoundRoute: route.found
-            ? acc.notFoundRoute
-            : acc.notFoundRoute.concat(route.route),
-        }),
-        {
-          route: [],
-          notFoundRoute: [],
-          startAndEnd: [routes[0].startAndEnd[0]],
-        }
-      )
-    : { route: [], notFoundRoute: [], startAndEnd: [] }
+type CollectedRoutes = {
+  geometry: RouteFeature[]
+  notFoundGeometry: RouteFeature[]
 }
+
+const collectRoutes = (routes: Route[]): CollectedRoutes =>
+  routes.reduce<CollectedRoutes>(
+    ({ geometry, notFoundGeometry }, r) => ({
+      geometry: r.found ? [...geometry, r.geometry] : geometry,
+      notFoundGeometry: r.found
+        ? notFoundGeometry
+        : [...notFoundGeometry, r.geometry],
+    }),
+    {
+      geometry: [],
+      notFoundGeometry: [],
+    }
+  )
 
 export const generateRouteSources = (
   routes: Route[]
-): Pick<Sources, 'route' | 'notFoundRoute' | 'routeStartAndEnd'> => {
-  const { route, notFoundRoute, startAndEnd } = collectRoutes(routes)
+): Pick<Sources, 'route' | 'notFoundRoute'> => {
+  const { geometry, notFoundGeometry } = collectRoutes(routes)
   return {
-    route: { id: 'route', data: laneFeatureCollection(route) },
+    route: { id: 'route', data: featureCollection(geometry) },
     notFoundRoute: {
       id: 'notFoundRoute',
-      data: laneFeatureCollection(notFoundRoute),
-    },
-    routeStartAndEnd: {
-      id: 'routeStartAndEnd',
-      data: laneFeatureCollection(startAndEnd),
+      data: featureCollection(notFoundGeometry),
     },
   }
 }

@@ -11,9 +11,10 @@ import {
   Collection,
   FeatureType,
   IsFeature,
-  Lane,
+  RouteFeature,
   MapBy,
   PointFeature,
+  LineStringFeature,
 } from '../../common/types'
 
 export type MouseEventHandler = (e: MapLayerMouseEvent) => void
@@ -48,9 +49,9 @@ export type SourceType<
 }
 
 export type AnySource =
-  | SourceType<'route', Collection<Lane>>
-  | SourceType<'notFoundRoute', Collection<Lane>>
-  | SourceType<'routeStartAndEnd', Collection<Lane>>
+  | SourceType<'route', Collection<RouteFeature>>
+  | SourceType<'notFoundRoute', Collection<RouteFeature>>
+  | SourceType<'waypointLine', Collection<LineStringFeature>>
   | SourceType<'dragIndicator', PointFeature>
 export type SourceId = AnySource['id']
 export type Source<S extends SourceId> = MapBy<AnySource, 'id', S>
@@ -80,7 +81,7 @@ export type LayerType<L extends string, S extends SourceId> = MapBy<
 export type AnyLayer =
   | LayerType<'route', 'route'>
   | LayerType<'notFoundRoute', 'notFoundRoute'>
-  | LayerType<'routeStartAndEnd', 'routeStartAndEnd'>
+  | LayerType<'waypointLine', 'waypointLine'>
   | LayerType<'dragIndicator', 'dragIndicator'>
 export type LayerId = AnyLayer['id']
 export type Layer<L extends LayerId> = MapBy<AnyLayer, 'id', L>

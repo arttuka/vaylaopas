@@ -67,8 +67,6 @@ export type SegmentView = {
   target: number
   source_point: DbPoint
   target_point: DbPoint
-  source_geometry: DbLineString
-  target_geometry: DbLineString
   direct: boolean
   type: WaypointType
 }
