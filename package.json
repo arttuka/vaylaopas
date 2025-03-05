@@ -3,19 +3,19 @@
   "version": "0.1.0",
   "license": "AGPL-3.0-only",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "private": true,
   "browserslist": [
     "defaults"
   ],
   "dependencies": {
-    "@dnd-kit/core": "^6.1.0",
-    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/core": "^6.3.0",
+    "@dnd-kit/sortable": "^10.0.0",
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
-    "@mui/icons-material": "^5.15.17",
-    "@mui/material": "^5.15.17",
+    "@mui/icons-material": "^6.4.7",
+    "@mui/material": "^6.4.7",
     "@redux-devtools/extension": "^3.2.2",
     "clsx": "^2.1.1",
     "express": "^4.17.1",
@@ -23,11 +23,11 @@
     "maplibre-gl": "^4.2.0",
     "notistack": "^3.0.1",
     "pg": "^8.7.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "uuid": "^10.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "uuid": "^11.1.0",
     "zod": "^3.23.8",
-    "zustand": "^4.5.4"
+    "zustand": "^5.0.3"
   },
   "scripts": {
     "watch:server": "ts-node-dev --watch src/server,src/common src/server/server.ts",
@@ -58,7 +58,7 @@
     "@types/geojson": "^7946.0.8",
     "@types/jest": "^29.5.12",
     "@types/mapbox__point-geometry": "^0.1.2",
-    "@types/node": "^20.12.11",
+    "@types/node": "^22.13.9",
     "@types/parcel-bundler": "^1.12.4",
     "@types/pg": "^8.6.1",
     "@types/react": "^18.3.1",
@@ -69,8 +69,8 @@
     "@types/webpack-env": "^1.16.2",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
-    "babel-loader": "^9.1.3",
-    "concurrently": "^8.2.2",
+    "babel-loader": "^10.0.0",
+    "concurrently": "^9.1.2",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^5.1.3",
@@ -81,8 +81,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "parcel": "^2.12.0",
     "prettier": "^3.2.5",
-    "react-refresh": "^0.14.2",
-    "rimraf": "^5.0.6",
+    "react-refresh": "^0.16.0",
+    "rimraf": "^6.0.1",
     "source-map-loader": "^5.0.0",
     "terser-webpack-plugin": "^5.2.4",
     "ts-jest": "^29.1.2",
