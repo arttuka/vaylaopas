@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import Marker from './Marker'
 import Map from './Map'
@@ -63,21 +63,24 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
       editWaypoints: state.editWaypoints,
     }))
   )
-  const longTouchTimer = useRef(0)
-  const [sources, setSources] = useState<Sources>({
-    ...generateRouteSources(routes),
-    waypointLine: {
+  const { route: routeSource, notFoundRoute: notFoundRouteSource } = useMemo(
+    () => generateRouteSources(routes),
+    [routes]
+  )
+  const waypointLineSource = useMemo<Sources['waypointLine']>(
+    () => ({
       id: 'waypointLine',
       data: featureCollection(waypointLines),
-    },
-    dragIndicator: { id: 'dragIndicator', data: pointFeature() },
+    }),
+    [waypointLines]
+  )
+  const [dragIndicatorSource, setDragIndicatorSource] = useState<
+    Sources['dragIndicator']
+  >({
+    id: 'dragIndicator',
+    data: pointFeature(),
   })
-  const setSource = useCallback((newSources: Partial<Sources>): void => {
-    setSources((sources) => ({
-      ...sources,
-      ...newSources,
-    }))
-  }, [])
+  const longTouchTimer = useRef(0)
 
   const openMenu = useCallback(
     (p: Point, waypoint?: WaypointProperties) =>
@@ -158,20 +161,16 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
             dragStarted = true
           }
           if (dragStarted) {
-            setSource({
-              dragIndicator: {
-                id: 'dragIndicator',
-                data: draggingMarker.current
-                  ? pointFeature()
-                  : pointFeature(e.lngLat, type === 'touch'),
-              },
+            setDragIndicatorSource({
+              id: 'dragIndicator',
+              data: draggingMarker.current
+                ? pointFeature()
+                : pointFeature(e.lngLat, type === 'touch'),
             })
           }
         },
         onMoveEnd: (e) => {
-          setSource({
-            dragIndicator: { id: 'dragIndicator', data: pointFeature() },
-          })
+          setDragIndicatorSource({ id: 'dragIndicator', data: pointFeature() })
           if (!draggingMarker.current && sqDistance(origin, e.point) > 1000) {
             editWaypoints({
               type: 'add',
@@ -186,7 +185,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
         },
       }
     },
-    [editWaypoints, setSource]
+    [editWaypoints]
   )
 
   const handleDragWaypoint = useCallback(
@@ -207,19 +206,6 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
     },
     [openMenu]
   )
-
-  useEffect(() => {
-    setSource(generateRouteSources(routes))
-  }, [routes, setSource])
-
-  useEffect(() => {
-    setSource({
-      waypointLine: {
-        id: 'waypointLine',
-        data: featureCollection(waypointLines),
-      },
-    })
-  }, [waypointLines, setSource])
 
   return (
     <>
@@ -246,15 +232,15 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
           />
         ))}
         <Source
-          source={sources.dragIndicator}
+          source={dragIndicatorSource}
           layers={[{ layer: layers.dragIndicator }]}
         />
         <Source
-          source={sources.notFoundRoute}
+          source={notFoundRouteSource}
           layers={[{ layer: layers.notFoundRoute }]}
         />
         <Source
-          source={sources.route}
+          source={routeSource}
           layers={[
             {
               layer: layers.route,
@@ -264,7 +250,7 @@ const MapContainer: FC<{ mapserverUrl: string }> = ({ mapserverUrl }) => {
           ]}
         />
         <Source
-          source={sources.waypointLine}
+          source={waypointLineSource}
           layers={[{ layer: layers.waypointLine }]}
         />
       </Map>

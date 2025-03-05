@@ -121,6 +121,8 @@ export const addLayer = <L extends LayerId>(
   }
 }
 
-export const removeLayer = <L extends LayerId>(map: Map, id: L) => {
-  map.removeLayer(id)
+export const removeLayer = <L extends LayerId>(map: Map | undefined, id: L) => {
+  if (map !== undefined && !map._removed) {
+    map.removeLayer(id)
+  }
 }

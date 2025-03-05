@@ -76,7 +76,9 @@ export const addSource = (map: Map, { id, data }: AnySource): void => {
 }
 
 export const removeSource = (map: Map, id: SourceId): void => {
-  map.removeSource(id)
+  if (map !== undefined && !map._removed) {
+    map.removeSource(id)
+  }
 }
 
 export const setSourceData = <S extends SourceId>(
@@ -106,7 +108,7 @@ export const useSource = <S extends SourceId, L extends LayerId>(
       removeSource(map, source.id)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [map])
   useEffect(() => {
     setSourceData(map, source)
   }, [map, source])
