@@ -5,7 +5,6 @@ import {
   MouseEventHandler,
   TouchEventHandler,
 } from '../Mapbox/types'
-import { addMapLoad } from '../api'
 
 export type MapProps = {
   center: [number, number]
@@ -43,7 +42,6 @@ export const useMaplibreMap = (
     })
     maplibreMap.on('load', () => {
       setMap(maplibreMap)
-      addMapLoad()
       maplibreMap.touchZoomRotate.disableRotation()
       maplibreMap
         .addControl(

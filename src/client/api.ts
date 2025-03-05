@@ -23,10 +23,6 @@ export const getRoutes = async (
   }
 }
 
-export const addMapLoad = async (): Promise<void> => {
-  await fetch('/api/map-load', { method: 'POST' })
-}
-
 export const getConfig = async (): Promise<ClientConfig> => {
   const response = await fetch('/api/config', { method: 'GET' })
 
